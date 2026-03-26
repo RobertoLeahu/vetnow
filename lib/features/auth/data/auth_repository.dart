@@ -1,0 +1,64 @@
+//Auth Repository
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/supabase/supabase_client.dart';
+import '../../../shared/models/profile.dart';
+
+class AuthRepository {
+  // Sesión actual
+  Session? get currentSession => supabase.auth.currentSession;
+  User? get currentUser => supabase.auth.currentUser;
+
+  // Stream de cambios de sesión
+  Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
+
+  /// Registro: crea usuario en Auth y luego el perfil en la tabla profiles
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+    required UserRole role,
+  }) async {
+    final response = await supabase.auth.signUp(
+      email: email,
+      password: password,
+    );
+
+    final user = response.user;
+    if (user == null) throw Exception('Error al crear el usuario');
+
+    // Insertar perfil con rol
+    await supabase.from('profiles').insert({
+      'id': user.id,
+      'role': role.name,
+      'full_name': fullName,
+    });
+  }
+
+  /// Login estándar
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
+    await supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// Logout
+  Future<void> signOut() async {
+    await supabase.auth.signOut();
+  }
+
+  /// Obtener perfil del usuario actual
+  Future<Profile?> fetchProfile(String userId) async {
+    final data = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (data == null) return null;
+    return Profile.fromMap(data);
+  }
+}
