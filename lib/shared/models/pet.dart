@@ -22,28 +22,28 @@ class Pet extends Equatable {
   });
 
   factory Pet.fromMap(Map<String, dynamic> map) => Pet(
-        id: map['id'] as String,
-        ownerId: map['owner_id'] as String,
-        name: map['name'] as String,
-        species: PetSpecies.values.firstWhere(
-          (e) => e.name == map['species'],
-          orElse: () => PetSpecies.other,
-        ),
-        breed: map['breed'] as String?,
-        birthDate: map['birth_date'] != null
-            ? DateTime.parse(map['birth_date'] as String)
-            : null,
-        photoUrl: map['photo_url'] as String?,
-      );
+    id: map['id'] as String,
+    ownerId: map['owner_id'] as String,
+    name: map['name'] as String,
+    species: PetSpecies.values.firstWhere(
+      (e) => e.name == map['species'],
+      orElse: () => PetSpecies.other,
+    ),
+    breed: map['breed'] as String?,
+    birthDate: map['birth_date'] != null
+        ? DateTime.parse(map['birth_date'] as String)
+        : null,
+    photoUrl: map['photo_url'] as String?,
+  );
 
   Map<String, dynamic> toMap() => {
-        'owner_id': ownerId,
-        'name': name,
-        'species': species.name,
-        'breed': breed,
-        'birth_date': birthDate?.toIso8601String().split('T').first,
-        'photo_url': photoUrl,
-      };
+    'owner_id': ownerId,
+    'name': name,
+    'species': species.name,
+    'breed': breed,
+    'birth_date': birthDate?.toIso8601String().split('T').first,
+    'photo_url': photoUrl,
+  };
 
   @override
   List<Object?> get props => [id, ownerId, name, species];

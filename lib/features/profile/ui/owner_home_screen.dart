@@ -24,15 +24,49 @@ class OwnerHomeScreen extends ConsumerWidget {
         ],
       ),
       body: profile.when(
-        data: (p) => Center(
-          child: Text(
-            '¡Hola, ${p?.fullName ?? 'propietario'}! 🐾\nFase 1 en construcción',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18),
+        data: (p) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: SizedBox(
+            width:
+                double.infinity, // Asegura que ocupe todo el ancho para centrar
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '¡Hola, ${p?.fullName ?? 'propietario'}! 🐾',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () => context.push('/search'),
+                  icon: const Icon(Icons.search),
+                  label: const Text('Buscar clínicas'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Error al cargar perfil: $e',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
       ),
     );
   }

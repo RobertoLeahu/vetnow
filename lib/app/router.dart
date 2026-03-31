@@ -7,8 +7,10 @@ import '../features/auth/ui/login_screen.dart';
 import '../features/auth/ui/register_screen.dart';
 import '../features/auth/ui/role_selector_screen.dart';
 import '../shared/models/profile.dart';
+import '../features/clinic/ui/search_screen.dart';
+import '../features/clinic/ui/clinic_detail_screen.dart';
 
-// Pantallas placeholder — las irás llenando en fases siguientes
+// Pantallas placeholder
 import '../features/profile/ui/owner_home_screen.dart';
 import '../features/profile/ui/clinic_home_screen.dart';
 
@@ -60,6 +62,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           );
         },
+      ),
+      GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
+      GoRoute(
+        path: '/clinic/:id',
+        builder: (context, state) =>
+            ClinicDetailScreen(clinicId: state.pathParameters['id']!),
       ),
     ],
   );
