@@ -15,14 +15,19 @@ class SearchFilters {
 
   const SearchFilters({this.city = '', this.specialtyId});
 
-  SearchFilters copyWith({String? city, String? specialtyId}) => SearchFilters(
-        city: city ?? this.city,
-        specialtyId: specialtyId,
-      );
+  SearchFilters copyWith({
+    String? city,
+    String? specialtyId,
+    bool clearSpecialty = false, // 👈 añadido
+  }) => SearchFilters(
+    city: city ?? this.city,
+    specialtyId: clearSpecialty ? null : (specialtyId ?? this.specialtyId),
+  );
 }
 
-final searchFiltersProvider =
-    StateProvider<SearchFilters>((_) => const SearchFilters());
+final searchFiltersProvider = StateProvider<SearchFilters>(
+  (_) => const SearchFilters(),
+);
 
 // Resultados de búsqueda reactivos a los filtros
 final clinicSearchProvider = FutureProvider<List<Clinic>>((ref) async {
@@ -41,7 +46,9 @@ final specialtiesProvider = FutureProvider<List<Specialty>>((ref) async {
 });
 
 // Clínica por ID (para pantalla de detalle)
-final clinicDetailProvider =
-    FutureProvider.family<Clinic?, String>((ref, id) async {
+final clinicDetailProvider = FutureProvider.family<Clinic?, String>((
+  ref,
+  id,
+) async {
   return ref.watch(clinicRepositoryProvider).getClinicById(id);
 });
