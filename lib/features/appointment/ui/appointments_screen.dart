@@ -30,9 +30,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
       appBar: AppBar(
         title: const Text('Citas'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          preferredSize: const Size.fromHeight(56),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               children: [
                 _TabChip(
