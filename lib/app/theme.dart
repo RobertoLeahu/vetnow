@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Paleta extraída de las capturas
   static const primary = Color(0xFF00897B); // teal principal
   static const primaryDark = Color(0xFF00695C);
   static const background = Color(0xFFFFFFFF);

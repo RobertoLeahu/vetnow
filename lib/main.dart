@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +15,7 @@ Future<void> main() async {
   // COMPROBACIÓN TEMPORAL:
   print("--- TEST CONFIG ---");
   print("URL: ${dotenv.env['SUPABASE_URL']}");
-  print("ANON_KEY: ${dotenv.env['SUPABASE_ANON_KEY']?.substring(0, 10)}..."); 
+  print("ANON_KEY: ${dotenv.env['SUPABASE_ANON_KEY']?.substring(0, 10)}...");
   print("-------------------");
 
   // Inicializar Supabase
@@ -24,6 +25,8 @@ Future<void> main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  await initializeDateFormatting('es', null);
 
   runApp(const ProviderScope(child: App()));
 }

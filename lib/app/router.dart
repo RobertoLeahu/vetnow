@@ -1,3 +1,4 @@
+// lib/app/router.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,9 +10,11 @@ import '../features/auth/ui/role_selector_screen.dart';
 import '../features/clinic/ui/search_screen.dart';
 import '../features/clinic/ui/clinic_detail_screen.dart';
 import '../features/appointment/ui/appointments_screen.dart';
+import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
 import '../features/profile/ui/profile_screen.dart';
 import '../shared/models/profile.dart';
+import '../shared/models/specialty.dart';
 import 'main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -31,7 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Auth (sin shell)
+      // ── Auth (sin shell) ──────────────────────────────────────────
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(
         path: '/role-selector',
@@ -43,7 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
       ),
 
-      // App principal (con shell + bottom nav)
+      // ── App principal (con shell + bottom nav) ────────────────────
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -55,6 +58,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'clinic/:id',
                 builder: (_, state) =>
                     ClinicDetailScreen(clinicId: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'book',
+                    builder: (_, state) => BookingScreen(
+                      clinicId: state.pathParameters['id']!,
+                      specialty: state.extra as Specialty,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
