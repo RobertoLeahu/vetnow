@@ -8,13 +8,6 @@ final appointmentRepositoryProvider = Provider<AppointmentRepository>(
   (_) => AppointmentRepository(),
 );
 
-/// Mascotas del usuario actual
-final myPetsProvider = FutureProvider<List<Pet>>((ref) async {
-  final user = ref.watch(authRepositoryProvider).currentUser;
-  if (user == null) return [];
-  return ref.watch(appointmentRepositoryProvider).fetchMyPets(user.id);
-});
-
 /// Citas del usuario actual
 final myAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
   final user = ref.watch(authRepositoryProvider).currentUser;

@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
-import '../data/appointment_repository.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/specialty.dart';
 import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/clinic/providers/clinic_provider.dart';
+import '../../../features/pet/providers/pet_provider.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String clinicId;

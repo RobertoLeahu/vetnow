@@ -36,14 +36,18 @@ class Pet extends Equatable {
     photoUrl: map['photo_url'] as String?,
   );
 
-  Map<String, dynamic> toMap() => {
-    'owner_id': ownerId,
-    'name': name,
-    'species': species.name,
-    'breed': breed,
-    'birth_date': birthDate?.toIso8601String().split('T').first,
-    'photo_url': photoUrl,
-  };
+  Map<String, dynamic> toMap() {
+    final map = <String, dynamic>{
+      'owner_id': ownerId,
+      'name': name,
+      'species': species.name,
+      'breed': breed,
+      'birth_date': birthDate?.toIso8601String().split('T').first,
+      'photo_url': photoUrl,
+    };
+    if (id.isNotEmpty) map['id'] = id;
+    return map;
+  }
 
   @override
   List<Object?> get props => [id, ownerId, name, species];
