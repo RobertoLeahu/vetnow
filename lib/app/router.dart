@@ -1,4 +1,3 @@
-// lib/app/router.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,12 +12,17 @@ import '../features/appointment/ui/appointments_screen.dart';
 import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
 import '../features/profile/ui/profile_screen.dart';
+import '../features/clinic_panel/ui/clinic_home_screen.dart';
+import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
+import '../features/clinic_panel/ui/clinic_patients_screen.dart';
+import '../features/clinic_panel/ui/clinic_profile_screen.dart';
 import '../shared/models/profile.dart';
 import '../shared/models/specialty.dart';
 import 'main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final profileAsync = ref.watch(profileProvider);
 
   return GoRouter(
     initialLocation: '/search',
@@ -30,7 +34,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/role-selector';
 
       if (!isLoggedIn && !isAuthRoute) return '/login';
-      if (isLoggedIn && isAuthRoute) return '/search';
+      if (isLoggedIn && isAuthRoute) {
+        // Redirige según rol al hacer login
+        final role = profileAsync.valueOrNull?.role;
+        if (role == UserRole.clinic) return '/clinic-home';
+        return '/search';
+      }
       return null;
     },
     routes: [
@@ -46,10 +55,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
       ),
 
-      // ── App principal (con shell + bottom nav) ────────────────────
+      // ── Shell compartido ──────────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
+          //── Rutas propietario ─────────────────────────────────────
           GoRoute(
             path: '/search',
             builder: (_, __) => const SearchScreen(),
@@ -76,6 +86,24 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(path: '/pets', builder: (_, __) => const PetsScreen()),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+
+          // ── Rutas clínica ─────────────────────────────────────────
+          GoRoute(
+            path: '/clinic-home',
+            builder: (_, __) => const ClinicHomeScreen(),
+          ),
+          GoRoute(
+            path: '/clinic-agenda',
+            builder: (_, __) => const ClinicAgendaScreen(),
+          ),
+          GoRoute(
+            path: '/clinic-patients',
+            builder: (_, __) => const ClinicPatientsScreen(),
+          ),
+          GoRoute(
+            path: '/clinic-profile',
+            builder: (_, __) => const ClinicProfileScreen(),
+          ),
         ],
       ),
     ],
