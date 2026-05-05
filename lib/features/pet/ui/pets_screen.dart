@@ -28,7 +28,10 @@ class PetsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 itemCount: pets.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) => _PetCard(pet: pets[i]),
+                itemBuilder: (_, i) => _PetCard(
+                  pet: pets[i],
+                  onEdit: () => _showEditPetSheet(context, ref, pets[i]),
+                ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -46,6 +49,21 @@ class PetsScreen extends ConsumerWidget {
       ),
       builder: (_) =>
           _AddPetSheet(onSaved: () => ref.invalidate(myPetsProvider)),
+    );
+  }
+
+  void _showEditPetSheet(BuildContext context, WidgetRef ref, Pet pet) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _EditPetSheet(
+        pet: pet,
+        onSaved: () => ref.invalidate(myPetsProvider),
+      ),
     );
   }
 }
@@ -101,7 +119,8 @@ class _EmptyPets extends StatelessWidget {
 
 class _PetCard extends ConsumerWidget {
   final Pet pet;
-  const _PetCard({required this.pet});
+  final VoidCallback onEdit;
+  const _PetCard({required this.pet, required this.onEdit});
 
   String get _speciesLabel => switch (pet.species) {
     PetSpecies.dog => '🐶 Perro',
@@ -119,14 +138,17 @@ class _PetCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.divider),
-      ),
-      child: Row(
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onEdit,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Row(
         children: [
           // Avatar especie
           Container(
@@ -188,6 +210,12 @@ class _PetCard extends ConsumerWidget {
             ),
           ),
 
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, color: AppTheme.textSecondary),
+            tooltip: 'Editar mascota',
+            onPressed: onEdit,
+          ),
+
           // Botón eliminar
           IconButton(
             icon: const Icon(
@@ -222,6 +250,7 @@ class _PetCard extends ConsumerWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }
@@ -458,6 +487,230 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
             child: _loading
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text('Guardar mascota'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditPetSheet extends ConsumerStatefulWidget {
+  final Pet pet;
+  final VoidCallback onSaved;
+  const _EditPetSheet({required this.pet, required this.onSaved});
+
+  @override
+  ConsumerState<_EditPetSheet> createState() => _EditPetSheetState();
+}
+
+class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _breedCtrl;
+  late PetSpecies _species;
+  DateTime? _birthDate;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.pet.name);
+    _breedCtrl = TextEditingController(text: widget.pet.breed ?? '');
+    _species = widget.pet.species;
+    _birthDate = widget.pet.birthDate;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _breedCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'El nombre es obligatorio');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final updatedPet = Pet(
+        id: widget.pet.id,
+        ownerId: widget.pet.ownerId,
+        name: _nameCtrl.text.trim(),
+        species: _species,
+        breed: _breedCtrl.text.trim().isEmpty ? null : _breedCtrl.text.trim(),
+        birthDate: _birthDate,
+        photoUrl: widget.pet.photoUrl,
+      );
+      await ref.read(petRepositoryProvider).updatePet(updatedPet);
+      widget.onSaved();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      setState(() => _error = 'Error al guardar: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Editar mascota',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(labelText: 'Nombre *'),
+            textCapitalization: TextCapitalization.words,
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Especie',
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: PetSpecies.values.map((s) {
+              final emoji = switch (s) {
+                PetSpecies.dog => '🐶',
+                PetSpecies.cat => '🐱',
+                PetSpecies.exotic => '🦎',
+                PetSpecies.other => '🐾',
+              };
+              final label = switch (s) {
+                PetSpecies.dog => 'Perro',
+                PetSpecies.cat => 'Gato',
+                PetSpecies.exotic => 'Exótico',
+                PetSpecies.other => 'Otro',
+              };
+              final selected = _species == s;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _species = s),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selected ? AppTheme.primary : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected ? AppTheme.primary : Colors.transparent,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(height: 4),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: selected
+                                ? Colors.white
+                                : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _breedCtrl,
+            decoration: const InputDecoration(labelText: 'Raza (opcional)'),
+            textCapitalization: TextCapitalization.words,
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate:
+                    _birthDate ?? DateTime.now().subtract(const Duration(days: 365)),
+                firstDate: DateTime(2000),
+                lastDate: DateTime.now(),
+                helpText: 'Fecha de nacimiento',
+              );
+              if (picked != null) {
+                setState(() => _birthDate = picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.cake_rounded,
+                    size: 18,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _birthDate == null
+                        ? 'Fecha de nacimiento (opcional)'
+                        : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                    style: TextStyle(
+                      color: _birthDate == null
+                          ? AppTheme.textSecondary
+                          : AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ],
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _loading ? null : _save,
+            child: _loading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text('Guardar cambios'),
           ),
         ],
       ),

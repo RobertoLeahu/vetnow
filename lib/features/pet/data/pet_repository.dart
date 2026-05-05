@@ -11,6 +11,10 @@ class PetRepository {
     await supabase.from('pets').insert(pet.toMap());
   }
 
+  Future<void> updatePet(Pet pet) async {
+    await supabase.from('pets').update(pet.toMap()).eq('id', pet.id);
+  }
+
   Future<void> deletePet(String petId) async {
     await supabase.from('pets').delete().eq('id', petId);
   }
