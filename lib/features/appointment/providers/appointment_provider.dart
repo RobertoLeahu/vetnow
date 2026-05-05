@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/appointment_repository.dart';
 import '../../../shared/models/appointment.dart';
-import '../../../shared/models/pet.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
 final appointmentRepositoryProvider = Provider<AppointmentRepository>(
   (_) => AppointmentRepository(),
 );
+
+/// Filtro de mascota seleccionado en pantalla de citas (null = todas)
+final selectedPetFilterProvider = StateProvider<String?>((_) => null);
 
 /// Citas del usuario actual
 final myAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {

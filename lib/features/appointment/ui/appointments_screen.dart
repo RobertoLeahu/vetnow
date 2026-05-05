@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
 import '../../../app/theme.dart';
 import '../../../shared/models/appointment.dart';
+import '../../pet/providers/pet_provider.dart';
 
 class AppointmentsScreen extends ConsumerStatefulWidget {
   const AppointmentsScreen({super.key});
@@ -31,53 +32,97 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
   @override
   Widget build(BuildContext context) {
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
+    final petsAsync = ref.watch(myPetsProvider);
+    final selectedPetId = ref.watch(selectedPetFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Citas'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(112),
           child: appointmentsAsync.when(
             data: (all) {
-              final upcoming = all.where((a) => a.isUpcoming).length;
-              final done = all.where((a) => a.isDone).length;
-              final cancelled = all.where((a) => a.isCancelled).length;
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+              final filteredAll = _filterByPet(all, selectedPetId);
+              final upcoming = filteredAll.where((a) => a.isUpcoming).length;
+              final done = filteredAll.where((a) => a.isDone).length;
+              final cancelled = filteredAll.where((a) => a.isCancelled).length;
+              return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Row(
+                child: Column(
                   children: [
-                    _TabChip(
-                      label: 'Programadas ($upcoming)',
-                      index: 0,
-                      controller: _tabController,
+                    petsAsync.when(
+                      data: (pets) => DropdownButtonFormField<String?>(
+                        value: selectedPetId,
+                        decoration: const InputDecoration(
+                          labelText: 'Mascota',
+                          isDense: true,
+                        ),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('Todas las mascotas'),
+                          ),
+                          ...pets.map(
+                            (p) => DropdownMenuItem<String?>(
+                              value: p.id,
+                              child: Text(p.name),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          ref.read(selectedPetFilterProvider.notifier).state =
+                              value;
+                        },
+                      ),
+                      loading: () => const SizedBox(
+                        height: 40,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (_, __) => const SizedBox(
+                        height: 40,
+                        child: Center(child: Text('No se pudieron cargar mascotas')),
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    _TabChip(
-                      label: 'Realizadas ($done)',
-                      index: 1,
-                      controller: _tabController,
-                    ),
-                    const SizedBox(width: 8),
-                    _TabChip(
-                      label: 'Canceladas ($cancelled)',
-                      index: 2,
-                      controller: _tabController,
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _TabChip(
+                            label: 'Programadas ($upcoming)',
+                            index: 0,
+                            controller: _tabController,
+                          ),
+                          const SizedBox(width: 8),
+                          _TabChip(
+                            label: 'Realizadas ($done)',
+                            index: 1,
+                            controller: _tabController,
+                          ),
+                          const SizedBox(width: 8),
+                          _TabChip(
+                            label: 'Canceladas ($cancelled)',
+                            index: 2,
+                            controller: _tabController,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               );
             },
-            loading: () => const SizedBox(height: 56),
-            error: (_, __) => const SizedBox(height: 56),
+            loading: () => const SizedBox(height: 112),
+            error: (_, __) => const SizedBox(height: 112),
           ),
         ),
       ),
       body: appointmentsAsync.when(
         data: (all) {
-          final upcoming = all.where((a) => a.isUpcoming).toList();
-          final done = all.where((a) => a.isDone).toList();
-          final cancelled = all.where((a) => a.isCancelled).toList();
+          final filteredAll = _filterByPet(all, selectedPetId);
+          final upcoming = filteredAll.where((a) => a.isUpcoming).toList();
+          final done = filteredAll.where((a) => a.isDone).toList();
+          final cancelled = filteredAll.where((a) => a.isCancelled).toList();
 
           return TabBarView(
             controller: _tabController,
@@ -104,6 +149,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
+  }
+
+  List<Appointment> _filterByPet(List<Appointment> all, String? selectedPetId) {
+    if (selectedPetId == null) return all;
+    return all.where((a) => a.petId == selectedPetId).toList();
   }
 }
 
