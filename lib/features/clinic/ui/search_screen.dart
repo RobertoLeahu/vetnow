@@ -6,6 +6,27 @@ import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/clinic.dart';
 
+IconData _specialtyIcon(String name) {
+  final n = name
+      .toLowerCase()
+      .replaceAll(RegExp(r'[áàä]'), 'a')
+      .replaceAll(RegExp(r'[éèë]'), 'e')
+      .replaceAll(RegExp(r'[íìï]'), 'i')
+      .replaceAll(RegExp(r'[óòö]'), 'o')
+      .replaceAll(RegExp(r'[úùü]'), 'u');
+
+  if (n.contains('medicina')) return Icons.medical_services_rounded;
+  if (n.contains('dermat')) return Icons.healing_rounded;
+  if (n.contains('cardio')) return Icons.favorite_rounded;
+  if (n.contains('traumat')) return Icons.set_meal_rounded;
+  if (n.contains('oftalm')) return Icons.visibility_rounded;
+  if (n.contains('exotic') || n.contains('exot')) return Icons.pets_rounded;
+  if (n.contains('urgenc') || n.contains('24')) {
+    return Icons.local_hospital_rounded;
+  }
+  return Icons.medical_information_outlined;
+}
+
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -96,29 +117,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     vertical: 8,
                   ),
                   child: Wrap(
-                    alignment: WrapAlignment.center, // Centra los chips horizontalmente
-                    spacing: 8.0, // Espacio horizontal entre los chips
-                    runSpacing:
-                        8.0, // Espacio vertical entre las líneas de chips
+                    alignment: WrapAlignment.center,
+                    spacing: 8.0,
+                    runSpacing: 8.0,
                     children: [
                       _SpecialtyChip(
                         label: 'Todas',
+                        icon: Icons.apps_rounded,
                         selected: filters.specialtyId == null,
                         onTap: () => ref
                             .read(searchFiltersProvider.notifier)
                             .update((s) => s.copyWith(clearSpecialty: true)),
                       ),
-
                       ...specialties.map(
-                        (s) {
-                          return _SpecialtyChip(
-                            label: s.name,
-                            selected: filters.specialtyId == s.id,
-                            onTap: () => ref
-                                .read(searchFiltersProvider.notifier)
-                                .update((f) => f.copyWith(specialtyId: s.id)),
-                          );
-                        },
+                        (s) => _SpecialtyChip(
+                          label: s.name,
+                          icon: _specialtyIcon(s.name),
+                          selected: filters.specialtyId == s.id,
+                          onTap: () => ref
+                              .read(searchFiltersProvider.notifier)
+                              .update((f) => f.copyWith(specialtyId: s.id)),
+                        ),
                       ),
                     ],
                   ),
@@ -186,10 +205,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
 class _SpecialtyChip extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
   const _SpecialtyChip({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
@@ -200,18 +221,29 @@ class _SpecialtyChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppTheme.primary : AppTheme.surface,
           borderRadius: BorderRadius.circular(50),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : AppTheme.textPrimary,
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? Colors.white : AppTheme.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );
