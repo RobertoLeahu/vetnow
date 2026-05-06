@@ -12,15 +12,6 @@ Future<void> main() async {
   // Cargar .env
   await dotenv.load(fileName: ".env");
 
-  // COMPROBACIÓN TEMPORAL:
-  print("--- TEST CONFIG ---");
-  print("URL: ${dotenv.env['SUPABASE_URL']}");
-  print("ANON_KEY: ${dotenv.env['SUPABASE_ANON_KEY']?.substring(0, 10)}...");
-  print("-------------------");
-
-  // Inicializar Supabase
-  await dotenv.load(fileName: '.env');
-
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,

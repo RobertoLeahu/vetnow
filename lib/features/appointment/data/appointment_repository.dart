@@ -12,9 +12,10 @@ class AppointmentRepository {
     return (data as List).map((e) => Pet.fromMap(e)).toList();
   }
 
-  /// Añadir mascota
-  Future<void> addPet(Pet pet) async {
-    await supabase.from('pets').insert(pet.toMap());
+  /// Añadir mascota (devuelve el id insertado).
+  Future<String> addPet(Pet pet) async {
+    final row = await supabase.from('pets').insert(pet.toMap()).select('id').single();
+    return row['id'] as String;
   }
 
   /// Obtener slots ocupados de una clínica en una fecha

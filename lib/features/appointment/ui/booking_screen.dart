@@ -354,7 +354,7 @@ class _StepDateState extends State<_StepDate> {
                     color: isSelected
                         ? AppTheme.primary
                         : isToday
-                        ? AppTheme.primary.withOpacity(0.1)
+                        ? AppTheme.primary.withValues(alpha: 0.1)
                         : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
@@ -411,86 +411,6 @@ class _StepTime extends ConsumerStatefulWidget {
     required this.selectedSlot,
     required this.onSelect,
   });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bookedAsync = ref.watch(
-      bookedSlotsProvider((clinicId: clinicId, date: date)),
-    );
-
-    return bookedAsync.when(
-      data: (booked) {
-        final bookedTimes = booked
-            .map((d) => '${d.hour}:${d.minute.toString().padLeft(2, '0')}')
-            .toSet();
-
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Selecciona una hora',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 2.5,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: slots.length,
-              itemBuilder: (_, i) {
-                final slot = slots[i];
-                final timeKey =
-                    '${slot.hour}:${slot.minute.toString().padLeft(2, '0')}';
-                final isBooked = bookedTimes.contains(timeKey);
-                final isSelected =
-                    selectedSlot != null &&
-                    DateUtils.isSameDay(slot, selectedSlot!) &&
-                    slot.hour == selectedSlot!.hour &&
-                    slot.minute == selectedSlot!.minute;
-
-                return GestureDetector(
-                  onTap: isBooked ? null : () => onSelect(slot),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isBooked
-                          ? AppTheme.surface
-                          : isSelected
-                          ? AppTheme.primary
-                          : Colors.white,
-                      border: Border.all(
-                        color: isSelected ? AppTheme.primary : AppTheme.divider,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        DateFormat('HH:mm').format(slot),
-                        style: TextStyle(
-                          color: isBooked
-                              ? AppTheme.divider
-                              : isSelected
-                              ? Colors.white
-                              : AppTheme.textPrimary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
 
   @override
   ConsumerState<_StepTime> createState() => _StepTimeState();
@@ -808,7 +728,9 @@ class _SelectionTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary.withOpacity(0.08) : Colors.white,
+          color: selected
+              ? AppTheme.primary.withValues(alpha: 0.08)
+              : Colors.white,
           border: Border.all(
             color: selected ? AppTheme.primary : AppTheme.divider,
             width: selected ? 1.5 : 1,

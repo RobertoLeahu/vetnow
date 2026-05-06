@@ -20,12 +20,12 @@ class MainShell extends ConsumerWidget {
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppTheme.divider)),
         ),
-        child: isClinic ? _ClinicNavBar(context) : _OwnerNavBar(context),
+        child: isClinic ? _clinicNavBar(context) : _ownerNavBar(context),
       ),
     );
   }
 
-  Widget _OwnerNavBar(BuildContext context) {
+  Widget _ownerNavBar(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     int index = 0;
     if (location.startsWith('/search')) index = 0;
@@ -72,7 +72,7 @@ class MainShell extends ConsumerWidget {
     );
   }
 
-  Widget _ClinicNavBar(BuildContext context) {
+  Widget _clinicNavBar(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     int index = 0;
     if (location.startsWith('/clinic-home')) index = 0;

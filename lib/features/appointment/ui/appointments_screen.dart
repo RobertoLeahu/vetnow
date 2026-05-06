@@ -52,7 +52,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                   children: [
                     petsAsync.when(
                       data: (pets) => DropdownButtonFormField<String?>(
-                        value: selectedPetId,
+                        initialValue: selectedPetId,
                         decoration: const InputDecoration(
                           labelText: 'Mascota',
                           isDense: true,
@@ -180,7 +180,7 @@ class _AppointmentList extends ConsumerWidget {
               Icon(
                 Icons.calendar_month_rounded,
                 size: 80,
-                color: AppTheme.primary.withOpacity(0.3),
+                color: AppTheme.primary.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 20),
               Text(
@@ -357,7 +357,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: config.color.withOpacity(0.1),
+        color: config.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(50),
       ),
       child: Text(

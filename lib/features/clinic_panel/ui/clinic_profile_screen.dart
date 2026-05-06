@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
 class ClinicProfileScreen extends ConsumerWidget {

@@ -9,21 +9,21 @@ class RoleSelectorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('¿Cómo usarás VetNow?')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: const Padding(
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Selecciona tu perfil',
+            Text('Selecciona tu perfil',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             _RoleCard(
               icon: Icons.pets,
               title: 'Soy propietario',
               subtitle: 'Busco clínicas y reservo citas para mi mascota',
               role: UserRole.owner,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _RoleCard(
               icon: Icons.local_hospital,
               title: 'Soy clínica',

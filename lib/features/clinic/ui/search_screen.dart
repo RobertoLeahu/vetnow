@@ -5,7 +5,6 @@ import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/clinic.dart';
-import '../../../shared/models/specialty.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -43,7 +42,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Logo
-                    Icon(Icons.pets_rounded, size: 36, color: AppTheme.primary),
+                    const Icon(
+                      Icons.pets_rounded,
+                      size: 36,
+                      color: AppTheme.primary,
+                    ),
                     const SizedBox(height: 12),
                     RichText(
                       text: TextSpan(
@@ -150,7 +153,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             // Lista de clínicas
             clinicsAsync.when(
               data: (clinics) => clinics.isEmpty
-                  ? SliverToBoxAdapter(
+                  ? const SliverToBoxAdapter(
                       child: _EmptyState(
                         icon: Icons.search_off_rounded,
                         title: 'No hay clínicas con estos filtros',

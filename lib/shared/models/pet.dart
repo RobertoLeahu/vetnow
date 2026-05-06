@@ -1,6 +1,39 @@
 import 'package:equatable/equatable.dart';
 
-enum PetSpecies { dog, cat, exotic, other }
+enum PetSpecies {
+  dog,
+  cat,
+  rabbit,
+  hamster,
+  bird,
+  reptile,
+  ferret,
+  other,
+}
+
+extension PetSpeciesX on PetSpecies {
+  String get emoji => switch (this) {
+    PetSpecies.dog => '🐶',
+    PetSpecies.cat => '🐱',
+    PetSpecies.rabbit => '🐰',
+    PetSpecies.hamster => '🐹',
+    PetSpecies.bird => '🦜',
+    PetSpecies.reptile => '🦎',
+    PetSpecies.ferret => '🦦',
+    PetSpecies.other => '🐾',
+  };
+
+  String get label => switch (this) {
+    PetSpecies.dog => 'Perro',
+    PetSpecies.cat => 'Gato',
+    PetSpecies.rabbit => 'Conejo',
+    PetSpecies.hamster => 'Hámster',
+    PetSpecies.bird => 'Ave',
+    PetSpecies.reptile => 'Reptil',
+    PetSpecies.ferret => 'Hurón',
+    PetSpecies.other => 'Otro',
+  };
+}
 
 class Pet extends Equatable {
   final String id;
