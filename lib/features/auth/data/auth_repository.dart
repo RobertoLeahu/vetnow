@@ -74,4 +74,13 @@ class AuthRepository {
   Future<void> updatePassword(String newPassword) async {
     await supabase.auth.updateUser(UserAttributes(password: newPassword));
   }
+
+  /// Elimina la cuenta del usuario actual (perfil) y cierra sesión.
+  Future<void> deleteCurrentAccount() async {
+    final user = currentUser;
+    if (user == null) throw Exception('No hay usuario autenticado');
+
+    await supabase.from('profiles').delete().eq('id', user.id);
+    await signOut();
+  }
 }
