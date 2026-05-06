@@ -17,7 +17,7 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_rounded),
-            onPressed: () {},
+            onPressed: () => context.push('/profile/settings'),
           ),
         ],
       ),

@@ -11,6 +11,7 @@ import '../features/appointment/ui/appointments_screen.dart';
 import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
 import '../features/profile/ui/profile_screen.dart';
+import '../features/profile/ui/settings_screen.dart';
 import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
@@ -84,7 +85,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const AppointmentsScreen(),
           ),
           GoRoute(path: '/pets', builder: (_, __) => const PetsScreen()),
-          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(
+            path: '/profile',
+            builder: (_, __) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path: 'settings',
+                builder: (_, __) => const SettingsScreen(),
+              ),
+            ],
+          ),
 
           // ── Rutas clínica ─────────────────────────────────────────
           GoRoute(

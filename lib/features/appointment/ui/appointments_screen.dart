@@ -55,7 +55,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                         initialValue: selectedPetId,
                         decoration: const InputDecoration(
                           labelText: 'Mascota',
-                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
                         ),
                         items: [
                           const DropdownMenuItem<String?>(

@@ -315,6 +315,7 @@ class _PetFormPhotoAvatar extends StatelessWidget {
 void _showPetPhotoSourceSheet(
   BuildContext context, {
   required void Function(ImageSource source) onChosen,
+  VoidCallback? onRemove,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -342,6 +343,21 @@ void _showPetPhotoSourceSheet(
               onChosen(ImageSource.gallery);
             },
           ),
+          if (onRemove != null)
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.red,
+              ),
+              title: const Text(
+                'Quitar foto de perfil',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                onRemove();
+              },
+            ),
         ],
       ),
     ),
@@ -732,6 +748,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
   late PetSpecies _species;
   DateTime? _birthDate;
   File? _pickedPhoto;
+  bool _removePhoto = false;
   bool _loading = false;
   bool _uploadingPhoto = false;
   String? _error;
@@ -744,7 +761,10 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
       imageQuality: 85,
     );
     if (x != null && mounted) {
-      setState(() => _pickedPhoto = File(x.path));
+      setState(() {
+        _pickedPhoto = File(x.path);
+        _removePhoto = false;
+      });
     }
   }
 
@@ -779,7 +799,9 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
       final repo = ref.read(petRepositoryProvider);
       String? photoUrl = widget.pet.photoUrl;
 
-      if (_pickedPhoto != null) {
+      if (_removePhoto && _pickedPhoto == null) {
+        photoUrl = null;
+      } else if (_pickedPhoto != null) {
         setState(() => _uploadingPhoto = true);
         photoUrl = await repo.uploadPetPhoto(
           ownerId: widget.pet.ownerId,
@@ -815,8 +837,9 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final displayUrl =
-        _pickedPhoto == null ? widget.pet.photoUrl : null;
+    final displayUrl = (_pickedPhoto == null && !_removePhoto)
+        ? widget.pet.photoUrl
+        : null;
 
     return SingleChildScrollView(
       child: Padding(
@@ -853,6 +876,12 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
               onTap: () => _showPetPhotoSourceSheet(
                 context,
                 onChosen: _pickImage,
+                onRemove: () {
+                  setState(() {
+                    _pickedPhoto = null;
+                    _removePhoto = true;
+                  });
+                },
               ),
               uploading: _uploadingPhoto,
             ),
