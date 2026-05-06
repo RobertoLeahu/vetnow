@@ -61,4 +61,17 @@ class AuthRepository {
     if (data == null) return null;
     return Profile.fromMap(data);
   }
+
+  /// Actualiza el teléfono en `profiles` (un solo campo; incluye prefijo y número).
+  Future<void> updatePhone({
+    required String userId,
+    String? phone,
+  }) async {
+    await supabase.from('profiles').update({'phone': phone}).eq('id', userId);
+  }
+
+  /// Cambia la contraseña del usuario autenticado.
+  Future<void> updatePassword(String newPassword) async {
+    await supabase.auth.updateUser(UserAttributes(password: newPassword));
+  }
 }

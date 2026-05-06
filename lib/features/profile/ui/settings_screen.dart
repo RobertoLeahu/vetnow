@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -22,32 +23,33 @@ class SettingsScreen extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(top: 8),
-              children: const [
+              children: [
                 _SettingsMenuItem(
                   icon: Icons.person_rounded,
                   label: 'Cuenta',
+                  onTap: () => context.push('/profile/settings/account'),
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.description_outlined,
                   label: 'Términos y condiciones',
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.tune_rounded,
                   label: 'Personalización',
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.privacy_tip_outlined,
                   label: 'Política y privacidad',
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.delete_outline_rounded,
                   label: 'Eliminar mi cuenta',
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.logout_rounded,
                   label: 'Cerrar sesión',
                 ),
-                _SettingsMenuItem(
+                const _SettingsMenuItem(
                   icon: Icons.flag_outlined,
                   label: 'Cambiar el país',
                   trailingText: 'ES',
@@ -75,11 +77,13 @@ class _SettingsMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? trailingText;
+  final VoidCallback? onTap;
 
   const _SettingsMenuItem({
     required this.icon,
     required this.label,
     this.trailingText,
+    this.onTap,
   });
 
   @override
@@ -115,7 +119,7 @@ class _SettingsMenuItem extends StatelessWidget {
               ),
             ],
           ),
-          onTap: () {},
+          onTap: onTap ?? () {},
         ),
         const Divider(height: 1, color: AppTheme.divider),
       ],

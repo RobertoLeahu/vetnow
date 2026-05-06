@@ -12,6 +12,7 @@ import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
 import '../features/profile/ui/profile_screen.dart';
 import '../features/profile/ui/settings_screen.dart';
+import '../features/profile/ui/account_screen.dart';
 import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
@@ -92,6 +93,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'settings',
                 builder: (_, __) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'account',
+                    builder: (_, __) => const AccountScreen(),
+                  ),
+                ],
               ),
             ],
           ),

@@ -83,7 +83,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                       ),
                       error: (_, __) => const SizedBox(
                         height: 40,
-                        child: Center(child: Text('No se pudieron cargar mascotas')),
+                        child: Center(
+                          child: Text('No se pudieron cargar mascotas'),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
