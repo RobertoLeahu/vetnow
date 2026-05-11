@@ -22,24 +22,50 @@ class ClinicDetailScreen extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 200,
                 pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(clinic.name),
-                  background: clinic.logoUrl != null
-                      ? Image.network(clinic.logoUrl!, fit: BoxFit.cover)
-                      : Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: const Icon(Icons.local_hospital, size: 64),
-                        ),
-                ),
+                backgroundColor: AppTheme.background,
+                foregroundColor: AppTheme.textPrimary,
+                elevation: 0,
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Avatar circular centrado + nombre
+                      Center(
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              backgroundImage: clinic.logoUrl != null
+                                  ? NetworkImage(clinic.logoUrl!)
+                                  : null,
+                              child: clinic.logoUrl == null
+                                  ? const Icon(
+                                      Icons.local_hospital_rounded,
+                                      size: 58,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              clinic.name,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       // Info básica
                       _InfoRow(
                         icon: Icons.location_on,
