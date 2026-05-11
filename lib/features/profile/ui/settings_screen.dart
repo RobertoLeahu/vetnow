@@ -109,9 +109,11 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.description_outlined,
                   label: 'Términos y condiciones',
                 ),
-                const _SettingsMenuItem(
+                _SettingsMenuItem(
                   icon: Icons.tune_rounded,
                   label: 'Personalización',
+                  onTap: () =>
+                      context.push('/profile/settings/personalization'),
                 ),
                 const _SettingsMenuItem(
                   icon: Icons.privacy_tip_outlined,
