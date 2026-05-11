@@ -457,9 +457,13 @@ class _StepTimeState extends ConsumerState<_StepTime> {
               itemCount: widget.slots.length,
               itemBuilder: (_, i) {
                 final slot = widget.slots[i];
+                final now = DateTime.now();
                 final timeKey =
                     '${slot.hour}:${slot.minute.toString().padLeft(2, '0')}';
                 final isBooked = bookedTimes.contains(timeKey);
+                final isPast = !slot.isAfter(now) &&
+                    DateUtils.isSameDay(slot, now);
+                final isDisabled = isBooked || isPast;
                 final isSelected =
                     widget.selectedSlot != null &&
                     DateUtils.isSameDay(slot, widget.selectedSlot!) &&
@@ -467,10 +471,10 @@ class _StepTimeState extends ConsumerState<_StepTime> {
                     slot.minute == widget.selectedSlot!.minute;
 
                 return GestureDetector(
-                  onTap: isBooked ? null : () => widget.onSelect(slot),
+                  onTap: isDisabled ? null : () => widget.onSelect(slot),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isBooked
+                      color: isDisabled
                           ? AppTheme.surface
                           : isSelected
                           ? AppTheme.primary
@@ -484,7 +488,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
                       child: Text(
                         DateFormat('HH:mm').format(slot),
                         style: TextStyle(
-                          color: isBooked
+                          color: isDisabled
                               ? AppTheme.textSecondary
                               : isSelected
                               ? Colors.white
