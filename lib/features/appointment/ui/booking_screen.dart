@@ -485,7 +485,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
                         DateFormat('HH:mm').format(slot),
                         style: TextStyle(
                           color: isBooked
-                              ? AppTheme.divider
+                              ? AppTheme.textSecondary
                               : isSelected
                               ? Colors.white
                               : AppTheme.textPrimary,
