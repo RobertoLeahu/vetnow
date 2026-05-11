@@ -647,10 +647,8 @@ class _StepPet extends ConsumerWidget {
             )
           else
             ...pets.map(
-              (p) => _SelectionTile(
-                title: p.name,
-                subtitle: p.breed,
-                icon: Icons.pets_rounded,
+              (p) => _PetSelectionTile(
+                pet: p,
                 selected: selectedPet?.id == p.id,
                 onTap: () => onSelect(p),
               ),
@@ -790,6 +788,89 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Tile de mascota con foto circular ─────────────────────────────────────────
+
+class _PetSelectionTile extends StatelessWidget {
+  final Pet pet;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PetSelectionTile({
+    required this.pet,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.primary.withValues(alpha: 0.08)
+              : Colors.white,
+          border: Border.all(
+            color: selected ? AppTheme.primary : AppTheme.divider,
+            width: selected ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppTheme.surface,
+              backgroundImage: pet.photoUrl != null
+                  ? NetworkImage(pet.photoUrl!)
+                  : null,
+              child: pet.photoUrl == null
+                  ? Text(
+                      pet.species.emoji,
+                      style: const TextStyle(fontSize: 20),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pet.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? AppTheme.primary
+                          : AppTheme.textPrimary,
+                    ),
+                  ),
+                  if (pet.breed != null)
+                    Text(
+                      pet.breed!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (selected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppTheme.primary,
+                size: 20,
+              ),
+          ],
+        ),
       ),
     );
   }
