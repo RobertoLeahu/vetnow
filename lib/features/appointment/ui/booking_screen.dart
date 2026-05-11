@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
+import '../utils/slot_generator.dart';
 import '../../../shared/models/clinic.dart';
+import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
 import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
@@ -31,17 +33,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   DateTime? _selectedSlot;
   Pet? _selectedPet;
   bool _loading = false;
-
-  List<DateTime> _generateSlots(DateTime date) {
-    final slots = <DateTime>[];
-    var current = DateTime(date.year, date.month, date.day, 9, 0);
-    final end = DateTime(date.year, date.month, date.day, 19, 0);
-    while (current.isBefore(end)) {
-      slots.add(current);
-      current = current.add(const Duration(minutes: 30));
-    }
-    return slots;
-  }
 
   Future<void> _confirm() async {
     final user = ref.read(authRepositoryProvider).currentUser;
@@ -119,6 +110,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     final clinicAsync = ref.watch(clinicDetailProvider(widget.clinicId));
+    final schedulesAsync =
+        ref.watch(clinicSchedulesProvider(widget.clinicId));
 
     return Scaffold(
       appBar: AppBar(
@@ -135,11 +128,20 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           if (clinic == null) {
             return const Center(child: Text('Clínica no encontrada'));
           }
-          return Column(
-            children: [
-              _StepIndicator(currentStep: _step),
-              Expanded(child: _buildStep(clinic)),
-            ],
+          return schedulesAsync.when(
+            data: (schedules) {
+              if (schedules.isEmpty) {
+                return const _NoSchedulesView();
+              }
+              return Column(
+                children: [
+                  _StepIndicator(currentStep: _step),
+                  Expanded(child: _buildStep(clinic, schedules)),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -148,11 +150,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     );
   }
 
-  Widget _buildStep(Clinic clinic) {
+  Widget _buildStep(Clinic clinic, List<Schedule> schedules) {
     switch (_step) {
       case 0:
         return _StepDate(
           selectedDate: _selectedDate,
+          openDays: openDaysFromSchedules(schedules),
           onSelect: (d) => setState(() {
             _selectedDate = d;
             _selectedSlot = null;
@@ -163,11 +166,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         return _StepTime(
           clinicId: widget.clinicId,
           date: _selectedDate!,
-          slots: _generateSlots(_selectedDate!),
+          slots: generateSlotsForDate(_selectedDate!, schedules),
           selectedSlot: _selectedSlot,
           onSelect: (s) => setState(() {
             _selectedSlot = s;
             _step = 2;
+          }),
+          onBackToDate: () => setState(() {
+            _step = 0;
+            _selectedDate = null;
           }),
         );
       case 2:
@@ -190,6 +197,48 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       default:
         return const SizedBox.shrink();
     }
+  }
+}
+
+// ─── Pantalla bloqueante: clínica sin horarios ───────────────────────────────
+
+class _NoSchedulesView extends StatelessWidget {
+  const _NoSchedulesView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.event_busy_rounded,
+              size: 64,
+              color: AppTheme.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Esta clínica no acepta citas todavía',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'La clínica aún no ha configurado sus horarios de atención.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => context.pop(),
+              child: const Text('Volver'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -229,8 +278,13 @@ class _StepIndicator extends StatelessWidget {
 
 class _StepDate extends StatefulWidget {
   final DateTime? selectedDate;
+  final Set<int> openDays;
   final ValueChanged<DateTime> onSelect;
-  const _StepDate({required this.selectedDate, required this.onSelect});
+  const _StepDate({
+    required this.selectedDate,
+    required this.openDays,
+    required this.onSelect,
+  });
 
   @override
   State<_StepDate> createState() => _StepDateState();
@@ -342,18 +396,21 @@ class _StepDateState extends State<_StepDate> {
               final isPast = date.isBefore(
                 DateTime(today.year, today.month, today.day),
               );
+              final isClosed =
+                  !widget.openDays.contains(date.weekday - 1);
+              final isDisabled = isPast || isClosed;
               final isSelected =
                   _selected != null && DateUtils.isSameDay(date, _selected);
               final isToday = DateUtils.isSameDay(date, today);
 
               return GestureDetector(
-                onTap: isPast ? null : () => setState(() => _selected = date),
+                onTap: isDisabled ? null : () => setState(() => _selected = date),
                 child: Container(
                   margin: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.primary
-                        : isToday
+                        : isToday && !isDisabled
                         ? AppTheme.primary.withValues(alpha: 0.1)
                         : Colors.transparent,
                     shape: BoxShape.circle,
@@ -362,12 +419,12 @@ class _StepDateState extends State<_StepDate> {
                     child: Text(
                       '$day',
                       style: TextStyle(
-                        color: isPast
+                        color: isDisabled
                             ? AppTheme.divider
                             : isSelected
                             ? Colors.white
                             : AppTheme.textPrimary,
-                        fontWeight: isSelected || isToday
+                        fontWeight: isSelected || (isToday && !isDisabled)
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
@@ -403,6 +460,7 @@ class _StepTime extends ConsumerStatefulWidget {
   final List<DateTime> slots;
   final DateTime? selectedSlot;
   final ValueChanged<DateTime> onSelect;
+  final VoidCallback onBackToDate;
 
   const _StepTime({
     required this.clinicId,
@@ -410,6 +468,7 @@ class _StepTime extends ConsumerStatefulWidget {
     required this.slots,
     required this.selectedSlot,
     required this.onSelect,
+    required this.onBackToDate,
   });
 
   @override
@@ -427,6 +486,35 @@ class _StepTimeState extends ConsumerState<_StepTime> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.slots.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 56,
+                color: AppTheme.textSecondary,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay horarios disponibles ese día',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: widget.onBackToDate,
+                child: const Text('Elegir otra fecha'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final bookedAsync = ref.watch(
       bookedSlotsProvider((clinicId: widget.clinicId, date: widget.date)),
     );

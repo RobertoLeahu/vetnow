@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/clinic_repository.dart';
 import '../../../shared/models/clinic.dart';
+import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
 import '../../../core/supabase/supabase_client.dart';
 
@@ -51,4 +52,10 @@ final clinicDetailProvider = FutureProvider.family<Clinic?, String>((
   id,
 ) async {
   return ref.watch(clinicRepositoryProvider).getClinicById(id);
+});
+
+// Horarios semanales de una clínica concreta (para el flujo de reserva)
+final clinicSchedulesProvider =
+    FutureProvider.family<List<Schedule>, String>((ref, clinicId) async {
+  return ref.watch(clinicRepositoryProvider).fetchSchedules(clinicId);
 });
