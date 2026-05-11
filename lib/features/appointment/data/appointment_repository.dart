@@ -18,21 +18,22 @@ class AppointmentRepository {
     return row['id'] as String;
   }
 
-  /// Obtener slots ocupados de una clínica en una fecha
+  /// Obtener slots ocupados de una clínica en una fecha.
+  /// Usa RPC con SECURITY DEFINER para bypasear RLS y ver slots de todos los
+  /// usuarios, devolviendo únicamente scheduled_at (sin datos personales).
   Future<List<DateTime>> fetchBookedSlots(
     String clinicId,
     DateTime date,
   ) async {
-    final from = DateTime(date.year, date.month, date.day);
+    // UTC midnight del día local → cubre el día completo en hora local.
+    final from = DateTime(date.year, date.month, date.day).toUtc();
     final to = from.add(const Duration(days: 1));
 
-    final data = await supabase
-        .from('appointments')
-        .select('scheduled_at')
-        .eq('clinic_id', clinicId)
-        .gte('scheduled_at', from.toIso8601String())
-        .lt('scheduled_at', to.toIso8601String())
-        .inFilter('status', ['pending', 'confirmed']);
+    final data = await supabase.rpc('get_booked_slots', params: {
+      'p_clinic_id': clinicId,
+      'p_from': from.toIso8601String(),
+      'p_to': to.toIso8601String(),
+    });
 
     return (data as List)
         .map((e) => DateTime.parse(e['scheduled_at'] as String).toLocal())
