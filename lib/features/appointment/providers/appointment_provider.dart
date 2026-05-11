@@ -12,7 +12,8 @@ final selectedPetFilterProvider = StateProvider<String?>((_) => null);
 
 /// Citas del usuario actual
 final myAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
-  final user = ref.watch(authRepositoryProvider).currentUser;
+  final authState = ref.watch(authStateProvider);
+  final user = authState.asData?.value.session?.user;
   if (user == null) return [];
   final raw = await ref
       .watch(appointmentRepositoryProvider)
