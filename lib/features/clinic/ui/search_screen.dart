@@ -267,23 +267,19 @@ class _ClinicCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: clinic.logoUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(clinic.logoUrl!, fit: BoxFit.cover),
-                    )
-                  : const Icon(
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: AppTheme.surface,
+              backgroundImage: clinic.logoUrl != null
+                  ? NetworkImage(clinic.logoUrl!)
+                  : null,
+              child: clinic.logoUrl == null
+                  ? const Icon(
                       Icons.local_hospital_rounded,
                       color: AppTheme.primary,
                       size: 28,
-                    ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 14),
             Expanded(
