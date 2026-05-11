@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,9 +19,24 @@ import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
 import '../features/clinic_panel/ui/clinic_profile_screen.dart';
+import '../core/supabase/supabase_client.dart';
 import '../shared/models/profile.dart';
 import '../shared/models/specialty.dart';
 import 'main_shell.dart';
+
+bool _isOwnerShellPath(String loc) {
+  return loc.startsWith('/search') ||
+      loc.startsWith('/appointments') ||
+      loc.startsWith('/pets') ||
+      loc.startsWith('/profile');
+}
+
+bool _isClinicShellPath(String loc) {
+  return loc.startsWith('/clinic-home') ||
+      loc.startsWith('/clinic-agenda') ||
+      loc.startsWith('/clinic-patients') ||
+      loc.startsWith('/clinic-profile');
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -29,19 +45,45 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/search',
     redirect: (context, state) {
-      final isLoggedIn = authState.valueOrNull?.session != null;
-      final isAuthRoute =
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/role-selector';
+      final loc = state.matchedLocation;
+      final session =
+          authState.asData?.value.session ?? supabase.auth.currentSession;
+      final isLoggedIn = session != null;
 
-      if (!isLoggedIn && !isAuthRoute) return '/login';
-      if (isLoggedIn && isAuthRoute) {
-        // Redirige según rol al hacer login
-        final role = profileAsync.valueOrNull?.role;
-        if (role == UserRole.clinic) return '/clinic-home';
+      final isAuthRoute =
+          loc == '/login' ||
+          loc == '/register' ||
+          loc == '/role-selector';
+
+      if (!isLoggedIn) {
+        if (loc == '/auth-resolve') return '/login';
+        if (!isAuthRoute) return '/login';
+        return null;
+      }
+
+      // Sesión activa: esperar perfil antes de mostrar rutas del shell por rol
+      if (profileAsync.isLoading) {
+        if (loc != '/auth-resolve' && !isAuthRoute) return '/auth-resolve';
+        return null;
+      }
+
+      final role = profileAsync.valueOrNull?.role ?? UserRole.owner;
+
+      if (loc == '/auth-resolve') {
+        return role == UserRole.clinic ? '/clinic-home' : '/search';
+      }
+
+      if (isAuthRoute) {
+        return role == UserRole.clinic ? '/clinic-home' : '/search';
+      }
+
+      if (role == UserRole.clinic && _isOwnerShellPath(loc)) {
+        return '/clinic-home';
+      }
+      if (role == UserRole.owner && _isClinicShellPath(loc)) {
         return '/search';
       }
+
       return null;
     },
     routes: [
@@ -55,6 +97,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (_, state) =>
             RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
+      ),
+      GoRoute(
+        path: '/auth-resolve',
+        builder: (_, __) => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
       ),
 
       // ── Shell compartido ──────────────────────────────────────────

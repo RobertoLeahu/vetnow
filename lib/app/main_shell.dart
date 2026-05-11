@@ -11,7 +11,15 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(profileProvider).valueOrNull;
+    final profileAsync = ref.watch(profileProvider);
+
+    if (profileAsync.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final profile = profileAsync.valueOrNull;
     final isClinic = profile?.role == UserRole.clinic;
 
     return Scaffold(

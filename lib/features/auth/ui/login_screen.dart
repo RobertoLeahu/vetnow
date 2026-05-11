@@ -23,7 +23,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text.trim(),
       );
-      if (mounted) context.go('/home');
+      ref.invalidate(profileProvider);
+      if (mounted) context.go('/auth-resolve');
     } catch (e) {
       setState(() => _error = 'Email o contraseña incorrectos');
     } finally {

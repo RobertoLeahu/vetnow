@@ -42,7 +42,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             fullName: _nameCtrl.text.trim(),
             role: widget.role, // <-- Usamos widget.role aquí
           );
-      if (mounted) context.go('/home');
+      ref.invalidate(profileProvider);
+      if (mounted) context.go('/auth-resolve');
     } catch (e) {
       setState(() => _error = 'Error al registrarse: ${e.toString()}');
     } finally {

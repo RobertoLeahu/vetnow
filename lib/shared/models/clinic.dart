@@ -51,6 +51,52 @@ class Clinic extends Equatable {
     );
   }
 
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'profile_id': profileId,
+        'name': name,
+        'description': description,
+        'address': address,
+        'city': city,
+        'lat': lat,
+        'lng': lng,
+        'phone': phone,
+        'email': email,
+        'logo_url': logoUrl,
+      };
+
+  Clinic copyWith({
+    String? id,
+    String? profileId,
+    String? name,
+    String? description,
+    String? address,
+    String? city,
+    double? lat,
+    double? lng,
+    String? phone,
+    String? email,
+    String? logoUrl,
+    List<Specialty>? specialties,
+  }) =>
+      Clinic(
+        id: id ?? this.id,
+        profileId: profileId ?? this.profileId,
+        name: name ?? this.name,
+        description: description ?? this.description,
+        address: address ?? this.address,
+        city: city ?? this.city,
+        lat: lat ?? this.lat,
+        lng: lng ?? this.lng,
+        phone: phone ?? this.phone,
+        email: email ?? this.email,
+        logoUrl: logoUrl ?? this.logoUrl,
+        specialties: specialties ?? this.specialties,
+      );
+
+  bool get isProfileComplete =>
+      name.isNotEmpty && address.isNotEmpty && city.isNotEmpty;
+
   @override
   List<Object?> get props => [id, profileId, name, city, specialties];
 }

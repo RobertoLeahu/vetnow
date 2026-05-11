@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/clinic.dart';
+import '../../../shared/models/schedule.dart';
 
 class ClinicRepository {
   /// Búsqueda con filtros opcionales de ciudad y especialidad
@@ -89,5 +94,72 @@ class ClinicRepository {
               .map((sid) => {'clinic_id': clinicId, 'specialty_id': sid})
               .toList(),
         );
+  }
+
+  // ── Schedules ───────────────────────────────────────────────────
+
+  Future<List<Schedule>> fetchSchedules(String clinicId) async {
+    final data = await supabase
+        .from('schedules')
+        .select()
+        .eq('clinic_id', clinicId)
+        .order('day_of_week');
+    return (data as List).map((e) => Schedule.fromMap(e)).toList();
+  }
+
+  Future<void> upsertSchedules(
+    String clinicId,
+    List<Schedule> schedules,
+  ) async {
+    await supabase.from('schedules').delete().eq('clinic_id', clinicId);
+
+    if (schedules.isEmpty) return;
+
+    await supabase
+        .from('schedules')
+        .insert(schedules.map((s) => s.toMap()).toList());
+  }
+
+  // ── Logo ────────────────────────────────────────────────────────
+
+  String _contentTypeForPath(String path) {
+    final ext = path.split('.').last.toLowerCase();
+    return switch (ext) {
+      'png' => 'image/png',
+      'gif' => 'image/gif',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+  }
+
+  Future<String> uploadClinicLogo({
+    required String clinicId,
+    required File file,
+  }) async {
+    final ext = file.path.split('.').last.toLowerCase();
+    final objectName = '$clinicId/logo.$ext';
+    final contentType = _contentTypeForPath(file.path);
+
+    await supabase.storage.from('clinic-logos').upload(
+          objectName,
+          file,
+          fileOptions: FileOptions(upsert: true, contentType: contentType),
+        );
+
+    return supabase.storage.from('clinic-logos').getPublicUrl(objectName);
+  }
+
+  // ── Crear clínica mínima al registrarse ─────────────────────────
+
+  Future<void> createClinicForProfile({
+    required String profileId,
+    required String name,
+  }) async {
+    await supabase.from('clinics').insert({
+      'profile_id': profileId,
+      'name': name,
+      'address': '',
+      'city': '',
+    });
   }
 }

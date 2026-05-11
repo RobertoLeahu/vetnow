@@ -32,6 +32,16 @@ class AuthRepository {
       'role': role.name,
       'full_name': fullName,
     });
+
+    // Para clínicas, crear fila mínima en la tabla clinics
+    if (role == UserRole.clinic) {
+      await supabase.from('clinics').insert({
+        'profile_id': user.id,
+        'name': fullName,
+        'address': '',
+        'city': '',
+      });
+    }
   }
 
   /// Login estándar
