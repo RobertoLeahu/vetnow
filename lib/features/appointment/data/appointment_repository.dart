@@ -82,4 +82,9 @@ class AppointmentRepository {
         .update({'status': 'cancelled'})
         .eq('id', appointmentId);
   }
+
+  /// Eliminar cita (solo debe usarse para citas canceladas; RLS en Supabase).
+  Future<void> deleteAppointment(String appointmentId) async {
+    await supabase.from('appointments').delete().eq('id', appointmentId);
+  }
 }

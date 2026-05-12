@@ -375,24 +375,36 @@ class _PetCard extends ConsumerWidget {
     return Container(
       width: 56,
       height: 56,
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(14),
+      color: AppTheme.primary.withValues(alpha: 0.1),
+      alignment: Alignment.center,
+      child: Text(
+        pet.species.emoji,
+        style: const TextStyle(fontSize: 28),
       ),
-      child: Center(
-        child: Text(
-          pet.species.emoji,
-          style: const TextStyle(fontSize: 28),
-        ),
+    );
+  }
+
+  Widget _listAvatar() {
+    final photo = pet.photoUrl;
+    final hasPhoto = photo != null && photo.isNotEmpty;
+
+    return ClipOval(
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: hasPhoto
+            ? Image.network(
+                photo,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _emojiAvatar(),
+              )
+            : _emojiAvatar(),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final photo = pet.photoUrl;
-    final hasPhoto = photo != null && photo.isNotEmpty;
-
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onEdit,
@@ -405,18 +417,7 @@ class _PetCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: hasPhoto
-                  ? Image.network(
-                      photo,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _emojiAvatar(),
-                    )
-                  : _emojiAvatar(),
-            ),
+            _listAvatar(),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

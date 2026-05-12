@@ -146,6 +146,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                 appointments: cancelled,
                 emptyTitle: 'No tienes citas canceladas',
                 emptySubtitle: '',
+                showDeleteButton: true,
               ),
             ],
           );
@@ -166,11 +167,13 @@ class _AppointmentList extends ConsumerWidget {
   final List<Appointment> appointments;
   final String emptyTitle;
   final String emptySubtitle;
+  final bool showDeleteButton;
 
   const _AppointmentList({
     required this.appointments,
     required this.emptyTitle,
     required this.emptySubtitle,
+    this.showDeleteButton = false,
   });
 
   @override
@@ -218,14 +221,22 @@ class _AppointmentList extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       itemCount: appointments.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _AppointmentCard(appointment: appointments[i]),
+      itemBuilder: (_, i) => _AppointmentCard(
+        appointment: appointments[i],
+        showDeleteButton: showDeleteButton,
+      ),
     );
   }
 }
 
 class _AppointmentCard extends ConsumerWidget {
   final Appointment appointment;
-  const _AppointmentCard({required this.appointment});
+  final bool showDeleteButton;
+
+  const _AppointmentCard({
+    required this.appointment,
+    this.showDeleteButton = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -338,6 +349,59 @@ class _AppointmentCard extends ConsumerWidget {
                 ),
               ),
               child: const Text('Cancelar cita'),
+            ),
+          ],
+          if (showDeleteButton && appointment.isCancelled) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Eliminar cita'),
+                    content: const Text(
+                      'Se borrará esta cita de tu historial. No se puede deshacer.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        child: const Text('No'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                        child: const Text(
+                          'Sí, eliminar',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true && context.mounted) {
+                  try {
+                    await ref
+                        .read(appointmentRepositoryProvider)
+                        .deleteAppointment(appointment.id);
+                    ref.invalidate(myAppointmentsProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('No se pudo eliminar: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              label: const Text('Eliminar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                minimumSize: const Size(double.infinity, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
             ),
           ],
         ],
