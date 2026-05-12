@@ -9,17 +9,27 @@ import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
-class PetsScreen extends ConsumerWidget {
+class PetsScreen extends ConsumerStatefulWidget {
   const PetsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PetsScreen> createState() => _PetsScreenState();
+}
+
+class _PetsScreenState extends ConsumerState<PetsScreen> {
+  Future<void> _refreshPets() async {
+    ref.invalidate(myPetsProvider);
+    await ref.read(myPetsProvider.future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final petsAsync = ref.watch(myPetsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis mascotas')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddPetSheet(context, ref),
+        onPressed: () => _showAddPetSheet(context),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -27,14 +37,31 @@ class PetsScreen extends ConsumerWidget {
       ),
       body: petsAsync.when(
         data: (pets) => pets.isEmpty
-            ? _EmptyPets(onAdd: () => _showAddPetSheet(context, ref))
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                itemCount: pets.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) => _PetCard(
-                  pet: pets[i],
-                  onEdit: () => _showEditPetSheet(context, ref, pets[i]),
+            ? RefreshIndicator(
+                onRefresh: _refreshPets,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.sizeOf(context).height * 0.45,
+                      child: _EmptyPets(
+                        onAdd: () => _showAddPetSheet(context),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _refreshPets,
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  itemCount: pets.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) => _PetCard(
+                    pet: pets[i],
+                    onEdit: () => _showEditPetSheet(context, pets[i]),
+                  ),
                 ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -43,7 +70,7 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddPetSheet(BuildContext context, WidgetRef ref) {
+  void _showAddPetSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -56,7 +83,7 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditPetSheet(BuildContext context, WidgetRef ref, Pet pet) {
+  void _showEditPetSheet(BuildContext context, Pet pet) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
