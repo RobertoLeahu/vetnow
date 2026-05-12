@@ -340,45 +340,101 @@ class _ClinicAgendaCard extends ConsumerWidget {
           ),
           if (showConfirm && appointment.isPending) ...[
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Confirmar cita'),
-                    content: const Text(
-                      '¿Confirmas esta cita? El propietario verá el estado actualizado.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(false),
-                        child: const Text('No'),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(true),
-                        child: const Text('Sí, confirmar'),
-                      ),
-                    ],
-                  ),
-                );
-                if (ok == true && context.mounted) {
-                  try {
-                    await ref
-                        .read(appointmentRepositoryProvider)
-                        .confirmAppointment(appointment.id);
-                    ref.invalidate(clinicAppointmentsProvider);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Confirmar cita'),
+                          content: const Text(
+                            '¿Confirmas esta cita? El propietario verá el estado actualizado.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(false),
+                              child: const Text('No'),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(true),
+                              child: const Text('Sí, confirmar'),
+                            ),
+                          ],
+                        ),
                       );
-                    }
-                  }
-                }
-              },
-              child: const Text('Confirmar cita'),
+                      if (ok == true && context.mounted) {
+                        try {
+                          await ref
+                              .read(appointmentRepositoryProvider)
+                              .confirmAppointment(appointment.id);
+                          ref.invalidate(clinicAppointmentsProvider);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    child: const Text('Confirmar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Denegar cita'),
+                          content: const Text(
+                            'La cita quedará cancelada y el propietario verá el cambio.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(false),
+                              child: const Text('No'),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(true),
+                              child: const Text(
+                                'Sí, denegar',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok == true && context.mounted) {
+                        try {
+                          await ref
+                              .read(appointmentRepositoryProvider)
+                              .rejectAppointmentByClinic(appointment.id);
+                          ref.invalidate(clinicAppointmentsProvider);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                    ),
+                    child: const Text('Denegar'),
+                  ),
+                ),
+              ],
             ),
           ],
           if (showMarkDone && appointment.isConfirmed) ...[

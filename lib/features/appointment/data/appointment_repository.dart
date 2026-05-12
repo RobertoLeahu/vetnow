@@ -111,6 +111,15 @@ class AppointmentRepository {
         .eq('status', 'confirmed');
   }
 
+  /// La clínica deniega una cita pendiente (pasa a cancelada).
+  Future<void> rejectAppointmentByClinic(String appointmentId) async {
+    await supabase
+        .from('appointments')
+        .update({'status': 'cancelled'})
+        .eq('id', appointmentId)
+        .eq('status', 'pending');
+  }
+
   /// Cancelar cita
   Future<void> cancelAppointment(String appointmentId) async {
     await supabase
