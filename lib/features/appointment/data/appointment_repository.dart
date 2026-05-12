@@ -75,6 +75,42 @@ class AppointmentRepository {
     return List<Map<String, dynamic>>.from(data as List);
   }
 
+  /// Citas recibidas por una clínica (panel agenda), con nombre del propietario.
+  Future<List<Map<String, dynamic>>> fetchClinicAppointments(
+    String clinicId,
+  ) async {
+    final data = await supabase
+        .from('appointments')
+        .select('''
+          *,
+          clinics(name, address, city, phone),
+          pets(name, species),
+          specialties(name),
+          profiles(full_name)
+        ''')
+        .eq('clinic_id', clinicId)
+        .order('scheduled_at');
+    return List<Map<String, dynamic>>.from(data as List);
+  }
+
+  /// Confirmar cita (pendiente → confirmada). RLS: solo la clínica dueña.
+  Future<void> confirmAppointment(String appointmentId) async {
+    await supabase
+        .from('appointments')
+        .update({'status': 'confirmed'})
+        .eq('id', appointmentId)
+        .eq('status', 'pending');
+  }
+
+  /// Marcar cita como realizada (confirmada → realizada). RLS: solo la clínica dueña.
+  Future<void> markAppointmentDone(String appointmentId) async {
+    await supabase
+        .from('appointments')
+        .update({'status': 'done'})
+        .eq('id', appointmentId)
+        .eq('status', 'confirmed');
+  }
+
   /// Cancelar cita
   Future<void> cancelAppointment(String appointmentId) async {
     await supabase

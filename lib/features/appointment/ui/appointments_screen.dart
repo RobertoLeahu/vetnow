@@ -136,17 +136,20 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                 appointments: upcoming,
                 emptyTitle: 'No tienes citas programadas',
                 emptySubtitle: 'Reserva una cita y aparecerá aquí.',
+                onRefresh: _refreshAppointments,
               ),
               _AppointmentList(
                 appointments: done,
                 emptyTitle: 'No tienes citas realizadas',
                 emptySubtitle: 'Aquí verás el historial de tus visitas.',
+                onRefresh: _refreshAppointments,
               ),
               _AppointmentList(
                 appointments: cancelled,
                 emptyTitle: 'No tienes citas canceladas',
                 emptySubtitle: '',
                 showDeleteButton: true,
+                onRefresh: _refreshAppointments,
               ),
             ],
           );
@@ -161,6 +164,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
     if (selectedPetId == null) return all;
     return all.where((a) => a.petId == selectedPetId).toList();
   }
+
+  Future<void> _refreshAppointments() async {
+    ref.invalidate(myAppointmentsProvider);
+    await ref.read(myAppointmentsProvider.future);
+  }
 }
 
 class _AppointmentList extends ConsumerWidget {
@@ -168,62 +176,79 @@ class _AppointmentList extends ConsumerWidget {
   final String emptyTitle;
   final String emptySubtitle;
   final bool showDeleteButton;
+  final Future<void> Function() onRefresh;
 
   const _AppointmentList({
     required this.appointments,
     required this.emptyTitle,
     required this.emptySubtitle,
+    required this.onRefresh,
     this.showDeleteButton = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (appointments.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.calendar_month_rounded,
-                size: 80,
-                color: AppTheme.primary.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                emptyTitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              if (emptySubtitle.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  emptySubtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 13,
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.35,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 80,
+                        color: AppTheme.primary.withValues(alpha: 0.3),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        emptyTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      if (emptySubtitle.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          emptySubtitle,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: appointments.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _AppointmentCard(
-        appointment: appointments[i],
-        showDeleteButton: showDeleteButton,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: appointments.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) => _AppointmentCard(
+          appointment: appointments[i],
+          showDeleteButton: showDeleteButton,
+        ),
       ),
     );
   }
