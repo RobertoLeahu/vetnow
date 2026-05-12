@@ -7,3 +7,4 @@ REGLAS GLOBALES:
 - Sigue la estructura de carpetas actual (features, core, shared).
 - NUNCA uses el `BuildContext` del widget padre dentro de dialogs o bottom sheets; usa siempre el propio `dialogContext`.
 - Cuando hagas cambios que afecten a la base de datos, ten en cuenta las políticas RLS de Supabase.
+- Cuando hagas nuevas implementaciones visuales, respeta el diseño que tiene la aplicación.

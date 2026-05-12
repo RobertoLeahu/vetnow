@@ -62,7 +62,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
           appBar: AppBar(
             title: const Text('Agenda'),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(52),
+              preferredSize: const Size.fromHeight(92),
               child: appointmentsAsync.when(
                 data: (all) {
                   final pending =
@@ -74,40 +74,37 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                       all.where((a) => a.isCancelled).length;
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _AgendaTabChip(
-                            label: 'Pendientes ($pending)',
-                            index: 0,
-                            controller: _tabController,
-                          ),
-                          const SizedBox(width: 8),
-                          _AgendaTabChip(
-                            label: 'Confirmadas ($confirmed)',
-                            index: 1,
-                            controller: _tabController,
-                          ),
-                          const SizedBox(width: 8),
-                          _AgendaTabChip(
-                            label: 'Realizadas ($done)',
-                            index: 2,
-                            controller: _tabController,
-                          ),
-                          const SizedBox(width: 8),
-                          _AgendaTabChip(
-                            label: 'Canceladas ($cancelled)',
-                            index: 3,
-                            controller: _tabController,
-                          ),
-                        ],
-                      ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.start,
+                      children: [
+                        _AgendaTabChip(
+                          label: 'Pendientes ($pending)',
+                          index: 0,
+                          controller: _tabController,
+                        ),
+                        _AgendaTabChip(
+                          label: 'Confirmadas ($confirmed)',
+                          index: 1,
+                          controller: _tabController,
+                        ),
+                        _AgendaTabChip(
+                          label: 'Realizadas ($done)',
+                          index: 2,
+                          controller: _tabController,
+                        ),
+                        _AgendaTabChip(
+                          label: 'Canceladas ($cancelled)',
+                          index: 3,
+                          controller: _tabController,
+                        ),
+                      ],
                     ),
                   );
                 },
-                loading: () => const SizedBox(height: 52),
-                error: (_, __) => const SizedBox(height: 52),
+                loading: () => const SizedBox(height: 92),
+                error: (_, __) => const SizedBox(height: 92),
               ),
             ),
           ),
@@ -146,6 +143,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                     emptyTitle: 'No hay citas canceladas',
                     emptySubtitle: '',
                     onRefresh: _onRefresh,
+                    showDeleteButton: true,
                   ),
                 ],
               );
@@ -166,6 +164,7 @@ class _AgendaList extends ConsumerWidget {
   final Future<void> Function() onRefresh;
   final bool showConfirm;
   final bool showMarkDone;
+  final bool showDeleteButton;
 
   const _AgendaList({
     required this.appointments,
@@ -174,6 +173,7 @@ class _AgendaList extends ConsumerWidget {
     required this.onRefresh,
     this.showConfirm = false,
     this.showMarkDone = false,
+    this.showDeleteButton = false,
   });
 
   @override
@@ -239,6 +239,7 @@ class _AgendaList extends ConsumerWidget {
           appointment: appointments[i],
           showConfirm: showConfirm,
           showMarkDone: showMarkDone,
+          showDeleteButton: showDeleteButton,
         ),
       ),
     );
@@ -249,11 +250,13 @@ class _ClinicAgendaCard extends ConsumerWidget {
   final Appointment appointment;
   final bool showConfirm;
   final bool showMarkDone;
+  final bool showDeleteButton;
 
   const _ClinicAgendaCard({
     required this.appointment,
     this.showConfirm = false,
     this.showMarkDone = false,
+    this.showDeleteButton = false,
   });
 
   @override
@@ -419,6 +422,61 @@ class _ClinicAgendaCard extends ConsumerWidget {
                 }
               },
               child: const Text('Marcar como realizada'),
+            ),
+          ],
+          if (showDeleteButton && appointment.isCancelled) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Eliminar cita'),
+                    content: const Text(
+                      'Se borrará esta cita del historial. No se puede deshacer.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(dialogContext).pop(false),
+                        child: const Text('No'),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(dialogContext).pop(true),
+                        child: const Text(
+                          'Sí, eliminar',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true && context.mounted) {
+                  try {
+                    await ref
+                        .read(appointmentRepositoryProvider)
+                        .deleteAppointment(appointment.id);
+                    ref.invalidate(clinicAppointmentsProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('No se pudo eliminar: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              label: const Text('Eliminar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                minimumSize: const Size(double.infinity, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
             ),
           ],
         ],
