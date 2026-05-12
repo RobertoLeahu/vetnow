@@ -5,7 +5,9 @@ import '../../appointment/providers/appointment_provider.dart';
 import '../../clinic/providers/clinic_provider.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../shared/models/clinic.dart';
+import '../../../shared/models/pet.dart';
 import '../../../shared/models/schedule.dart';
+import '../data/medical_notes_repository.dart';
 
 /// Clínica del usuario logueado (null si no existe fila en `clinics`).
 final myClinicProvider = FutureProvider<Clinic?>((ref) async {
@@ -30,4 +32,40 @@ final clinicAppointmentsProvider =
       .watch(appointmentRepositoryProvider)
       .fetchClinicAppointments(clinic.id);
   return raw.map((e) => Appointment.fromMap(e)).toList();
+});
+
+// ── Expedientes médicos ───────────────────────────────────────────────────────
+
+final medicalNotesRepositoryProvider = Provider<MedicalNotesRepository>(
+  (_) => MedicalNotesRepository(),
+);
+
+/// Propietarios únicos con al menos una cita en la clínica logueada.
+final clinicPatientsProvider =
+    FutureProvider<List<ClinicPatient>>((ref) async {
+  final clinic = await ref.watch(myClinicProvider.future);
+  if (clinic == null) return [];
+  return ref
+      .watch(medicalNotesRepositoryProvider)
+      .fetchClinicPatients(clinic.id);
+});
+
+/// Mascotas de [ownerId] que han visitado la clínica logueada.
+final ownerPetsForClinicProvider =
+    FutureProvider.family<List<Pet>, String>((ref, ownerId) async {
+  final clinic = await ref.watch(myClinicProvider.future);
+  if (clinic == null) return [];
+  return ref
+      .watch(medicalNotesRepositoryProvider)
+      .fetchOwnerPetsForClinic(clinic.id, ownerId);
+});
+
+/// Visitas realizadas de [petId] en la clínica logueada, con notas clínicas.
+final petVisitsProvider =
+    FutureProvider.family<List<PetVisit>, String>((ref, petId) async {
+  final clinic = await ref.watch(myClinicProvider.future);
+  if (clinic == null) return [];
+  return ref
+      .watch(medicalNotesRepositoryProvider)
+      .fetchPetVisits(clinic.id, petId);
 });
