@@ -1,3 +1,4 @@
+import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/medical_note.dart';
 import '../../../shared/models/pet.dart';
@@ -6,22 +7,28 @@ import '../../../shared/models/pet.dart';
 class ClinicPatient {
   final String ownerId;
   final String fullName;
+  /// Most recent appointment at this clinic (any status).
+  final DateTime lastAppointmentAt;
 
-  const ClinicPatient({required this.ownerId, required this.fullName});
+  const ClinicPatient({
+    required this.ownerId,
+    required this.fullName,
+    required this.lastAppointmentAt,
+  });
 }
 
-/// Value object pairing a completed appointment with its optional clinical note.
+/// Value object pairing a completed appointment with its clinical notes.
 class PetVisit {
   final String appointmentId;
   final DateTime scheduledAt;
   final String specialtyName;
-  final MedicalNote? note;
+  final List<MedicalNote> notes;
 
   const PetVisit({
     required this.appointmentId,
     required this.scheduledAt,
     required this.specialtyName,
-    this.note,
+    this.notes = const [],
   });
 }
 
@@ -30,25 +37,37 @@ class MedicalNotesRepository {
   Future<List<ClinicPatient>> fetchClinicPatients(String clinicId) async {
     final data = await supabase
         .from('appointments')
-        .select('owner_id, profiles(full_name)')
-        .eq('clinic_id', clinicId)
-        .order('owner_id');
+        .select('owner_id, scheduled_at, profiles(full_name)')
+        .eq('clinic_id', clinicId);
 
-    final seen = <String>{};
-    final patients = <ClinicPatient>[];
+    final byOwner = <String, ({String fullName, DateTime lastAt})>{};
 
     for (final row in data as List) {
       final ownerId = row['owner_id'] as String;
-      if (seen.contains(ownerId)) continue;
-      seen.add(ownerId);
-
+      final scheduledAt =
+          parseTimestamptzToLocal(row['scheduled_at'] as String);
       final profilesRaw = row['profiles'];
       final fullName = (profilesRaw is Map ? profilesRaw['full_name'] : null)
               as String? ??
           '—';
 
-      patients.add(ClinicPatient(ownerId: ownerId, fullName: fullName));
+      final existing = byOwner[ownerId];
+      if (existing == null) {
+        byOwner[ownerId] = (fullName: fullName, lastAt: scheduledAt);
+      } else if (scheduledAt.isAfter(existing.lastAt)) {
+        byOwner[ownerId] = (fullName: existing.fullName, lastAt: scheduledAt);
+      }
     }
+
+    final patients = byOwner.entries
+        .map(
+          (e) => ClinicPatient(
+            ownerId: e.key,
+            fullName: e.value.fullName,
+            lastAppointmentAt: e.value.lastAt,
+          ),
+        )
+        .toList();
 
     patients.sort((a, b) => a.fullName.compareTo(b.fullName));
     return patients;
@@ -108,40 +127,52 @@ class MedicalNotesRepository {
           (specialtiesRaw is Map ? specialtiesRaw['name'] : null) as String? ??
               '—';
 
-      MedicalNote? note;
       final notesRaw = row['medical_notes'];
-      if (notesRaw is Map<String, dynamic>) {
-        note = MedicalNote.fromMap(notesRaw);
-      } else if (notesRaw is List && notesRaw.isNotEmpty) {
-        note = MedicalNote.fromMap(
-          Map<String, dynamic>.from(notesRaw.first as Map),
-        );
+      final notes = <MedicalNote>[];
+      if (notesRaw is List) {
+        for (final item in notesRaw) {
+          if (item is Map<String, dynamic>) {
+            notes.add(MedicalNote.fromMap(item));
+          } else if (item is Map) {
+            notes.add(MedicalNote.fromMap(Map<String, dynamic>.from(item)));
+          }
+        }
+        notes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      } else if (notesRaw is Map<String, dynamic>) {
+        notes.add(MedicalNote.fromMap(notesRaw));
       }
 
       return PetVisit(
         appointmentId: row['id'] as String,
         scheduledAt:
-            DateTime.parse(row['scheduled_at'] as String).toLocal(),
+            parseTimestamptzToLocal(row['scheduled_at'] as String),
         specialtyName: specialtyName,
-        note: note,
+        notes: notes,
       );
     }).toList();
   }
 
-  /// Creates or updates the clinical note for [appointmentId].
-  Future<void> upsertNote({
+  /// Añade una nueva nota clínica para la visita [appointmentId].
+  Future<void> addNote({
     required String appointmentId,
     required String clinicId,
     required String content,
   }) async {
-    await supabase.from('medical_notes').upsert(
-      {
-        'appointment_id': appointmentId,
-        'clinic_id': clinicId,
-        'content': content,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      onConflict: 'appointment_id',
-    );
+    await supabase.from('medical_notes').insert({
+      'appointment_id': appointmentId,
+      'clinic_id': clinicId,
+      'content': content,
+    });
+  }
+
+  /// Actualiza el texto de una nota existente (solo la clínica dueña vía RLS).
+  Future<void> updateNote({
+    required String noteId,
+    required String content,
+  }) async {
+    await supabase.from('medical_notes').update({
+      'content': content,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', noteId);
   }
 }

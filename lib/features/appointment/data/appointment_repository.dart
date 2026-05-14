@@ -1,3 +1,4 @@
+import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/pet.dart';
 
@@ -36,7 +37,7 @@ class AppointmentRepository {
     });
 
     return (data as List)
-        .map((e) => DateTime.parse(e['scheduled_at'] as String).toLocal())
+        .map((e) => parseTimestamptzToLocal(e['scheduled_at'] as String))
         .toList();
   }
 

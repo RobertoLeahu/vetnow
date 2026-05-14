@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../core/datetime/timestamptz.dart';
+
 class Appointment extends Equatable {
   final String id;
   final String clinicId;
@@ -46,7 +48,7 @@ class Appointment extends Equatable {
       petId: map['pet_id'] as String,
       petName: readNestedString('pets', 'name') ?? '—',
       specialtyName: readNestedString('specialties', 'name') ?? '—',
-      scheduledAt: DateTime.parse(map['scheduled_at'] as String).toLocal(),
+      scheduledAt: parseTimestamptzToLocal(map['scheduled_at'] as String),
       status: map['status'] as String,
       ownerFullName: ownerName,
     );

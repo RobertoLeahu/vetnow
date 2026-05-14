@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
+import '../../../shared/models/medical_note.dart';
 import '../../../shared/models/pet.dart';
 import '../data/medical_notes_repository.dart';
 import '../providers/clinic_panel_provider.dart';
@@ -61,6 +62,8 @@ class _PatientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initials = _initials(patient.fullName);
+    final lastVisitLabel = DateFormat("d MMM yyyy", 'es')
+        .format(patient.lastAppointmentAt);
 
     return InkWell(
       onTap: () => context.push(
@@ -91,13 +94,28 @@ class _PatientCard extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                patient.fullName,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    patient.fullName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Última cita · $lastVisitLabel',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.2,
+                      color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
             ),
             const Icon(
@@ -352,7 +370,8 @@ class _VisitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat("d 'de' MMMM 'de' yyyy · HH:mm", 'es');
-    final hasNote = visit.note != null;
+    final hasNotes = visit.notes.isNotEmpty;
+    final dateShort = DateFormat("d MMM yyyy", 'es');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -412,97 +431,76 @@ class _VisitCard extends StatelessWidget {
           const Divider(height: 1, color: AppTheme.divider),
           const SizedBox(height: 12),
 
-          // Nota clínica
-          if (hasNote) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.notes_rounded,
-                  size: 16,
-                  color: AppTheme.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    visit.note!.content,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textPrimary,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
+          Text(
+            hasNotes
+                ? 'Notas clínicas (${visit.notes.length})'
+                : 'Notas clínicas',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary,
+              letterSpacing: 0.2,
             ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                'Editado ${DateFormat("d MMM yyyy", 'es').format(visit.note!.updatedAt)}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textSecondary,
+          ),
+          const SizedBox(height: 10),
+
+          if (hasNotes)
+            ...visit.notes.map(
+              (note) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _ClinicalNoteBlock(
+                  note: note,
+                  dateShort: dateShort,
+                  onEdit: () => _showNoteSheet(context, editingNote: note),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => _showNoteSheet(
-                context,
-                initialText: visit.note!.content,
+
+          TextButton.icon(
+            onPressed: () => _showNoteSheet(context),
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: Text(hasNotes ? 'Añadir otra nota' : 'Añadir nota clínica'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 40),
+              foregroundColor: AppTheme.primary,
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
-              icon: const Icon(Icons.edit_rounded, size: 15),
-              label: const Text('Editar nota'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                side: const BorderSide(color: AppTheme.divider),
-                foregroundColor: AppTheme.textSecondary,
-                textStyle: const TextStyle(fontSize: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(50),
               ),
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
             ),
-          ] else ...[
-            TextButton.icon(
-              onPressed: () => _showNoteSheet(context, initialText: ''),
-              icon: const Icon(Icons.add_rounded, size: 16),
-              label: const Text('Añadir nota clínica'),
-              style: TextButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40),
-                foregroundColor: AppTheme.primary,
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  void _showNoteSheet(BuildContext context, {required String initialText}) {
+  void _showNoteSheet(BuildContext context, {MedicalNote? editingNote}) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _NoteSheet(
-        initialText: initialText,
+        editingNote: editingNote,
         onSave: (text) async {
           Navigator.of(sheetContext).pop();
           try {
-            await ref.read(medicalNotesRepositoryProvider).upsertNote(
-                  appointmentId: visit.appointmentId,
-                  clinicId: clinicId,
-                  content: text,
-                );
+            final repo = ref.read(medicalNotesRepositoryProvider);
+            if (editingNote == null) {
+              await repo.addNote(
+                appointmentId: visit.appointmentId,
+                clinicId: clinicId,
+                content: text,
+              );
+            } else {
+              await repo.updateNote(
+                noteId: editingNote.id,
+                content: text,
+              );
+            }
             ref.invalidate(petVisitsProvider(petId));
           } catch (e) {
             if (context.mounted) {
@@ -517,13 +515,85 @@ class _VisitCard extends StatelessWidget {
   }
 }
 
+class _ClinicalNoteBlock extends StatelessWidget {
+  final MedicalNote note;
+  final DateFormat dateShort;
+  final VoidCallback onEdit;
+
+  const _ClinicalNoteBlock({
+    required this.note,
+    required this.dateShort,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          left: BorderSide(
+            color: AppTheme.primary.withValues(alpha: 0.45),
+            width: 3,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textPrimary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  note.updatedAt != note.createdAt
+                      ? 'Editado ${dateShort.format(note.updatedAt)}'
+                      : dateShort.format(note.createdAt),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onEdit,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: AppTheme.primary,
+                ),
+                child: const Text(
+                  'Editar',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── _NoteSheet ────────────────────────────────────────────────────────────────
 
 class _NoteSheet extends StatefulWidget {
-  final String initialText;
+  final MedicalNote? editingNote;
   final Future<void> Function(String text) onSave;
 
-  const _NoteSheet({required this.initialText, required this.onSave});
+  const _NoteSheet({this.editingNote, required this.onSave});
 
   @override
   State<_NoteSheet> createState() => _NoteSheetState();
@@ -536,7 +606,7 @@ class _NoteSheetState extends State<_NoteSheet> {
   @override
   void initState() {
     super.initState();
-    _ctrl = TextEditingController(text: widget.initialText);
+    _ctrl = TextEditingController(text: widget.editingNote?.content ?? '');
   }
 
   @override
@@ -571,18 +641,20 @@ class _NoteSheetState extends State<_NoteSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Nota clínica',
-            style: TextStyle(
+          Text(
+            widget.editingNote == null ? 'Nueva nota' : 'Editar nota',
+            style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Escribe la observación o diagnóstico de esta visita.',
-            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          Text(
+            widget.editingNote == null
+                ? 'Puedes añadir varias notas por visita.'
+                : 'Actualiza el texto de esta nota.',
+            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -628,7 +700,11 @@ class _NoteSheetState extends State<_NoteSheet> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Guardar nota'),
+                : Text(
+                    widget.editingNote == null
+                        ? 'Guardar nota'
+                        : 'Guardar cambios',
+                  ),
           ),
         ],
       ),

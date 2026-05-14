@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../core/datetime/timestamptz.dart';
+
 class MedicalNote extends Equatable {
   final String id;
   final String appointmentId;
@@ -22,8 +24,8 @@ class MedicalNote extends Equatable {
         appointmentId: map['appointment_id'] as String,
         clinicId: map['clinic_id'] as String,
         content: map['content'] as String,
-        createdAt: DateTime.parse(map['created_at'] as String).toLocal(),
-        updatedAt: DateTime.parse(map['updated_at'] as String).toLocal(),
+        createdAt: parseTimestamptzToLocal(map['created_at'] as String),
+        updatedAt: parseTimestamptzToLocal(map['updated_at'] as String),
       );
 
   Map<String, dynamic> toMap() => {
