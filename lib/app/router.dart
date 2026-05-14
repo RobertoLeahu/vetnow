@@ -168,6 +168,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/clinic-patients',
             builder: (_, __) => const ClinicPatientsScreen(),
+            routes: [
+              GoRoute(
+                path: ':ownerId',
+                builder: (_, state) => OwnerPetsScreen(
+                  ownerId: state.pathParameters['ownerId']!,
+                  ownerName: state.extra as String? ?? '',
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':petId',
+                    builder: (_, state) => PetVisitsScreen(
+                      ownerId: state.pathParameters['ownerId']!,
+                      petId: state.pathParameters['petId']!,
+                      petName: state.extra as String? ?? '',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/clinic-profile',

@@ -1,3 +1,4 @@
+import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/pet.dart';
 
@@ -36,7 +37,7 @@ class AppointmentRepository {
     });
 
     return (data as List)
-        .map((e) => DateTime.parse(e['scheduled_at'] as String).toLocal())
+        .map((e) => parseScheduledAtColumn(e['scheduled_at']))
         .toList();
   }
 
@@ -89,7 +90,7 @@ class AppointmentRepository {
           profiles(full_name)
         ''')
         .eq('clinic_id', clinicId)
-        .order('scheduled_at');
+        .order('scheduled_at', ascending: true);
     return List<Map<String, dynamic>>.from(data as List);
   }
 
