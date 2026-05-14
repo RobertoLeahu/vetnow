@@ -33,12 +33,18 @@ class ClinicPatientsScreen extends ConsumerWidget {
               title: 'Sin pacientes aún',
               subtitle:
                   'Los propietarios que reserven citas aparecerán aquí.',
-              onRefresh: () => ref.invalidate(clinicPatientsProvider),
+              onRefresh: () async {
+                ref.invalidate(clinicPatientsProvider);
+                await ref.read(clinicPatientsProvider.future);
+              },
             );
           }
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(clinicPatientsProvider),
+            onRefresh: () async {
+              ref.invalidate(clinicPatientsProvider);
+              await ref.read(clinicPatientsProvider.future);
+            },
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: patients.length,
@@ -168,14 +174,18 @@ class OwnerPetsScreen extends ConsumerWidget {
               icon: Icons.pets_rounded,
               title: 'Sin mascotas registradas',
               subtitle: 'Este propietario no tiene mascotas con visitas.',
-              onRefresh: () =>
-                  ref.invalidate(ownerPetsForClinicProvider(ownerId)),
+              onRefresh: () async {
+                ref.invalidate(ownerPetsForClinicProvider(ownerId));
+                await ref.read(ownerPetsForClinicProvider(ownerId).future);
+              },
             );
           }
 
           return RefreshIndicator(
-            onRefresh: () async =>
-                ref.invalidate(ownerPetsForClinicProvider(ownerId)),
+            onRefresh: () async {
+              ref.invalidate(ownerPetsForClinicProvider(ownerId));
+              await ref.read(ownerPetsForClinicProvider(ownerId).future);
+            },
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: pets.length,
@@ -327,13 +337,18 @@ class PetVisitsScreen extends ConsumerWidget {
                   title: 'Sin visitas realizadas',
                   subtitle:
                       'Aquí aparecerán las visitas marcadas como realizadas.',
-                  onRefresh: () => ref.invalidate(petVisitsProvider(petId)),
+                  onRefresh: () async {
+                    ref.invalidate(petVisitsProvider(petId));
+                    await ref.read(petVisitsProvider(petId).future);
+                  },
                 );
               }
 
               return RefreshIndicator(
-                onRefresh: () async =>
-                    ref.invalidate(petVisitsProvider(petId)),
+                onRefresh: () async {
+                  ref.invalidate(petVisitsProvider(petId));
+                  await ref.read(petVisitsProvider(petId).future);
+                },
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: visits.length,
@@ -718,7 +733,7 @@ class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   const _EmptyState({
     required this.icon,
@@ -730,7 +745,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
+      onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [

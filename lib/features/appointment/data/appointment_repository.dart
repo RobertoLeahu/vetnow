@@ -37,7 +37,7 @@ class AppointmentRepository {
     });
 
     return (data as List)
-        .map((e) => parseTimestamptzToLocal(e['scheduled_at'] as String))
+        .map((e) => parseScheduledAtColumn(e['scheduled_at']))
         .toList();
   }
 
@@ -90,7 +90,7 @@ class AppointmentRepository {
           profiles(full_name)
         ''')
         .eq('clinic_id', clinicId)
-        .order('scheduled_at');
+        .order('scheduled_at', ascending: true);
     return List<Map<String, dynamic>>.from(data as List);
   }
 

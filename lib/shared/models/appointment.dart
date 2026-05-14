@@ -48,7 +48,7 @@ class Appointment extends Equatable {
       petId: map['pet_id'] as String,
       petName: readNestedString('pets', 'name') ?? '—',
       specialtyName: readNestedString('specialties', 'name') ?? '—',
-      scheduledAt: parseTimestamptzToLocal(map['scheduled_at'] as String),
+      scheduledAt: parseScheduledAtColumn(map['scheduled_at']),
       status: map['status'] as String,
       ownerFullName: ownerName,
     );

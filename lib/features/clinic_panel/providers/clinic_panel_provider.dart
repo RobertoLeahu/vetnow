@@ -31,7 +31,9 @@ final clinicAppointmentsProvider =
   final raw = await ref
       .watch(appointmentRepositoryProvider)
       .fetchClinicAppointments(clinic.id);
-  return raw.map((e) => Appointment.fromMap(e)).toList();
+  final list = raw.map((e) => Appointment.fromMap(e)).toList()
+    ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+  return list;
 });
 
 // ── Expedientes médicos ───────────────────────────────────────────────────────
@@ -51,8 +53,9 @@ final clinicPatientsProvider =
 });
 
 /// Mascotas de [ownerId] que han visitado la clínica logueada.
+/// autoDispose: datos frescos cada vez que se abre la pantalla.
 final ownerPetsForClinicProvider =
-    FutureProvider.family<List<Pet>, String>((ref, ownerId) async {
+    FutureProvider.autoDispose.family<List<Pet>, String>((ref, ownerId) async {
   final clinic = await ref.watch(myClinicProvider.future);
   if (clinic == null) return [];
   return ref
@@ -61,8 +64,10 @@ final ownerPetsForClinicProvider =
 });
 
 /// Visitas realizadas de [petId] en la clínica logueada, con notas clínicas.
+/// autoDispose: datos frescos cada vez que se abre la pantalla.
 final petVisitsProvider =
-    FutureProvider.family<List<PetVisit>, String>((ref, petId) async {
+    FutureProvider.autoDispose.family<List<PetVisit>, String>(
+        (ref, petId) async {
   final clinic = await ref.watch(myClinicProvider.future);
   if (clinic == null) return [];
   return ref
