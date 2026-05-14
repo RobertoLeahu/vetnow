@@ -36,6 +36,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   File? _pickedLogo;
   bool _saving = false;
   bool _initialized = false;
+  /// Evita quedar enganchados a otro perfil si cambia la clínica.
+  String? _initializedForClinicId;
 
   @override
   void initState() {
@@ -65,8 +67,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   }
 
   void _initFromClinic(Clinic clinic, List<Schedule> schedules) {
-    if (_initialized) return;
+    final sameClinic = _initializedForClinicId == clinic.id;
+    if (_initialized && sameClinic) return;
     _initialized = true;
+    _initializedForClinicId = clinic.id;
 
     _nameCtrl.text = clinic.name;
     _addressCtrl.text = clinic.address;
@@ -77,6 +81,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     _selectedSpecialtyIds =
         clinic.specialties.map((s) => s.id).toSet();
 
+    _weekSchedule = List.generate(
+      7,
+      (i) => _DaySchedule(dayOfWeek: i),
+    );
     for (final s in schedules) {
       if (s.dayOfWeek >= 0 && s.dayOfWeek < 7) {
         _weekSchedule[s.dayOfWeek] = _DaySchedule(
@@ -198,51 +206,66 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           );
         }
 
-        final schedules = schedulesAsync.valueOrNull ?? [];
-        _initFromClinic(clinic, schedules);
+        // [myClinicProvider] suele resolverse antes que [mySchedulesProvider].
+        // Si inicializamos con schedules vacíos, _initialized queda true y los
+        // horarios guardados nunca se cargan. Esperar a tener datos de horarios.
+        return schedulesAsync.when(
+          loading: () => Scaffold(
+            appBar: AppBar(title: const Text('Mi clínica')),
+            body: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Scaffold(
+            appBar: AppBar(title: const Text('Mi clínica')),
+            body: Center(child: Text('Error al cargar horarios: $e')),
+          ),
+          data: (schedules) {
+            _initFromClinic(clinic, schedules);
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Mi clínica'),
-            actions: [
-              _saving
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : IconButton(
-                      onPressed: () => _save(clinic),
-                      icon: const Icon(Icons.check_rounded),
-                      tooltip: 'Guardar',
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Mi clínica'),
+                actions: [
+                  _saving
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          onPressed: () => _save(clinic),
+                          icon: const Icon(Icons.check_rounded),
+                          tooltip: 'Guardar',
+                        ),
+                ],
+              ),
+              body: Form(
+                key: _formKey,
+                child: ListView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  children: [
+                    _buildLogoSection(clinic),
+                    const SizedBox(height: 24),
+                    _buildInfoSection(),
+                    const SizedBox(height: 24),
+                    _buildSpecialtiesSection(
+                      specialtiesAsync.valueOrNull ?? [],
                     ),
-            ],
-          ),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              children: [
-                _buildLogoSection(clinic),
-                const SizedBox(height: 24),
-                _buildInfoSection(),
-                const SizedBox(height: 24),
-                _buildSpecialtiesSection(
-                  specialtiesAsync.valueOrNull ?? [],
+                    const SizedBox(height: 24),
+                    _buildScheduleSection(),
+                    const SizedBox(height: 32),
+                    _buildSaveButton(clinic),
+                    const SizedBox(height: 16),
+                    _buildLogoutButton(),
+                    const SizedBox(height: 32),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                _buildScheduleSection(),
-                const SizedBox(height: 32),
-                _buildSaveButton(clinic),
-                const SizedBox(height: 16),
-                _buildLogoutButton(),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
