@@ -7,6 +7,23 @@ import '../../appointment/providers/appointment_provider.dart';
 import '../../../shared/models/appointment.dart';
 import '../providers/clinic_panel_provider.dart';
 
+/// Filtro rápido de la agenda por rango de fechas (hora local).
+enum AgendaDateFilter {
+  today,
+  tomorrow,
+  thisWeek,
+  all,
+}
+
+extension AgendaDateFilterX on AgendaDateFilter {
+  String get label => switch (this) {
+        AgendaDateFilter.today => 'Hoy',
+        AgendaDateFilter.tomorrow => 'Mañana',
+        AgendaDateFilter.thisWeek => 'Esta semana',
+        AgendaDateFilter.all => 'Todas las citas',
+      };
+}
+
 class ClinicAgendaScreen extends ConsumerStatefulWidget {
   const ClinicAgendaScreen({super.key});
 
@@ -17,6 +34,8 @@ class ClinicAgendaScreen extends ConsumerStatefulWidget {
 class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  AgendaDateFilter _dateFilter = AgendaDateFilter.all;
 
   @override
   void initState() {
@@ -33,6 +52,38 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
   Future<void> _onRefresh() async {
     ref.invalidate(clinicAppointmentsProvider);
     await ref.read(clinicAppointmentsProvider.future);
+  }
+
+  static DateTime _dateOnlyLocal(DateTime utcOrLocal) {
+    final l = utcOrLocal.toLocal();
+    return DateTime(l.year, l.month, l.day);
+  }
+
+  bool _matchesDateFilter(Appointment a) {
+    switch (_dateFilter) {
+      case AgendaDateFilter.all:
+        return true;
+      case AgendaDateFilter.today:
+        final d = _dateOnlyLocal(a.scheduledAt);
+        final today = _dateOnlyLocal(DateTime.now());
+        return d == today;
+      case AgendaDateFilter.tomorrow:
+        final d = _dateOnlyLocal(a.scheduledAt);
+        final today = _dateOnlyLocal(DateTime.now());
+        final tomorrow = today.add(const Duration(days: 1));
+        return d == tomorrow;
+      case AgendaDateFilter.thisWeek:
+        final d = _dateOnlyLocal(a.scheduledAt);
+        final today = _dateOnlyLocal(DateTime.now());
+        final monday = today.subtract(Duration(days: today.weekday - 1));
+        final sunday = monday.add(const Duration(days: 6));
+        return !d.isBefore(monday) && !d.isAfter(sunday);
+    }
+  }
+
+  List<Appointment> _applyDateFilter(List<Appointment> all) {
+    if (_dateFilter == AgendaDateFilter.all) return all;
+    return all.where(_matchesDateFilter).toList();
   }
 
   @override
@@ -62,58 +113,95 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
           appBar: AppBar(
             title: const Text('Agenda'),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(92),
+              preferredSize: const Size.fromHeight(112),
               child: appointmentsAsync.when(
                 data: (all) {
+                  final filtered = _applyDateFilter(all);
                   final pending =
-                      all.where((a) => a.isPending).length;
+                      filtered.where((a) => a.isPending).length;
                   final confirmed =
-                      all.where((a) => a.isConfirmed).length;
-                  final done = all.where((a) => a.isDone).length;
+                      filtered.where((a) => a.isConfirmed).length;
+                  final done = filtered.where((a) => a.isDone).length;
                   final cancelled =
-                      all.where((a) => a.isCancelled).length;
+                      filtered.where((a) => a.isCancelled).length;
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.start,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Column(
                       children: [
-                        _AgendaTabChip(
-                          label: 'Pendientes ($pending)',
-                          index: 0,
-                          controller: _tabController,
+                        DropdownButtonFormField<AgendaDateFilter>(
+                          key: ValueKey(_dateFilter),
+                          initialValue: _dateFilter,
+                          borderRadius: BorderRadius.circular(12),
+                          decoration: const InputDecoration(
+                            labelText: 'Fecha',
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 18,
+                            ),
+                          ),
+                          items: AgendaDateFilter.values
+                              .map(
+                                (f) => DropdownMenuItem(
+                                  value: f,
+                                  child: Text(f.label),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) {
+                            if (v != null) {
+                              setState(() => _dateFilter = v);
+                            }
+                          },
                         ),
-                        _AgendaTabChip(
-                          label: 'Confirmadas ($confirmed)',
-                          index: 1,
-                          controller: _tabController,
-                        ),
-                        _AgendaTabChip(
-                          label: 'Realizadas ($done)',
-                          index: 2,
-                          controller: _tabController,
-                        ),
-                        _AgendaTabChip(
-                          label: 'Canceladas ($cancelled)',
-                          index: 3,
-                          controller: _tabController,
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _AgendaTabChip(
+                                label: 'Pendientes ($pending)',
+                                index: 0,
+                                controller: _tabController,
+                              ),
+                              const SizedBox(width: 8),
+                              _AgendaTabChip(
+                                label: 'Confirmadas ($confirmed)',
+                                index: 1,
+                                controller: _tabController,
+                              ),
+                              const SizedBox(width: 8),
+                              _AgendaTabChip(
+                                label: 'Realizadas ($done)',
+                                index: 2,
+                                controller: _tabController,
+                              ),
+                              const SizedBox(width: 8),
+                              _AgendaTabChip(
+                                label: 'Canceladas ($cancelled)',
+                                index: 3,
+                                controller: _tabController,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   );
                 },
-                loading: () => const SizedBox(height: 92),
-                error: (_, __) => const SizedBox(height: 92),
+                loading: () => const SizedBox(height: 112),
+                error: (_, __) => const SizedBox(height: 112),
               ),
             ),
           ),
           body: appointmentsAsync.when(
             data: (all) {
-              final pending = all.where((a) => a.isPending).toList();
-              final confirmed = all.where((a) => a.isConfirmed).toList();
-              final done = all.where((a) => a.isDone).toList();
-              final cancelled = all.where((a) => a.isCancelled).toList();
+              final filtered = _applyDateFilter(all);
+              final pending = filtered.where((a) => a.isPending).toList();
+              final confirmed =
+                  filtered.where((a) => a.isConfirmed).toList();
+              final done = filtered.where((a) => a.isDone).toList();
+              final cancelled =
+                  filtered.where((a) => a.isCancelled).toList();
 
               return TabBarView(
                 controller: _tabController,
@@ -121,7 +209,8 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                   _AgendaList(
                     appointments: pending,
                     emptyTitle: 'No hay citas pendientes',
-                    emptySubtitle: 'Las nuevas reservas aparecerán aquí.',
+                    emptySubtitle:
+                        'Las nuevas reservas aparecerán aquí.',
                     onRefresh: _onRefresh,
                     showConfirm: true,
                   ),
