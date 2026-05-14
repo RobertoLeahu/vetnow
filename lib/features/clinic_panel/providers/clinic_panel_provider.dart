@@ -74,3 +74,17 @@ final petVisitsProvider =
       .watch(medicalNotesRepositoryProvider)
       .fetchPetVisits(clinic.id, petId);
 });
+
+/// Citas de hoy (pending o confirmed) de la clínica logueada.
+final todayClinicAppointmentsProvider =
+    FutureProvider<List<Appointment>>((ref) async {
+  final all = await ref.watch(clinicAppointmentsProvider.future);
+  final now = DateTime.now();
+  return all.where((a) {
+    final local = a.scheduledAt.toLocal();
+    return a.isUpcoming &&
+        local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
+  }).toList();
+});
