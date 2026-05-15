@@ -467,6 +467,7 @@ class _VisitCard extends StatelessWidget {
                   note: note,
                   dateShort: dateShort,
                   onEdit: () => _showNoteSheet(context, editingNote: note),
+                  onDelete: () => _confirmDeleteNote(context, note),
                 ),
               ),
             ),
@@ -528,17 +529,56 @@ class _VisitCard extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _confirmDeleteNote(BuildContext context, MedicalNote note) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar nota'),
+        content: const Text(
+          '¿Seguro que quieres eliminar esta nota clínica? No se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(medicalNotesRepositoryProvider).deleteNote(note.id);
+      ref.invalidate(petVisitsProvider(petId));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo eliminar: $e')),
+        );
+      }
+    }
+  }
 }
 
 class _ClinicalNoteBlock extends StatelessWidget {
   final MedicalNote note;
   final DateFormat dateShort;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _ClinicalNoteBlock({
     required this.note,
     required this.dateShort,
     required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -591,6 +631,19 @@ class _ClinicalNoteBlock extends StatelessWidget {
                 ),
                 child: const Text(
                   'Editar',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+              TextButton(
+                onPressed: onDelete,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text(
+                  'Eliminar',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),

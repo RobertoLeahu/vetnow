@@ -175,4 +175,9 @@ class MedicalNotesRepository {
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', noteId);
   }
+
+  /// Elimina una nota clínica (solo la clínica dueña vía RLS).
+  Future<void> deleteNote(String noteId) async {
+    await supabase.from('medical_notes').delete().eq('id', noteId);
+  }
 }
