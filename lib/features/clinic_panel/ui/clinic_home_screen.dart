@@ -68,7 +68,8 @@ class ClinicHomeScreen extends ConsumerWidget {
                   _TodayAppointmentsCard(
                     isLoading: todayAsync.isLoading,
                     appointments: todayAppointments,
-                    onTapAgenda: () => context.go('/clinic-agenda'),
+                    onTapAgenda: () =>
+                        context.go('/clinic-agenda', extra: 1),
                   ),
 
                   const SizedBox(height: 20),
@@ -303,15 +304,22 @@ class _TodayAppointmentsCard extends StatelessWidget {
                   const Divider(color: Colors.white24, height: 1),
                   const SizedBox(height: 12),
                   Text(
-                    'Próxima cita',
+                    appointments.length == 1
+                        ? 'Próxima cita'
+                        : 'Próximas citas',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.white.withValues(alpha: 0.7),
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  _NextAppointmentRow(appointment: appointments.first),
+                  const SizedBox(height: 8),
+                  ...appointments.take(3).map(
+                    (a) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _NextAppointmentRow(appointment: a),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 14),
                 GestureDetector(

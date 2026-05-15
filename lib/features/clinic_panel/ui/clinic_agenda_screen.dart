@@ -25,7 +25,10 @@ extension AgendaDateFilterX on AgendaDateFilter {
 }
 
 class ClinicAgendaScreen extends ConsumerStatefulWidget {
-  const ClinicAgendaScreen({super.key});
+  /// Índice del chip inicial: 0 Pendientes, 1 Confirmadas, 2 Realizadas, 3 Canceladas.
+  final int initialTabIndex;
+
+  const ClinicAgendaScreen({super.key, this.initialTabIndex = 0});
 
   @override
   ConsumerState<ClinicAgendaScreen> createState() => _ClinicAgendaScreenState();
@@ -40,7 +43,8 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    final tab = widget.initialTabIndex.clamp(0, 3);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: tab);
   }
 
   @override

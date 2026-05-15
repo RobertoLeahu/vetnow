@@ -163,7 +163,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/clinic-agenda',
-            builder: (_, __) => const ClinicAgendaScreen(),
+            builder: (_, state) => ClinicAgendaScreen(
+              initialTabIndex: state.extra as int? ?? 0,
+            ),
           ),
           GoRoute(
             path: '/clinic-patients',
