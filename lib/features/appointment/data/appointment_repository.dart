@@ -85,7 +85,7 @@ class AppointmentRepository {
         .select('''
           *,
           clinics(name, address, city, phone),
-          pets(name, species),
+          pets(name, species, photo_url),
           specialties(name),
           profiles(full_name)
         ''')

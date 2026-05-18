@@ -11,11 +11,39 @@ import '../providers/clinic_panel_provider.dart';
 
 // ── ClinicPatientsScreen ──────────────────────────────────────────────────────
 
-class ClinicPatientsScreen extends ConsumerWidget {
+class ClinicPatientsScreen extends ConsumerStatefulWidget {
   const ClinicPatientsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClinicPatientsScreen> createState() =>
+      _ClinicPatientsScreenState();
+}
+
+class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<ClinicPatient> _filterByName(List<ClinicPatient> patients) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return patients;
+    return patients
+        .where((p) => p.fullName.toLowerCase().contains(q))
+        .toList();
+  }
+
+  Future<void> _refreshPatients() async {
+    ref.invalidate(clinicPatientsProvider);
+    await ref.read(clinicPatientsProvider.future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final patientsAsync = ref.watch(clinicPatientsProvider);
 
     return Scaffold(
@@ -33,27 +61,96 @@ class ClinicPatientsScreen extends ConsumerWidget {
               title: 'Sin pacientes aún',
               subtitle:
                   'Los propietarios que reserven citas aparecerán aquí.',
-              onRefresh: () async {
-                ref.invalidate(clinicPatientsProvider);
-                await ref.read(clinicPatientsProvider.future);
-              },
+              onRefresh: _refreshPatients,
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(clinicPatientsProvider);
-              await ref.read(clinicPatientsProvider.future);
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: patients.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final patient = patients[i];
-                return _PatientCard(patient: patient);
-              },
-            ),
+          final filtered = _filterByName(patients);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: TextField(
+                  controller: _searchCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar paciente por nombre',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 20),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _query = '');
+                            },
+                          ),
+                  ),
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? RefreshIndicator(
+                        onRefresh: _refreshPatients,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.25,
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(32),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.search_off_rounded,
+                                        size: 56,
+                                        color: AppTheme.primary
+                                            .withValues(alpha: 0.25),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Sin resultados para "$_query"',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Prueba con otro nombre.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _refreshPatients,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (_, i) =>
+                              _PatientCard(patient: filtered[i]),
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),

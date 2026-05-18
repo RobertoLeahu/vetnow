@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../core/datetime/timestamptz.dart';
+import 'pet.dart';
 
 class Appointment extends Equatable {
   final String id;
@@ -9,10 +10,13 @@ class Appointment extends Equatable {
   final String clinicAddress;
   final String petId;
   final String petName;
+  final PetSpecies petSpecies;
+  final String? petPhotoUrl;
   final String specialtyName;
   final DateTime scheduledAt;
   final String status;
   final String? ownerFullName;
+  final String? ownerId;
 
   const Appointment({
     required this.id,
@@ -21,10 +25,13 @@ class Appointment extends Equatable {
     required this.clinicAddress,
     required this.petId,
     required this.petName,
+    this.petSpecies = PetSpecies.other,
+    this.petPhotoUrl,
     required this.specialtyName,
     required this.scheduledAt,
     required this.status,
     this.ownerFullName,
+    this.ownerId,
   });
 
   factory Appointment.fromMap(Map<String, dynamic> map) {
@@ -40,6 +47,14 @@ class Appointment extends Equatable {
       ownerName = profilesRaw['full_name'] as String?;
     }
 
+    final speciesRaw = readNestedString('pets', 'species');
+    final petSpecies = speciesRaw != null
+        ? PetSpecies.values.firstWhere(
+            (e) => e.name == speciesRaw,
+            orElse: () => PetSpecies.other,
+          )
+        : PetSpecies.other;
+
     return Appointment(
       id: map['id'] as String,
       clinicId: map['clinic_id'] as String,
@@ -47,10 +62,13 @@ class Appointment extends Equatable {
       clinicAddress: readNestedString('clinics', 'city') ?? '—',
       petId: map['pet_id'] as String,
       petName: readNestedString('pets', 'name') ?? '—',
+      petSpecies: petSpecies,
+      petPhotoUrl: readNestedString('pets', 'photo_url'),
       specialtyName: readNestedString('specialties', 'name') ?? '—',
       scheduledAt: parseScheduledAtColumn(map['scheduled_at']),
       status: map['status'] as String,
       ownerFullName: ownerName,
+      ownerId: map['owner_id'] as String?,
     );
   }
 

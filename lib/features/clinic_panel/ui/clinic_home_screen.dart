@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
 import '../../../shared/models/appointment.dart';
+import '../../../shared/models/pet.dart';
 import '../providers/clinic_panel_provider.dart';
 
 class ClinicHomeScreen extends ConsumerWidget {
@@ -70,6 +71,16 @@ class ClinicHomeScreen extends ConsumerWidget {
                     appointments: todayAppointments,
                     onTapAgenda: () =>
                         context.go('/clinic-agenda', extra: 1),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Pacientes de hoy ─────────────────────────────
+                  const _SectionLabel(label: 'Pacientes de hoy'),
+                  const SizedBox(height: 10),
+                  _TodayPatientsCarousel(
+                    isLoading: todayAsync.isLoading,
+                    appointments: todayAppointments,
                   ),
 
                   const SizedBox(height: 20),
@@ -537,6 +548,249 @@ class _QuickAccessCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Carrusel pacientes de hoy ─────────────────────────────────────────────────
+
+class _TodayPatientsCarousel extends StatelessWidget {
+  final bool isLoading;
+  final List<Appointment> appointments;
+
+  const _TodayPatientsCarousel({
+    required this.isLoading,
+    required this.appointments,
+  });
+
+  /// Dedupe por petId conservando la cita más temprana del día.
+  List<Appointment> get _uniquePatients {
+    final seen = <String>{};
+    final result = <Appointment>[];
+    for (final a in appointments) {
+      if (seen.add(a.petId)) result.add(a);
+    }
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return SizedBox(
+        height: 116,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (_, __) => const _SkeletonPatientChip(),
+        ),
+      );
+    }
+
+    final patients = _uniquePatients;
+
+    if (patients.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Text(
+          'Ningún paciente programado para hoy.',
+          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 116,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: patients.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (_, i) => _TodayPatientChip(appointment: patients[i]),
+      ),
+    );
+  }
+}
+
+class _TodayPatientChip extends StatelessWidget {
+  final Appointment appointment;
+  const _TodayPatientChip({required this.appointment});
+
+  @override
+  Widget build(BuildContext context) {
+    final time =
+        DateFormat('HH:mm').format(appointment.scheduledAt.toLocal());
+    final ownerId = appointment.ownerId;
+    final petId = appointment.petId;
+    final canNavigate = ownerId != null && ownerId.isNotEmpty;
+
+    return GestureDetector(
+      onTap: canNavigate
+          ? () => context.push(
+                '/clinic-patients/$ownerId/$petId',
+                extra: appointment.petName,
+              )
+          : null,
+      child: Container(
+        width: 130,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Text(
+                time,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                  backgroundImage: appointment.petPhotoUrl != null &&
+                          appointment.petPhotoUrl!.isNotEmpty
+                      ? NetworkImage(appointment.petPhotoUrl!) as ImageProvider
+                      : null,
+                  child: appointment.petPhotoUrl == null ||
+                          appointment.petPhotoUrl!.isEmpty
+                      ? Text(
+                          _speciesEmoji(appointment.petSpecies),
+                          style: const TextStyle(fontSize: 14),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        appointment.petName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        appointment.ownerFullName ?? '—',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _speciesEmoji(PetSpecies species) => switch (species) {
+        PetSpecies.dog => '🐶',
+        PetSpecies.cat => '🐱',
+        PetSpecies.rabbit => '🐰',
+        PetSpecies.hamster => '🐹',
+        PetSpecies.bird => '🦜',
+        PetSpecies.reptile => '🦎',
+        PetSpecies.ferret => '🦦',
+        PetSpecies.other => '🐾',
+      };
+}
+
+class _SkeletonPatientChip extends StatelessWidget {
+  const _SkeletonPatientChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 20,
+            decoration: BoxDecoration(
+              color: AppTheme.divider,
+              borderRadius: BorderRadius.circular(50),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: AppTheme.divider,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 11,
+                      decoration: BoxDecoration(
+                        color: AppTheme.divider,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      width: 60,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: AppTheme.divider,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
