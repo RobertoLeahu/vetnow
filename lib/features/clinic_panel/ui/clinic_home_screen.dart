@@ -8,17 +8,32 @@ import '../../../shared/models/appointment.dart';
 import '../../../shared/models/pet.dart';
 import '../providers/clinic_panel_provider.dart';
 
-class ClinicHomeScreen extends ConsumerWidget {
+class ClinicHomeScreen extends ConsumerStatefulWidget {
   const ClinicHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClinicHomeScreen> createState() => _ClinicHomeScreenState();
+}
+
+class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(clinicAppointmentsProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final clinicAsync = ref.watch(myClinicProvider);
-    final todayAsync = ref.watch(todayClinicAppointmentsProvider);
     final allAsync = ref.watch(clinicAppointmentsProvider);
+    final todayAppointments = ref.watch(todayClinicAppointmentsProvider);
+    final todayConfirmedAppointments =
+        ref.watch(todayConfirmedClinicAppointmentsProvider);
+    final appointmentsLoading = allAsync.isLoading;
 
     final clinic = clinicAsync.valueOrNull;
-    final todayAppointments = todayAsync.valueOrNull ?? [];
     final allAppointments = allAsync.valueOrNull ?? [];
     final pendingCount =
         allAppointments.where((a) => a.isPending).length;
@@ -32,16 +47,19 @@ class ClinicHomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(myClinicProvider);
           ref.invalidate(clinicAppointmentsProvider);
+          await ref.read(clinicAppointmentsProvider.future);
         },
         child: CustomScrollView(
           slivers: [
             // ── App bar con saludo ───────────────────────────────────
             SliverAppBar(
               pinned: true,
-              expandedHeight: 120,
+              expandedHeight: 148,
               backgroundColor: AppTheme.background,
               surfaceTintColor: Colors.transparent,
               flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                titlePadding: EdgeInsets.zero,
                 background: _ClinicHeader(
                   clinicName: clinic?.name,
                   logoUrl: clinic?.logoUrl,
@@ -67,7 +85,7 @@ class ClinicHomeScreen extends ConsumerWidget {
                   const _SectionLabel(label: 'Hoy'),
                   const SizedBox(height: 10),
                   _TodayAppointmentsCard(
-                    isLoading: todayAsync.isLoading,
+                    isLoading: appointmentsLoading,
                     appointments: todayAppointments,
                     onTapAgenda: () =>
                         context.go('/clinic-agenda', extra: 1),
@@ -79,8 +97,8 @@ class ClinicHomeScreen extends ConsumerWidget {
                   const _SectionLabel(label: 'Pacientes de hoy'),
                   const SizedBox(height: 10),
                   _TodayPatientsCarousel(
-                    isLoading: todayAsync.isLoading,
-                    appointments: todayAppointments,
+                    isLoading: appointmentsLoading,
+                    appointments: todayConfirmedAppointments,
                   ),
 
                   const SizedBox(height: 20),
@@ -125,49 +143,52 @@ class _ClinicHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 52, 20, 12),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: AppTheme.surface,
-            backgroundImage: (logoUrl != null && logoUrl!.isNotEmpty)
-                ? NetworkImage(logoUrl!) as ImageProvider
-                : null,
-            child: (logoUrl == null || logoUrl!.isEmpty)
-                ? const Icon(Icons.storefront_rounded,
-                    size: 26, color: AppTheme.textSecondary)
-                : null,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  clinicName != null ? 'Hola, $clinicName' : 'Bienvenido',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: AppTheme.surface,
+                backgroundImage: (logoUrl != null && logoUrl!.isNotEmpty)
+                    ? NetworkImage(logoUrl!) as ImageProvider
+                    : null,
+                child: (logoUrl == null || logoUrl!.isEmpty)
+                    ? const Icon(Icons.storefront_rounded,
+                        size: 26, color: AppTheme.textSecondary)
+                    : null,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                clinicName ?? 'Mi clínica',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  dateLabel,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                  ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                dateLabel,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
                 ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -599,7 +620,7 @@ class _TodayPatientsCarousel extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Text(
-          'Ningún paciente programado para hoy.',
+          'Ningún paciente con cita confirmada para hoy.',
           style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           textAlign: TextAlign.center,
         ),

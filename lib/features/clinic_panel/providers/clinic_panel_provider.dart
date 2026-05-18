@@ -25,7 +25,7 @@ final mySchedulesProvider = FutureProvider<List<Schedule>>((ref) async {
 
 /// Citas recibidas por la clínica del usuario logueado (agenda).
 final clinicAppointmentsProvider =
-    FutureProvider<List<Appointment>>((ref) async {
+    FutureProvider.autoDispose<List<Appointment>>((ref) async {
   final clinic = await ref.watch(myClinicProvider.future);
   if (clinic == null) return [];
   final raw = await ref
@@ -34,6 +34,41 @@ final clinicAppointmentsProvider =
   final list = raw.map((e) => Appointment.fromMap(e)).toList()
     ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
   return list;
+});
+
+List<Appointment> filterTodayClinicAppointments(List<Appointment> all) {
+  final now = DateTime.now();
+  return all.where((a) {
+    final local = a.scheduledAt.toLocal();
+    return a.isUpcoming &&
+        local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
+  }).toList();
+}
+
+List<Appointment> filterTodayConfirmedClinicAppointments(List<Appointment> all) {
+  final now = DateTime.now();
+  return all.where((a) {
+    final local = a.scheduledAt.toLocal();
+    return a.isConfirmed &&
+        local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
+  }).toList();
+}
+
+/// Citas de hoy (pending + confirmed) para el resumen del dashboard.
+final todayClinicAppointmentsProvider = Provider<List<Appointment>>((ref) {
+  final all = ref.watch(clinicAppointmentsProvider).valueOrNull ?? [];
+  return filterTodayClinicAppointments(all);
+});
+
+/// Citas confirmadas de hoy para el carrusel de pacientes.
+final todayConfirmedClinicAppointmentsProvider =
+    Provider<List<Appointment>>((ref) {
+  final all = ref.watch(clinicAppointmentsProvider).valueOrNull ?? [];
+  return filterTodayConfirmedClinicAppointments(all);
 });
 
 // ── Expedientes médicos ───────────────────────────────────────────────────────
@@ -75,16 +110,3 @@ final petVisitsProvider =
       .fetchPetVisits(clinic.id, petId);
 });
 
-/// Citas de hoy (pending o confirmed) de la clínica logueada.
-final todayClinicAppointmentsProvider =
-    FutureProvider<List<Appointment>>((ref) async {
-  final all = await ref.watch(clinicAppointmentsProvider.future);
-  final now = DateTime.now();
-  return all.where((a) {
-    final local = a.scheduledAt.toLocal();
-    return a.isUpcoming &&
-        local.year == now.year &&
-        local.month == now.month &&
-        local.day == now.day;
-  }).toList();
-});

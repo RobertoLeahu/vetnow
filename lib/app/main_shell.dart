@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../app/theme.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/clinic_panel/providers/clinic_panel_provider.dart';
 import '../shared/models/profile.dart';
 
 class MainShell extends ConsumerWidget {
@@ -28,7 +29,7 @@ class MainShell extends ConsumerWidget {
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppTheme.divider)),
         ),
-        child: isClinic ? _clinicNavBar(context) : _ownerNavBar(context),
+        child: isClinic ? _clinicNavBar(context, ref) : _ownerNavBar(context),
       ),
     );
   }
@@ -80,7 +81,7 @@ class MainShell extends ConsumerWidget {
     );
   }
 
-  Widget _clinicNavBar(BuildContext context) {
+  Widget _clinicNavBar(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
     int index = 0;
     if (location.startsWith('/clinic-home')) index = 0;
@@ -93,6 +94,7 @@ class MainShell extends ConsumerWidget {
       onTap: (i) {
         switch (i) {
           case 0:
+            ref.invalidate(clinicAppointmentsProvider);
             context.go('/clinic-home');
             break;
           case 1:
