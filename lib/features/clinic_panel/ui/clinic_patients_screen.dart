@@ -431,9 +431,9 @@ class PetVisitsScreen extends ConsumerWidget {
               if (visits.isEmpty) {
                 return _EmptyState(
                   icon: Icons.history_rounded,
-                  title: 'Sin visitas realizadas',
+                  title: 'Sin citas con esta mascota',
                   subtitle:
-                      'Aquí aparecerán las visitas marcadas como realizadas.',
+                      'Las citas pendientes, confirmadas o realizadas aparecerán aquí para añadir notas.',
                   onRefresh: () async {
                     ref.invalidate(petVisitsProvider(petId));
                     await ref.read(petVisitsProvider(petId).future);
@@ -483,6 +483,7 @@ class _VisitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFmt = DateFormat("d 'de' MMMM 'de' yyyy · HH:mm", 'es');
     final hasNotes = visit.notes.isNotEmpty;
+    final canNote = visit.canAddNotes;
     final dateShort = DateFormat("d MMM yyyy", 'es');
 
     return Container(
@@ -536,6 +537,7 @@ class _VisitCard extends StatelessWidget {
                   ],
                 ),
               ),
+              _VisitStatusBadge(status: visit.status),
             ],
           ),
 
@@ -563,29 +565,55 @@ class _VisitCard extends StatelessWidget {
                 child: _ClinicalNoteBlock(
                   note: note,
                   dateShort: dateShort,
+                  canModify: canNote,
                   onEdit: () => _showNoteSheet(context, editingNote: note),
                   onDelete: () => _confirmDeleteNote(context, note),
                 ),
               ),
             ),
 
-          TextButton.icon(
-            onPressed: () => _showNoteSheet(context),
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: Text(hasNotes ? 'Añadir otra nota' : 'Añadir nota clínica'),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(double.infinity, 40),
-              foregroundColor: AppTheme.primary,
-              textStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+          if (canNote)
+            TextButton.icon(
+              onPressed: () => _showNoteSheet(context),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: Text(hasNotes ? 'Añadir otra nota' : 'Añadir nota clínica'),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(double.infinity, 40),
+                foregroundColor: AppTheme.primary,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
+            )
+          else if (visit.isPending)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Confirma la cita en la agenda para poder añadir notas.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
             ),
-          ),
         ],
       ),
     );
@@ -665,15 +693,47 @@ class _VisitCard extends StatelessWidget {
   }
 }
 
+class _VisitStatusBadge extends StatelessWidget {
+  final String status;
+  const _VisitStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = switch (status) {
+      'confirmed' => (label: 'Confirmada', color: AppTheme.primary),
+      'done' => (label: 'Realizada', color: Colors.grey),
+      _ => (label: 'Pendiente', color: Colors.orange),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: config.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Text(
+        config.label,
+        style: TextStyle(
+          color: config.color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class _ClinicalNoteBlock extends StatelessWidget {
   final MedicalNote note;
   final DateFormat dateShort;
+  final bool canModify;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ClinicalNoteBlock({
     required this.note,
     required this.dateShort,
+    this.canModify = true,
     required this.onEdit,
     required this.onDelete,
   });
@@ -718,32 +778,36 @@ class _ClinicalNoteBlock extends StatelessWidget {
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: onEdit,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: AppTheme.primary,
+              if (canModify) ...[
+                TextButton(
+                  onPressed: onEdit,
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: AppTheme.primary,
+                  ),
+                  child: const Text(
+                    'Editar',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                child: const Text(
-                  'Editar',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                TextButton(
+                  onPressed: onDelete,
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text(
+                    'Eliminar',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: onDelete,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: Colors.red,
-                ),
-                child: const Text(
-                  'Eliminar',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
+              ],
             ],
           ),
         ],

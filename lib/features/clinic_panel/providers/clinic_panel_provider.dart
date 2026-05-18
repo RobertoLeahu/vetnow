@@ -16,6 +16,13 @@ final myClinicProvider = FutureProvider<Clinic?>((ref) async {
   return ref.watch(clinicRepositoryProvider).getMyClinic(profile.id);
 });
 
+/// Si devuelve `false`, la navegación fuera de Mi clínica debe cancelarse.
+typedef ClinicProfileExitHandler = Future<bool> Function();
+
+/// Registrado por [ClinicProfileScreen] para confirmar salida con cambios sin guardar.
+final clinicProfileExitHandlerProvider =
+    StateProvider<ClinicProfileExitHandler?>((ref) => null);
+
 /// Horarios semanales de la clínica logueada.
 final mySchedulesProvider = FutureProvider<List<Schedule>>((ref) async {
   final clinic = await ref.watch(myClinicProvider.future);
@@ -98,7 +105,7 @@ final ownerPetsForClinicProvider =
       .fetchOwnerPetsForClinic(clinic.id, ownerId);
 });
 
-/// Visitas realizadas de [petId] en la clínica logueada, con notas clínicas.
+/// Citas de [petId] en la clínica logueada (excepto canceladas), con notas clínicas.
 /// autoDispose: datos frescos cada vez que se abre la pantalla.
 final petVisitsProvider =
     FutureProvider.autoDispose.family<List<PetVisit>, String>(

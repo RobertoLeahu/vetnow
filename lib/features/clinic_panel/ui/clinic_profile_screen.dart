@@ -38,6 +38,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   bool _initialized = false;
   /// Evita quedar enganchados a otro perfil si cambia la clínica.
   String? _initializedForClinicId;
+  _ClinicProfileBaseline? _baseline;
+  Clinic? _loadedClinic;
 
   @override
   void initState() {
@@ -53,10 +55,21 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
       7,
       (i) => _DaySchedule(dayOfWeek: i),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(clinicProfileExitHandlerProvider.notifier).state =
+          _handleExitRequest;
+    });
   }
 
   @override
   void dispose() {
+    final exitHandlerNotifier =
+        ref.read(clinicProfileExitHandlerProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      exitHandlerNotifier.state = null;
+    });
     _nameCtrl.dispose();
     _addressCtrl.dispose();
     _cityCtrl.dispose();
@@ -95,6 +108,108 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         );
       }
     }
+    _loadedClinic = clinic;
+    _captureBaseline();
+  }
+
+  void _captureBaseline() {
+    _baseline = _ClinicProfileBaseline(
+      name: _nameCtrl.text,
+      address: _addressCtrl.text,
+      city: _cityCtrl.text,
+      phone: _phoneCtrl.text,
+      email: _emailCtrl.text,
+      description: _descCtrl.text,
+      specialtyIds: Set<String>.from(_selectedSpecialtyIds),
+      weekSchedule: _weekSchedule.map((d) => d.copy()).toList(),
+      pickedLogoPath: _pickedLogo?.path,
+    );
+  }
+
+  void _restoreBaseline() {
+    final b = _baseline;
+    if (b == null) return;
+
+    _nameCtrl.text = b.name;
+    _addressCtrl.text = b.address;
+    _cityCtrl.text = b.city;
+    _phoneCtrl.text = b.phone;
+    _emailCtrl.text = b.email;
+    _descCtrl.text = b.description;
+    _selectedSpecialtyIds = Set<String>.from(b.specialtyIds);
+    _weekSchedule = b.weekSchedule.map((d) => d.copy()).toList();
+    _pickedLogo = b.pickedLogoPath != null ? File(b.pickedLogoPath!) : null;
+  }
+
+  bool _hasUnsavedChanges() => _baseline?.differsFrom(
+        name: _nameCtrl.text,
+        address: _addressCtrl.text,
+        city: _cityCtrl.text,
+        phone: _phoneCtrl.text,
+        email: _emailCtrl.text,
+        description: _descCtrl.text,
+        specialtyIds: _selectedSpecialtyIds,
+        weekSchedule: _weekSchedule,
+        pickedLogoPath: _pickedLogo?.path,
+      ) ??
+      false;
+
+  Future<bool> _handleExitRequest() async {
+    if (!_hasUnsavedChanges()) return true;
+    if (!mounted) return true;
+
+    final action = await showDialog<_UnsavedExitAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cambios sin guardar'),
+        content: const Text(
+          'Has modificado el perfil o los horarios de la clínica sin guardar. '
+          '¿Qué deseas hacer?',
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pop(ctx, _UnsavedExitAction.save),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: const Text('Guardar'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () =>
+                      Navigator.pop(ctx, _UnsavedExitAction.discard),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: const Text('Descartar cambios'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    switch (action) {
+      case _UnsavedExitAction.save:
+        final clinic = _loadedClinic;
+        if (clinic == null) return false;
+        final ok = await _save(clinic);
+        return ok;
+      case _UnsavedExitAction.discard:
+        setState(_restoreBaseline);
+        return true;
+      case null:
+        return false;
+    }
   }
 
   TimeOfDay _parseTime(String t) {
@@ -119,8 +234,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     }
   }
 
-  Future<void> _save(Clinic clinic) async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<bool> _save(Clinic clinic) async {
+    if (!_formKey.currentState!.validate()) return false;
 
     setState(() => _saving = true);
 
@@ -168,16 +283,19 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
       ref.invalidate(mySchedulesProvider);
 
       if (mounted) {
+        _captureBaseline();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Perfil actualizado')),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al guardar: $e')),
         );
       }
+      return false;
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -221,7 +339,15 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           data: (schedules) {
             _initFromClinic(clinic, schedules);
 
-            return Scaffold(
+            return PopScope(
+              canPop: !_hasUnsavedChanges(),
+              onPopInvokedWithResult: (didPop, _) async {
+                if (didPop) return;
+                final canLeave = await _handleExitRequest();
+                if (!mounted || !canLeave) return;
+                Navigator.of(context).pop();
+              },
+              child: Scaffold(
               appBar: AppBar(
                 title: const Text('Mi clínica'),
                 actions: [
@@ -264,6 +390,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                   ],
                 ),
               ),
+            ),
             );
           },
         );
@@ -542,6 +669,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   Widget _buildLogoutButton() {
     return OutlinedButton.icon(
       onPressed: () async {
+        if (!await _handleExitRequest()) return;
         await ref.read(authRepositoryProvider).signOut();
         if (mounted) context.go('/login');
       },
@@ -610,4 +738,70 @@ class _DaySchedule {
         openTime: openTime ?? this.openTime,
         closeTime: closeTime ?? this.closeTime,
       );
+
+  _DaySchedule copy() => _DaySchedule(
+        dayOfWeek: dayOfWeek,
+        active: active,
+        openTime: openTime,
+        closeTime: closeTime,
+      );
+
+  bool sameAs(_DaySchedule other) =>
+      active == other.active &&
+      openTime.hour == other.openTime.hour &&
+      openTime.minute == other.openTime.minute &&
+      closeTime.hour == other.closeTime.hour &&
+      closeTime.minute == other.closeTime.minute;
+}
+
+enum _UnsavedExitAction { save, discard }
+
+class _ClinicProfileBaseline {
+  final String name;
+  final String address;
+  final String city;
+  final String phone;
+  final String email;
+  final String description;
+  final Set<String> specialtyIds;
+  final List<_DaySchedule> weekSchedule;
+  final String? pickedLogoPath;
+
+  const _ClinicProfileBaseline({
+    required this.name,
+    required this.address,
+    required this.city,
+    required this.phone,
+    required this.email,
+    required this.description,
+    required this.specialtyIds,
+    required this.weekSchedule,
+    required this.pickedLogoPath,
+  });
+
+  bool differsFrom({
+    required String name,
+    required String address,
+    required String city,
+    required String phone,
+    required String email,
+    required String description,
+    required Set<String> specialtyIds,
+    required List<_DaySchedule> weekSchedule,
+    required String? pickedLogoPath,
+  }) {
+    if (name != this.name) return true;
+    if (address != this.address) return true;
+    if (city != this.city) return true;
+    if (phone != this.phone) return true;
+    if (email != this.email) return true;
+    if (description != this.description) return true;
+    if (pickedLogoPath != this.pickedLogoPath) return true;
+    if (specialtyIds.length != this.specialtyIds.length) return true;
+    if (!specialtyIds.containsAll(this.specialtyIds)) return true;
+    for (var i = 0; i < weekSchedule.length; i++) {
+      if (!weekSchedule[i].sameAs(this.weekSchedule[i])) return true;
+    }
+    return false;
+  }
 }

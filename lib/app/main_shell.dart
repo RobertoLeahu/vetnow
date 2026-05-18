@@ -91,23 +91,7 @@ class MainShell extends ConsumerWidget {
 
     return BottomNavigationBar(
       currentIndex: index,
-      onTap: (i) {
-        switch (i) {
-          case 0:
-            ref.invalidate(clinicAppointmentsProvider);
-            context.go('/clinic-home');
-            break;
-          case 1:
-            context.go('/clinic-agenda');
-            break;
-          case 2:
-            context.go('/clinic-patients');
-            break;
-          case 3:
-            context.go('/clinic-profile');
-            break;
-        }
-      },
+      onTap: (i) => _onClinicNavTap(context, ref, i, index, location),
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.dashboard_rounded),
@@ -127,5 +111,41 @@ class MainShell extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _onClinicNavTap(
+    BuildContext context,
+    WidgetRef ref,
+    int targetIndex,
+    int currentIndex,
+    String location,
+  ) async {
+    if (currentIndex == targetIndex) return;
+
+    if (location.startsWith('/clinic-profile')) {
+      final exitHandler = ref.read(clinicProfileExitHandlerProvider);
+      if (exitHandler != null) {
+        final canLeave = await exitHandler();
+        if (!canLeave) return;
+      }
+    }
+
+    if (!context.mounted) return;
+
+    switch (targetIndex) {
+      case 0:
+        ref.invalidate(clinicAppointmentsProvider);
+        context.go('/clinic-home');
+        break;
+      case 1:
+        context.go('/clinic-agenda');
+        break;
+      case 2:
+        context.go('/clinic-patients');
+        break;
+      case 3:
+        context.go('/clinic-profile');
+        break;
+    }
   }
 }

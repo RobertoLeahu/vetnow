@@ -17,19 +17,29 @@ class ClinicPatient {
   });
 }
 
-/// Value object pairing a completed appointment with its clinical notes.
+/// Value object pairing an appointment with its clinical notes.
 class PetVisit {
   final String appointmentId;
   final DateTime scheduledAt;
   final String specialtyName;
+  /// pending | confirmed | done | cancelled
+  final String status;
   final List<MedicalNote> notes;
 
   const PetVisit({
     required this.appointmentId,
     required this.scheduledAt,
     required this.specialtyName,
+    required this.status,
     this.notes = const [],
   });
+
+  bool get isDone => status == 'done';
+  bool get isCancelled => status == 'cancelled';
+  bool get isPending => status == 'pending';
+
+  /// Solo tras confirmar la cita (o si ya está realizada).
+  bool get canAddNotes => status == 'confirmed' || status == 'done';
 }
 
 class MedicalNotesRepository {
@@ -103,7 +113,7 @@ class MedicalNotesRepository {
     return pets;
   }
 
-  /// Completed visits for [petId] at [clinicId], newest first.
+  /// Citas de [petId] en [clinicId] (excepto canceladas), con notas. Más recientes primero.
   Future<List<PetVisit>> fetchPetVisits(
     String clinicId,
     String petId,
@@ -113,12 +123,13 @@ class MedicalNotesRepository {
         .select('''
           id,
           scheduled_at,
+          status,
           specialties(name),
           medical_notes(id, appointment_id, clinic_id, content, created_at, updated_at)
         ''')
         .eq('clinic_id', clinicId)
         .eq('pet_id', petId)
-        .eq('status', 'done')
+        .neq('status', 'cancelled')
         .order('scheduled_at', ascending: false);
 
     return (data as List).map((row) {
@@ -147,9 +158,24 @@ class MedicalNotesRepository {
         scheduledAt:
             parseTimestamptzToLocal(row['scheduled_at'] as String),
         specialtyName: specialtyName,
+        status: row['status'] as String,
         notes: notes,
       );
     }).toList();
+  }
+
+  Future<void> _assertAppointmentAllowsNotes(String appointmentId) async {
+    final row = await supabase
+        .from('appointments')
+        .select('status')
+        .eq('id', appointmentId)
+        .single();
+    final status = row['status'] as String;
+    if (status == 'pending') {
+      throw StateError(
+        'Confirma la cita en la agenda para poder gestionar notas.',
+      );
+    }
   }
 
   /// Añade una nueva nota clínica para la visita [appointmentId].
@@ -158,6 +184,7 @@ class MedicalNotesRepository {
     required String clinicId,
     required String content,
   }) async {
+    await _assertAppointmentAllowsNotes(appointmentId);
     await supabase.from('medical_notes').insert({
       'appointment_id': appointmentId,
       'clinic_id': clinicId,
@@ -170,6 +197,12 @@ class MedicalNotesRepository {
     required String noteId,
     required String content,
   }) async {
+    final row = await supabase
+        .from('medical_notes')
+        .select('appointment_id')
+        .eq('id', noteId)
+        .single();
+    await _assertAppointmentAllowsNotes(row['appointment_id'] as String);
     await supabase.from('medical_notes').update({
       'content': content,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -178,6 +211,12 @@ class MedicalNotesRepository {
 
   /// Elimina una nota clínica (solo la clínica dueña vía RLS).
   Future<void> deleteNote(String noteId) async {
+    final row = await supabase
+        .from('medical_notes')
+        .select('appointment_id')
+        .eq('id', noteId)
+        .single();
+    await _assertAppointmentAllowsNotes(row['appointment_id'] as String);
     await supabase.from('medical_notes').delete().eq('id', noteId);
   }
 }
