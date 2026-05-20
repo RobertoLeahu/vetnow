@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/pet.dart';
@@ -95,12 +98,18 @@ class AppointmentRepository {
   }
 
   /// Confirmar cita (pendiente → confirmada). RLS: solo la clínica dueña.
+  /// Tras actualizar el estado, envía email de confirmación al propietario.
   Future<void> confirmAppointment(String appointmentId) async {
     await supabase
         .from('appointments')
         .update({'status': 'confirmed'})
         .eq('id', appointmentId)
         .eq('status', 'pending');
+
+    await _notifyOwnerByEmail(
+      appointmentId: appointmentId,
+      type: 'confirmed',
+    );
   }
 
   /// Marcar cita como realizada (confirmada → realizada). RLS: solo la clínica dueña.
@@ -113,12 +122,59 @@ class AppointmentRepository {
   }
 
   /// La clínica deniega una cita pendiente (pasa a cancelada).
+  /// Tras actualizar el estado, envía email de denegación al propietario.
   Future<void> rejectAppointmentByClinic(String appointmentId) async {
     await supabase
         .from('appointments')
         .update({'status': 'cancelled'})
         .eq('id', appointmentId)
         .eq('status', 'pending');
+
+    await _notifyOwnerByEmail(
+      appointmentId: appointmentId,
+      type: 'rejected',
+    );
+  }
+
+  /// Invoca la Edge Function de email. No lanza: la cita ya quedó en BD.
+  Future<void> _notifyOwnerByEmail({
+    required String appointmentId,
+    required String type,
+  }) async {
+    final session = supabase.auth.currentSession;
+    if (session == null) {
+      debugPrint(
+        '[VetNow] send-appointment-notification: sin sesión, email no enviado',
+      );
+      return;
+    }
+
+    try {
+      final response = await supabase.functions.invoke(
+        'send-appointment-notification',
+        method: HttpMethod.post,
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+        body: {'appointmentId': appointmentId, 'type': type},
+      );
+
+      if (response.status == 200) {
+        debugPrint(
+          '[VetNow] send-appointment-notification OK ($type): ${response.data}',
+        );
+      } else {
+        debugPrint(
+          '[VetNow] send-appointment-notification falló '
+          '(${response.status}): ${response.data}',
+        );
+      }
+    } on FunctionException catch (e) {
+      debugPrint(
+        '[VetNow] send-appointment-notification FunctionException '
+        '(${e.status}): ${e.details}',
+      );
+    } catch (e, st) {
+      debugPrint('[VetNow] send-appointment-notification error: $e\n$st');
+    }
   }
 
   /// Cancelar cita

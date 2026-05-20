@@ -43,6 +43,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(clinicSearchProvider);
+    ref.invalidate(specialtiesProvider);
+    ref.invalidate(profileProvider);
+    await Future.wait([
+      ref.read(clinicSearchProvider.future),
+      ref.read(specialtiesProvider.future),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider).valueOrNull;
@@ -53,8 +63,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             // Header
             SliverToBoxAdapter(
               child: Padding(
@@ -77,9 +90,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                         children: [
-                          const TextSpan(text: 'Hola, '),
+                          const TextSpan(text: 'Bienvenido a VetNow, '),
                           TextSpan(
-                            text: '$firstName.',
+                            text: '$firstName!',
                             style: const TextStyle(
                               color: AppTheme.primary,
                               fontWeight: FontWeight.bold,
@@ -196,7 +209,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
-          ],
+            ],
+          ),
         ),
       ),
     );
