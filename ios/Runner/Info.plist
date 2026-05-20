@@ -6,6 +6,8 @@
 	<string>Necesitamos acceso a la cámara para hacer una foto de perfil de tu mascota.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Necesitamos acceso a tus fotos para elegir una imagen de perfil de tu mascota.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos acceso a tu ubicación para mostrarte las clínicas veterinarias más cercanas.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

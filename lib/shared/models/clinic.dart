@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 import 'specialty.dart';
 
@@ -15,6 +17,11 @@ class Clinic extends Equatable {
   final String? logoUrl;
   final List<Specialty> specialties;
 
+  /// Distancia en kilómetros desde la posición del usuario hasta la clínica.
+  /// No se persiste en BD: se calcula en cliente al realizar una búsqueda
+  /// por proximidad (Haversine).
+  final double? distanceKm;
+
   const Clinic({
     required this.id,
     required this.profileId,
@@ -28,6 +35,7 @@ class Clinic extends Equatable {
     this.email,
     this.logoUrl,
     this.specialties = const [],
+    this.distanceKm,
   });
 
   factory Clinic.fromMap(Map<String, dynamic> map) {
@@ -78,6 +86,7 @@ class Clinic extends Equatable {
     String? email,
     String? logoUrl,
     List<Specialty>? specialties,
+    double? distanceKm,
   }) =>
       Clinic(
         id: id ?? this.id,
@@ -92,6 +101,7 @@ class Clinic extends Equatable {
         email: email ?? this.email,
         logoUrl: logoUrl ?? this.logoUrl,
         specialties: specialties ?? this.specialties,
+        distanceKm: distanceKm ?? this.distanceKm,
       );
 
   bool get isProfileComplete =>
@@ -100,3 +110,25 @@ class Clinic extends Equatable {
   @override
   List<Object?> get props => [id, profileId, name, city, specialties];
 }
+
+/// Calcula la distancia en kilómetros entre dos pares de coordenadas
+/// geográficas usando la fórmula Haversine.
+double haversineKm({
+  required double lat1,
+  required double lng1,
+  required double lat2,
+  required double lng2,
+}) {
+  const earthRadiusKm = 6371.0;
+  final dLat = _degToRad(lat2 - lat1);
+  final dLng = _degToRad(lng2 - lng1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_degToRad(lat1)) *
+          math.cos(_degToRad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
+double _degToRad(double deg) => deg * (math.pi / 180.0);

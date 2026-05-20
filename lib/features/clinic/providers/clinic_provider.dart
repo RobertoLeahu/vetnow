@@ -14,16 +14,40 @@ class SearchFilters {
   final String city;
   final String? specialtyId;
 
-  const SearchFilters({this.city = '', this.specialtyId});
+  /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] y se ignora
+  /// el filtro de [city].
+  final bool isNearbyMode;
+  final double? userLat;
+  final double? userLng;
+  final double nearbyRadiusKm;
+
+  const SearchFilters({
+    this.city = '',
+    this.specialtyId,
+    this.isNearbyMode = false,
+    this.userLat,
+    this.userLng,
+    this.nearbyRadiusKm = 10.0,
+  });
 
   SearchFilters copyWith({
     String? city,
     String? specialtyId,
-    bool clearSpecialty = false, // 👈 añadido
-  }) => SearchFilters(
-    city: city ?? this.city,
-    specialtyId: clearSpecialty ? null : (specialtyId ?? this.specialtyId),
-  );
+    bool clearSpecialty = false,
+    bool? isNearbyMode,
+    double? userLat,
+    double? userLng,
+    double? nearbyRadiusKm,
+    bool clearLocation = false,
+  }) =>
+      SearchFilters(
+        city: city ?? this.city,
+        specialtyId: clearSpecialty ? null : (specialtyId ?? this.specialtyId),
+        isNearbyMode: isNearbyMode ?? this.isNearbyMode,
+        userLat: clearLocation ? null : (userLat ?? this.userLat),
+        userLng: clearLocation ? null : (userLng ?? this.userLng),
+        nearbyRadiusKm: nearbyRadiusKm ?? this.nearbyRadiusKm,
+      );
 }
 
 final searchFiltersProvider = StateProvider<SearchFilters>(
@@ -34,6 +58,18 @@ final searchFiltersProvider = StateProvider<SearchFilters>(
 final clinicSearchProvider = FutureProvider<List<Clinic>>((ref) async {
   final filters = ref.watch(searchFiltersProvider);
   final repo = ref.watch(clinicRepositoryProvider);
+
+  if (filters.isNearbyMode &&
+      filters.userLat != null &&
+      filters.userLng != null) {
+    return repo.searchClinicsNearby(
+      userLat: filters.userLat!,
+      userLng: filters.userLng!,
+      radiusKm: filters.nearbyRadiusKm,
+      specialtyId: filters.specialtyId,
+    );
+  }
+
   return repo.searchClinics(
     city: filters.city,
     specialtyId: filters.specialtyId,

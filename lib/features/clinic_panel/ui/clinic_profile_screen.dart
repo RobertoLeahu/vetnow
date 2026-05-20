@@ -250,14 +250,36 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         );
       }
 
+      final newAddress = _addressCtrl.text.trim();
+      final newCity = _cityCtrl.text.trim();
+
+      // Geocodificar solo si la dirección o ciudad ha cambiado, o si todavía
+      // no hay coordenadas guardadas. Esto respeta el rate limit de Nominatim.
+      double? lat = clinic.lat;
+      double? lng = clinic.lng;
+      final addressChanged =
+          newAddress != clinic.address || newCity != clinic.city;
+      if (addressChanged || lat == null || lng == null) {
+        final coords = await repo.geocodeAddress(
+          address: newAddress,
+          city: newCity,
+        );
+        if (coords != null) {
+          lat = coords.lat;
+          lng = coords.lng;
+        }
+      }
+
       final updated = clinic.copyWith(
         name: _nameCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        city: _cityCtrl.text.trim(),
+        address: newAddress,
+        city: newCity,
         phone: _phoneCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         logoUrl: logoUrl,
+        lat: lat,
+        lng: lng,
       );
 
       await repo.upsertClinic(updated.toMap());

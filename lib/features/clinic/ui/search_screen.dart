@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
@@ -36,6 +37,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchCtrl = TextEditingController();
+  bool _locating = false;
 
   @override
   void dispose() {
@@ -53,6 +55,98 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ]);
   }
 
+  Future<void> _toggleNearby() async {
+    final filters = ref.read(searchFiltersProvider);
+
+    if (filters.isNearbyMode) {
+      ref
+          .read(searchFiltersProvider.notifier)
+          .update((s) => s.copyWith(isNearbyMode: false, clearLocation: true));
+      return;
+    }
+
+    setState(() => _locating = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        await _showLocationDeniedDialog(
+          title: 'Ubicación desactivada',
+          message:
+              'Activa el servicio de ubicación de tu dispositivo para ver las clínicas cercanas.',
+          openSettings: () => Geolocator.openLocationSettings(),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        await _showLocationDeniedDialog(
+          title: 'Permiso de ubicación necesario',
+          message:
+              'Para mostrarte las clínicas más cercanas necesitamos acceder a tu ubicación. Actívala en los ajustes de la app.',
+          openSettings: () => Geolocator.openAppSettings(),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 15),
+      );
+
+      _searchCtrl.clear();
+      ref.read(searchFiltersProvider.notifier).update(
+            (s) => s.copyWith(
+              isNearbyMode: true,
+              userLat: position.latitude,
+              userLng: position.longitude,
+              city: '',
+            ),
+          );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo obtener tu ubicación: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  Future<void> _showLocationDeniedDialog({
+    required String title,
+    required String message,
+    required Future<bool> Function() openSettings,
+  }) async {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await openSettings();
+            },
+            child: const Text('Abrir ajustes'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider).valueOrNull;
@@ -68,149 +162,238 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-            // Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Logo
-                    const Icon(
-                      Icons.pets_rounded,
-                      size: 36,
-                      color: AppTheme.primary,
-                    ),
-                    const SizedBox(height: 12),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Bienvenido a VetNow, '),
-                          TextSpan(
-                            text: '$firstName!',
-                            style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Buscador
-                    TextField(
-                      controller: _searchCtrl,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Encuentra clínicas o especialistas por ubicación',
-                        prefixIcon: Icon(Icons.search_rounded),
-                      ),
-                      onChanged: (v) => ref
-                          .read(searchFiltersProvider.notifier)
-                          .update((s) => s.copyWith(city: v)),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-
-            // Chips de especialidades
-            SliverToBoxAdapter(
-              child: specialtiesAsync.when(
-                data: (specialties) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8.0,
-                    runSpacing: 8.0,
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SpecialtyChip(
-                        label: 'Todas',
-                        icon: Icons.apps_rounded,
-                        selected: filters.specialtyId == null,
-                        onTap: () => ref
-                            .read(searchFiltersProvider.notifier)
-                            .update((s) => s.copyWith(clearSpecialty: true)),
+                      const Icon(
+                        Icons.pets_rounded,
+                        size: 36,
+                        color: AppTheme.primary,
                       ),
-                      ...specialties.map(
-                        (s) => _SpecialtyChip(
-                          label: s.name,
-                          icon: _specialtyIcon(s.name),
-                          selected: filters.specialtyId == s.id,
-                          onTap: () => ref
-                              .read(searchFiltersProvider.notifier)
-                              .update((f) => f.copyWith(specialtyId: s.id)),
+                      const SizedBox(height: 12),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          children: [
+                            const TextSpan(text: 'Bienvenido a VetNow, '),
+                            TextSpan(
+                              text: '$firstName!',
+                              style: const TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // Buscador
+                      TextField(
+                        controller: _searchCtrl,
+                        enabled: !filters.isNearbyMode,
+                        decoration: InputDecoration(
+                          hintText: filters.isNearbyMode
+                              ? 'Mostrando clínicas cerca de ti'
+                              : 'Encuentra clínicas o especialistas por ubicación',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                        ),
+                        onChanged: (v) => ref
+                            .read(searchFiltersProvider.notifier)
+                            .update((s) => s.copyWith(city: v)),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Botón "Cerca de mí"
+                      _NearbyToggle(
+                        active: filters.isNearbyMode,
+                        loading: _locating,
+                        radiusKm: filters.nearbyRadiusKm,
+                        onTap: _locating ? null : _toggleNearby,
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
-                // Ajustar el loading para que ocupe algo más
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => const SizedBox.shrink(),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              // Chips de especialidades
+              SliverToBoxAdapter(
+                child: specialtiesAsync.when(
+                  data: (specialties) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        _SpecialtyChip(
+                          label: 'Todas',
+                          icon: Icons.apps_rounded,
+                          selected: filters.specialtyId == null,
+                          onTap: () => ref
+                              .read(searchFiltersProvider.notifier)
+                              .update((s) => s.copyWith(clearSpecialty: true)),
+                        ),
+                        ...specialties.map(
+                          (s) => _SpecialtyChip(
+                            label: s.name,
+                            icon: _specialtyIcon(s.name),
+                            selected: filters.specialtyId == s.id,
+                            onTap: () => ref
+                                .read(searchFiltersProvider.notifier)
+                                .update((f) => f.copyWith(specialtyId: s.id)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ),
 
-            // Título sección
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Clínicas disponibles',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Título sección
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    filters.isNearbyMode
+                        ? 'Clínicas cerca de ti'
+                        : 'Clínicas disponibles',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // Lista de clínicas
-            clinicsAsync.when(
-              data: (clinics) => clinics.isEmpty
-                  ? const SliverToBoxAdapter(
-                      child: _EmptyState(
-                        icon: Icons.search_off_rounded,
-                        title: 'No hay clínicas con estos filtros',
-                        subtitle: 'Prueba con otra ciudad o especialidad',
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                          child: _ClinicCard(clinic: clinics[i]),
+              // Lista de clínicas
+              clinicsAsync.when(
+                data: (clinics) => clinics.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: _EmptyState(
+                          icon: filters.isNearbyMode
+                              ? Icons.location_off_rounded
+                              : Icons.search_off_rounded,
+                          title: filters.isNearbyMode
+                              ? 'No hay clínicas en ${filters.nearbyRadiusKm.toStringAsFixed(0)} km'
+                              : 'No hay clínicas con estos filtros',
+                          subtitle: filters.isNearbyMode
+                              ? 'Prueba a ampliar la zona o desactivar el modo cercanía'
+                              : 'Prueba con otra ciudad o especialidad',
                         ),
-                        childCount: clinics.length,
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                            child: _ClinicCard(clinic: clinics[i]),
+                          ),
+                          childCount: clinics.length,
+                        ),
                       ),
-                    ),
-              loading: () => const SliverToBoxAdapter(
-                child: Center(child: CircularProgressIndicator()),
+                loading: () => const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $e'))),
               ),
-              error: (e, _) =>
-                  SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NearbyToggle extends StatelessWidget {
+  final bool active;
+  final bool loading;
+  final double radiusKm;
+  final VoidCallback? onTap;
+
+  const _NearbyToggle({
+    required this.active,
+    required this.loading,
+    required this.radiusKm,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = active ? AppTheme.primary : AppTheme.surface;
+    final fgColor = active ? Colors.white : AppTheme.textPrimary;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: active ? AppTheme.primary : AppTheme.divider,
+          ),
+        ),
+        child: Row(
+          children: [
+            if (loading)
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: fgColor,
+                ),
+              )
+            else
+              Icon(
+                active
+                    ? Icons.my_location_rounded
+                    : Icons.location_searching_rounded,
+                size: 20,
+                color: fgColor,
+              ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                active
+                    ? 'Mostrando clínicas en ${radiusKm.toStringAsFixed(0)} km'
+                    : 'Buscar clínicas cerca de mí',
+                style: TextStyle(
+                  color: fgColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (active)
+              Icon(Icons.close_rounded, size: 18, color: fgColor),
+          ],
         ),
       ),
     );
@@ -268,6 +451,11 @@ class _ClinicCard extends StatelessWidget {
   final Clinic clinic;
   const _ClinicCard({required this.clinic});
 
+  String _formatDistance(double km) {
+    if (km < 1) return '${(km * 1000).toStringAsFixed(0)} m';
+    return '${km.toStringAsFixed(1)} km';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -300,13 +488,51 @@ class _ClinicCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    clinic.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppTheme.textPrimary,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          clinic.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (clinic.distanceKm != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.near_me_rounded,
+                                size: 12,
+                                color: AppTheme.primary,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                _formatDistance(clinic.distanceKm!),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -317,11 +543,13 @@ class _ClinicCard extends StatelessWidget {
                         color: AppTheme.textSecondary,
                       ),
                       const SizedBox(width: 3),
-                      Text(
-                        clinic.city,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
+                      Expanded(
+                        child: Text(
+                          clinic.city,
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
