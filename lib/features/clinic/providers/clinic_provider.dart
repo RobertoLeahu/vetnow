@@ -11,18 +11,19 @@ final clinicRepositoryProvider = Provider<ClinicRepository>(
 
 // Filtros de búsqueda como estado
 class SearchFilters {
-  final String city;
+  /// Texto libre: busca por nombre de clínica, ciudad o dirección.
+  final String query;
   final String? specialtyId;
 
   /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] y se ignora
-  /// el filtro de [city].
+  /// el filtro de [query].
   final bool isNearbyMode;
   final double? userLat;
   final double? userLng;
   final double nearbyRadiusKm;
 
   const SearchFilters({
-    this.city = '',
+    this.query = '',
     this.specialtyId,
     this.isNearbyMode = false,
     this.userLat,
@@ -31,7 +32,7 @@ class SearchFilters {
   });
 
   SearchFilters copyWith({
-    String? city,
+    String? query,
     String? specialtyId,
     bool clearSpecialty = false,
     bool? isNearbyMode,
@@ -41,7 +42,7 @@ class SearchFilters {
     bool clearLocation = false,
   }) =>
       SearchFilters(
-        city: city ?? this.city,
+        query: query ?? this.query,
         specialtyId: clearSpecialty ? null : (specialtyId ?? this.specialtyId),
         isNearbyMode: isNearbyMode ?? this.isNearbyMode,
         userLat: clearLocation ? null : (userLat ?? this.userLat),
@@ -71,7 +72,7 @@ final clinicSearchProvider = FutureProvider<List<Clinic>>((ref) async {
   }
 
   return repo.searchClinics(
-    city: filters.city,
+    query: filters.query,
     specialtyId: filters.specialtyId,
   );
 });

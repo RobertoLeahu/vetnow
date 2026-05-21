@@ -107,7 +107,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               isNearbyMode: true,
               userLat: position.latitude,
               userLng: position.longitude,
-              city: '',
+              query: '',
             ),
           );
     } catch (e) {
@@ -203,12 +203,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         decoration: InputDecoration(
                           hintText: filters.isNearbyMode
                               ? 'Mostrando clínicas cerca de ti'
-                              : 'Encuentra clínicas o especialistas por ubicación',
+                              : 'Buscar por nombre, ciudad o dirección',
                           prefixIcon: const Icon(Icons.search_rounded),
                         ),
                         onChanged: (v) => ref
                             .read(searchFiltersProvider.notifier)
-                            .update((s) => s.copyWith(city: v)),
+                            .update((s) => s.copyWith(query: v)),
                       ),
                       const SizedBox(height: 12),
 
@@ -302,7 +302,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               ? 'Las clínicas deben tener ubicación GPS registrada '
                                   '(guardar perfil en Mi clínica). Si usas emulador, '
                                   'configura la ubicación del dispositivo en Valdemoro.'
-                              : 'Prueba con otra ciudad o especialidad',
+                              : 'Prueba con otro nombre, ciudad o especialidad',
                         ),
                       )
                     : SliverList(

@@ -10,30 +10,34 @@ import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
 
 class ClinicRepository {
-  /// Búsqueda con filtros opcionales de ciudad y especialidad
+  /// Búsqueda por texto (nombre, ciudad o dirección) y especialidad opcional.
   Future<List<Clinic>> searchClinics({
-    String? city,
+    String? query,
     String? specialtyId,
   }) async {
-    var query = supabase
-        .from('clinics')
-        .select('''
+    final data = await supabase.from('clinics').select('''
           *,
           clinic_specialties(
             specialties(id, name)
           )
         ''');
 
-    if (city != null && city.isNotEmpty) {
-      query = query.ilike('city', '%$city%');
+    var clinics = (data as List).map((e) => Clinic.fromMap(e)).toList();
+
+    final term = query?.trim().toLowerCase();
+    if (term != null && term.isNotEmpty) {
+      clinics = clinics
+          .where(
+            (c) =>
+                c.name.toLowerCase().contains(term) ||
+                c.city.toLowerCase().contains(term) ||
+                c.address.toLowerCase().contains(term),
+          )
+          .toList();
     }
 
-    final data = await query;
-    final clinics = (data as List).map((e) => Clinic.fromMap(e)).toList();
-
-    // Filtro por especialidad en cliente (más simple que join complejo)
     if (specialtyId != null && specialtyId.isNotEmpty) {
-      return clinics
+      clinics = clinics
           .where((c) => c.specialties.any((s) => s.id == specialtyId))
           .toList();
     }
