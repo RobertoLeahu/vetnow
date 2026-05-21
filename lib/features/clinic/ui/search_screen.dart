@@ -55,16 +55,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ]);
   }
 
-  Future<void> _toggleNearby() async {
-    final filters = ref.read(searchFiltersProvider);
-
-    if (filters.isNearbyMode) {
-      ref
-          .read(searchFiltersProvider.notifier)
-          .update((s) => s.copyWith(isNearbyMode: false, clearLocation: true));
-      return;
-    }
-
+  Future<void> _openNearby() async {
     setState(() => _locating = true);
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -101,15 +92,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         timeLimit: const Duration(seconds: 15),
       );
 
-      _searchCtrl.clear();
-      ref.read(searchFiltersProvider.notifier).update(
-            (s) => s.copyWith(
-              isNearbyMode: true,
-              userLat: position.latitude,
-              userLng: position.longitude,
-              query: '',
-            ),
-          );
+      if (!mounted) return;
+      context.push(
+        '/search/nearby',
+        extra: (lat: position.latitude, lng: position.longitude),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -196,15 +183,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Buscador
+                      // Search field
                       TextField(
                         controller: _searchCtrl,
-                        enabled: !filters.isNearbyMode,
-                        decoration: InputDecoration(
-                          hintText: filters.isNearbyMode
-                              ? 'Mostrando clínicas cerca de ti'
-                              : 'Buscar por nombre, ciudad o dirección',
-                          prefixIcon: const Icon(Icons.search_rounded),
+                        decoration: const InputDecoration(
+                          hintText: 'Buscar por nombre, ciudad o dirección',
+                          prefixIcon: Icon(Icons.search_rounded),
                         ),
                         onChanged: (v) => ref
                             .read(searchFiltersProvider.notifier)
@@ -212,12 +196,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Botón "Cerca de mí"
-                      _NearbyToggle(
-                        active: filters.isNearbyMode,
+                      // "Cerca de mí" button
+                      _NearbyButton(
                         loading: _locating,
-                        radiusKm: filters.nearbyRadiusKm,
-                        onTap: _locating ? null : _toggleNearby,
+                        onTap: _locating ? null : _openNearby,
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -225,7 +207,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
-              // Chips de especialidades
+              // Specialty chips
               SliverToBoxAdapter(
                 child: specialtiesAsync.when(
                   data: (specialties) => Padding(
@@ -269,15 +251,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Título sección
-              SliverToBoxAdapter(
+              // Section title
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    filters.isNearbyMode
-                        ? 'Clínicas cerca de ti'
-                        : 'Clínicas disponibles',
-                    style: const TextStyle(
+                    'Clínicas disponibles',
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textPrimary,
@@ -287,22 +267,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // Lista de clínicas
+              // Clinic list
               clinicsAsync.when(
                 data: (clinics) => clinics.isEmpty
-                    ? SliverToBoxAdapter(
+                    ? const SliverToBoxAdapter(
                         child: _EmptyState(
-                          icon: filters.isNearbyMode
-                              ? Icons.location_off_rounded
-                              : Icons.search_off_rounded,
-                          title: filters.isNearbyMode
-                              ? 'No hay clínicas en ${filters.nearbyRadiusKm.toStringAsFixed(0)} km'
-                              : 'No hay clínicas con estos filtros',
-                          subtitle: filters.isNearbyMode
-                              ? 'Las clínicas deben tener ubicación GPS registrada '
-                                  '(guardar perfil en Mi clínica). Si usas emulador, '
-                                  'configura la ubicación del dispositivo en Valdemoro.'
-                              : 'Prueba con otro nombre, ciudad o especialidad',
+                          icon: Icons.search_off_rounded,
+                          title: 'No hay clínicas con estos filtros',
+                          subtitle:
+                              'Prueba con otro nombre, ciudad o especialidad',
                         ),
                       )
                     : SliverList(
@@ -330,77 +303,70 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-class _NearbyToggle extends StatelessWidget {
-  final bool active;
+// ── Nearby Button ────────────────────────────────────────────────
+
+class _NearbyButton extends StatelessWidget {
   final bool loading;
-  final double radiusKm;
   final VoidCallback? onTap;
 
-  const _NearbyToggle({
-    required this.active,
+  const _NearbyButton({
     required this.loading,
-    required this.radiusKm,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = active ? AppTheme.primary : AppTheme.surface;
-    final fgColor = active ? Colors.white : AppTheme.textPrimary;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: active ? AppTheme.primary : AppTheme.divider,
-          ),
+          border: Border.all(color: AppTheme.divider),
         ),
         child: Row(
           children: [
             if (loading)
-              SizedBox(
-                width: 18,
-                height: 18,
+              const SizedBox(
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: fgColor,
+                  color: AppTheme.primary,
                 ),
               )
             else
-              Icon(
-                active
-                    ? Icons.my_location_rounded
-                    : Icons.location_searching_rounded,
+              const Icon(
+                Icons.location_searching_rounded,
                 size: 20,
-                color: fgColor,
+                color: AppTheme.primary,
               ),
             const SizedBox(width: 10),
-            Expanded(
+            const Expanded(
               child: Text(
-                active
-                    ? 'Mostrando clínicas en ${radiusKm.toStringAsFixed(0)} km'
-                    : 'Buscar clínicas cerca de mí',
+                'Buscar clínicas cerca de mí',
                 style: TextStyle(
-                  color: fgColor,
+                  color: AppTheme.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            if (active)
-              Icon(Icons.close_rounded, size: 18, color: fgColor),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppTheme.textSecondary,
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+// ── Specialty Chip ───────────────────────────────────────────────
 
 class _SpecialtyChip extends StatelessWidget {
   final String label;
@@ -449,14 +415,11 @@ class _SpecialtyChip extends StatelessWidget {
   }
 }
 
+// ── Clinic Card ──────────────────────────────────────────────────
+
 class _ClinicCard extends StatelessWidget {
   final Clinic clinic;
   const _ClinicCard({required this.clinic});
-
-  String _formatDistance(double km) {
-    if (km < 1) return '${(km * 1000).toStringAsFixed(0)} m';
-    return '${km.toStringAsFixed(1)} km';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -490,51 +453,13 @@ class _ClinicCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          clinic.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ),
-                      if (clinic.distanceKm != null) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.near_me_rounded,
-                                size: 12,
-                                color: AppTheme.primary,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                _formatDistance(clinic.distanceKm!),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    clinic.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -598,6 +523,8 @@ class _ClinicCard extends StatelessWidget {
     );
   }
 }
+
+// ── Empty State ──────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final IconData icon;
