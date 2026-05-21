@@ -110,9 +110,35 @@ class ClinicRepository {
     required String address,
     required String city,
   }) async {
-    final query = [address, city].where((s) => s.trim().isNotEmpty).join(', ');
-    if (query.isEmpty) return null;
+    final addr = address.trim();
+    final cty = city.trim();
+    if (addr.isEmpty && cty.isEmpty) return null;
 
+    // Intento 1: dirección completa + ciudad + país
+    if (addr.isNotEmpty && cty.isNotEmpty) {
+      final coords = await _nominatimSearch('$addr, $cty, España');
+      if (coords != null) return coords;
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+
+    // Intento 2: solo ciudad + país (útil si la calle no está en OSM)
+    if (cty.isNotEmpty) {
+      final coords = await _nominatimSearch('$cty, España');
+      if (coords != null) return coords;
+      if (addr.isNotEmpty) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    // Intento 3: solo dirección si no hay ciudad
+    if (addr.isNotEmpty) {
+      return _nominatimSearch('$addr, España');
+    }
+
+    return null;
+  }
+
+  Future<({double lat, double lng})?> _nominatimSearch(String query) async {
     final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
       'q': query,
       'format': 'json',

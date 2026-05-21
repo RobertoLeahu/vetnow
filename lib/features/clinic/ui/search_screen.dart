@@ -299,7 +299,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               ? 'No hay clínicas en ${filters.nearbyRadiusKm.toStringAsFixed(0)} km'
                               : 'No hay clínicas con estos filtros',
                           subtitle: filters.isNearbyMode
-                              ? 'Prueba a ampliar la zona o desactivar el modo cercanía'
+                              ? 'Las clínicas deben tener ubicación GPS registrada '
+                                  '(guardar perfil en Mi clínica). Si usas emulador, '
+                                  'configura la ubicación del dispositivo en Valdemoro.'
                               : 'Prueba con otra ciudad o especialidad',
                         ),
                       )
