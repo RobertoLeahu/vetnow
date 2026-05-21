@@ -54,7 +54,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
             // ── App bar con saludo ───────────────────────────────────
             SliverAppBar(
               pinned: true,
-              expandedHeight: 148,
+              expandedHeight: 100,
               backgroundColor: AppTheme.background,
               surfaceTintColor: Colors.transparent,
               flexibleSpace: FlexibleSpaceBar(
@@ -62,7 +62,6 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                 titlePadding: EdgeInsets.zero,
                 background: _ClinicHeader(
                   clinicName: clinic?.name,
-                  logoUrl: clinic?.logoUrl,
                   dateLabel: today,
                 ),
               ),
@@ -132,12 +131,10 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
 
 class _ClinicHeader extends StatelessWidget {
   final String? clinicName;
-  final String? logoUrl;
   final String dateLabel;
 
   const _ClinicHeader({
     required this.clinicName,
-    required this.logoUrl,
     required this.dateLabel,
   });
 
@@ -152,34 +149,22 @@ class _ClinicHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppTheme.surface,
-                backgroundImage: (logoUrl != null && logoUrl!.isNotEmpty)
-                    ? NetworkImage(logoUrl!) as ImageProvider
-                    : null,
-                child: (logoUrl == null || logoUrl!.isEmpty)
-                    ? const Icon(Icons.storefront_rounded,
-                        size: 26, color: AppTheme.textSecondary)
-                    : null,
-              ),
-              const SizedBox(height: 6),
               Text(
                 clinicName ?? 'Mi clínica',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
               Text(
                 dateLabel,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: AppTheme.textSecondary,
                 ),
                 maxLines: 1,
