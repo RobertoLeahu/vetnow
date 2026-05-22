@@ -299,4 +299,50 @@ class ClinicRepository {
       'city': '',
     });
   }
+
+  // ── Favoritos ──────────────────────────────────────────────────
+
+  Future<Set<String>> fetchFavoriteClinicIds(String ownerId) async {
+    final data = await supabase
+        .from('clinic_favorites')
+        .select('clinic_id')
+        .eq('owner_id', ownerId);
+    return (data as List).map((e) => e['clinic_id'] as String).toSet();
+  }
+
+  Future<List<Clinic>> fetchFavoriteClinics(String ownerId) async {
+    final favRows = await supabase
+        .from('clinic_favorites')
+        .select('clinic_id')
+        .eq('owner_id', ownerId);
+    final ids =
+        (favRows as List).map((e) => e['clinic_id'] as String).toList();
+    if (ids.isEmpty) return [];
+
+    final data = await supabase
+        .from('clinics')
+        .select('''
+          *,
+          clinic_specialties(
+            specialties(id, name)
+          )
+        ''')
+        .inFilter('id', ids);
+    return (data as List).map((e) => Clinic.fromMap(e)).toList();
+  }
+
+  Future<void> addFavorite(String ownerId, String clinicId) async {
+    await supabase.from('clinic_favorites').upsert({
+      'owner_id': ownerId,
+      'clinic_id': clinicId,
+    });
+  }
+
+  Future<void> removeFavorite(String ownerId, String clinicId) async {
+    await supabase
+        .from('clinic_favorites')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('clinic_id', clinicId);
+  }
 }

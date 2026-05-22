@@ -46,11 +46,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _onRefresh() async {
-    ref.invalidate(clinicSearchProvider);
+    ref.invalidate(favoriteClinicsProvider);
     ref.invalidate(specialtiesProvider);
     ref.invalidate(profileProvider);
     await Future.wait([
-      ref.read(clinicSearchProvider.future),
+      ref.read(favoriteClinicsProvider.future),
       ref.read(specialtiesProvider.future),
     ]);
   }
@@ -139,7 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final profile = ref.watch(profileProvider).valueOrNull;
     final firstName = profile?.fullName.split(' ').first ?? '';
     final specialtiesAsync = ref.watch(specialtiesProvider);
-    final clinicsAsync = ref.watch(clinicSearchProvider);
+    final favoritesAsync = ref.watch(favoriteClinicsProvider);
     final filters = ref.watch(searchFiltersProvider);
 
     return Scaffold(
@@ -256,7 +256,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    'Clínicas disponibles',
+                    'Clínicas favoritas',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -267,26 +267,50 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // Clinic list
-              clinicsAsync.when(
-                data: (clinics) => clinics.isEmpty
-                    ? const SliverToBoxAdapter(
-                        child: _EmptyState(
-                          icon: Icons.search_off_rounded,
-                          title: 'No hay clínicas con estos filtros',
-                          subtitle:
-                              'Prueba con otro nombre, ciudad o especialidad',
-                        ),
-                      )
-                    : SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                            child: _ClinicCard(clinic: clinics[i]),
-                          ),
-                          childCount: clinics.length,
-                        ),
+              // Favorite clinics list (filtered by search text + specialty)
+              favoritesAsync.when(
+                data: (allFavs) {
+                  final term = filters.query.trim().toLowerCase();
+                  final filtered = allFavs.where((c) {
+                    final matchText = term.isEmpty ||
+                        c.name.toLowerCase().contains(term) ||
+                        c.city.toLowerCase().contains(term) ||
+                        c.address.toLowerCase().contains(term);
+                    final matchSpecialty = filters.specialtyId == null ||
+                        c.specialties.any((s) => s.id == filters.specialtyId);
+                    return matchText && matchSpecialty;
+                  }).toList();
+
+                  if (allFavs.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: _EmptyState(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Todavía no tienes clínicas favoritas',
+                        subtitle:
+                            'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
                       ),
+                    );
+                  }
+                  if (filtered.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: _EmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'Ninguna favorita coincide con los filtros',
+                        subtitle:
+                            'Prueba con otro nombre, ciudad o especialidad',
+                      ),
+                    );
+                  }
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                        child: _ClinicCard(clinic: filtered[i]),
+                      ),
+                      childCount: filtered.length,
+                    ),
+                  );
+                },
                 loading: () => const SliverToBoxAdapter(
                   child: Center(child: CircularProgressIndicator()),
                 ),

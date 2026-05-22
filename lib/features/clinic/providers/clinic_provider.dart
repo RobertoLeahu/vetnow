@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/clinic_repository.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
@@ -102,3 +103,21 @@ void invalidateClinicBookingData(WidgetRef ref, String clinicId) {
   ref.invalidate(clinicSchedulesProvider(clinicId));
   ref.invalidate(clinicDetailProvider(clinicId));
 }
+
+// ── Favoritos ────────────────────────────────────────────────────
+
+/// IDs de clínicas favoritas del propietario logueado.
+final favoriteClinicIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final user = ref.watch(authStateProvider).valueOrNull?.session?.user;
+  if (user == null) return {};
+  return ref.watch(clinicRepositoryProvider).fetchFavoriteClinicIds(user.id);
+});
+
+/// Clínicas favoritas completas (para la lista en SearchScreen).
+final favoriteClinicsProvider =
+    FutureProvider.autoDispose<List<Clinic>>((ref) async {
+  final user = ref.watch(authStateProvider).valueOrNull?.session?.user;
+  if (user == null) return [];
+  return ref.watch(clinicRepositoryProvider).fetchFavoriteClinics(user.id);
+});
