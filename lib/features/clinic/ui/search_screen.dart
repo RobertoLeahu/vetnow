@@ -267,7 +267,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // Favorite clinics list (filtered by search text + specialty)
+              // Favorite clinics (content inside bordered section)
               favoritesAsync.when(
                 data: (allFavs) {
                   final term = filters.query.trim().toLowerCase();
@@ -281,47 +281,83 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     return matchText && matchSpecialty;
                   }).toList();
 
+                  Widget content;
                   if (allFavs.isEmpty) {
-                    return const SliverToBoxAdapter(
-                      child: _EmptyState(
-                        icon: Icons.favorite_border_rounded,
-                        title: 'Todavía no tienes clínicas favoritas',
-                        subtitle:
-                            'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
-                      ),
+                    content = const _EmptyState(
+                      icon: Icons.favorite_border_rounded,
+                      title: 'Todavía no tienes clínicas favoritas',
+                      subtitle:
+                          'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
+                    );
+                  } else if (filtered.isEmpty) {
+                    content = const _EmptyState(
+                      icon: Icons.search_off_rounded,
+                      title: 'Ninguna favorita coincide con los filtros',
+                      subtitle:
+                          'Prueba con otro nombre, ciudad o especialidad',
+                    );
+                  } else {
+                    content = Column(
+                      children: [
+                        for (var i = 0; i < filtered.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 10),
+                          _ClinicCard(clinic: filtered[i]),
+                        ],
+                      ],
                     );
                   }
-                  if (filtered.isEmpty) {
-                    return const SliverToBoxAdapter(
-                      child: _EmptyState(
-                        icon: Icons.search_off_rounded,
-                        title: 'Ninguna favorita coincide con los filtros',
-                        subtitle:
-                            'Prueba con otro nombre, ciudad o especialidad',
-                      ),
-                    );
-                  }
-                  return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                        child: _ClinicCard(clinic: filtered[i]),
-                      ),
-                      childCount: filtered.length,
-                    ),
+
+                  return SliverToBoxAdapter(
+                    child: _FavoritesSectionBox(child: content),
                   );
                 },
                 loading: () => const SliverToBoxAdapter(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
                 ),
                 error: (e, _) => SliverToBoxAdapter(
-                    child: Center(child: Text('Error: $e'))),
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: Text('Error: $e')),
+                    ),
+                  ),
+                ),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Recuadro de sección (solo contenido; el título va fuera) ─────
+
+class _FavoritesSectionBox extends StatelessWidget {
+  final Widget child;
+
+  const _FavoritesSectionBox({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: child,
       ),
     );
   }
