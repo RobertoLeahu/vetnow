@@ -127,6 +127,7 @@ class ClinicDetailScreen extends ConsumerWidget {
                           }
 
                           if (clinic.specialties.length == 1) {
+                            invalidateClinicBookingData(ref, clinic.id);
                             context.push(
                               '/search/clinic/${clinic.id}/book',
                               extra: clinic.specialties.first,
@@ -145,6 +146,7 @@ class ClinicDetailScreen extends ConsumerWidget {
                               ),
                             ),
                             builder: (ctx) => _SpecialtySheet(
+                              ref: ref,
                               specialties: clinic.specialties,
                               clinicId: clinic.id,
                             ),
@@ -170,10 +172,15 @@ class ClinicDetailScreen extends ConsumerWidget {
 // ─── Bottom sheet de especialidades ──────────────────────────────────────────
 
 class _SpecialtySheet extends StatelessWidget {
+  final WidgetRef ref;
   final List<Specialty> specialties;
   final String clinicId;
 
-  const _SpecialtySheet({required this.specialties, required this.clinicId});
+  const _SpecialtySheet({
+    required this.ref,
+    required this.specialties,
+    required this.clinicId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +237,7 @@ class _SpecialtySheet extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
+                  invalidateClinicBookingData(ref, clinicId);
                   context.push('/search/clinic/$clinicId/book', extra: s);
                 },
               ),

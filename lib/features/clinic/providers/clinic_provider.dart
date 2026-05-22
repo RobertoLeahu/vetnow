@@ -83,16 +83,22 @@ final specialtiesProvider = FutureProvider<List<Specialty>>((ref) async {
   return (data as List).map((e) => Specialty.fromMap(e)).toList();
 });
 
-// Clínica por ID (para pantalla de detalle)
-final clinicDetailProvider = FutureProvider.family<Clinic?, String>((
+// Clínica por ID (para pantalla de detalle y reserva).
+final clinicDetailProvider = FutureProvider.autoDispose.family<Clinic?, String>((
   ref,
   id,
 ) async {
   return ref.watch(clinicRepositoryProvider).getClinicById(id);
 });
 
-// Horarios semanales de una clínica concreta (para el flujo de reserva)
+// Horarios semanales de una clínica (flujo de reserva; se refresca al entrar).
 final clinicSchedulesProvider =
-    FutureProvider.family<List<Schedule>, String>((ref, clinicId) async {
+    FutureProvider.autoDispose.family<List<Schedule>, String>((ref, clinicId) async {
   return ref.watch(clinicRepositoryProvider).fetchSchedules(clinicId);
 });
+
+/// Fuerza recarga de datos de clínica usados en reserva (horarios, duración, etc.).
+void invalidateClinicBookingData(WidgetRef ref, String clinicId) {
+  ref.invalidate(clinicSchedulesProvider(clinicId));
+  ref.invalidate(clinicDetailProvider(clinicId));
+}

@@ -352,6 +352,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
 
       ref.invalidate(myClinicProvider);
       ref.invalidate(mySchedulesProvider);
+      invalidateClinicBookingData(ref, clinic.id);
 
       if (mounted) {
         _captureBaseline();

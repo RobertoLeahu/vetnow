@@ -35,6 +35,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   Pet? _selectedPet;
   bool _loading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      invalidateClinicBookingData(ref, widget.clinicId);
+    });
+  }
+
   Future<void> _confirm() async {
     final user = ref.read(authRepositoryProvider).currentUser;
     if (user == null || _selectedSlot == null || _selectedPet == null) return;
