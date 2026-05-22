@@ -8,25 +8,51 @@ int weekdayToDayOfWeek(DateTime d) => d.weekday - 1;
 Set<int> openDaysFromSchedules(List<Schedule> schedules) =>
     schedules.map((s) => s.dayOfWeek).toSet();
 
+Duration appointmentDurationFromMinutes(int minutes) =>
+    Duration(minutes: minutes);
+
+/// Slot ya reservado (inicio + duración de esa cita).
+class BookedSlot {
+  final DateTime scheduledAt;
+  final Duration duration;
+
+  const BookedSlot({
+    required this.scheduledAt,
+    required this.duration,
+  });
+}
+
+/// `true` si [slot] solapa con alguna cita ya reservada.
+bool isSlotBlocked(
+  DateTime slot,
+  Duration slotDuration,
+  List<BookedSlot> booked,
+) {
+  final slotEnd = slot.add(slotDuration);
+  for (final b in booked) {
+    final bookedEnd = b.scheduledAt.add(b.duration);
+    if (slot.isBefore(bookedEnd) && b.scheduledAt.isBefore(slotEnd)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ({int hour, int minute}) _parseHourMinute(String t) {
   final parts = t.split(':');
   return (hour: int.parse(parts[0]), minute: int.parse(parts[1]));
 }
-
-/// Duración de cada slot de cita. Debe coincidir con la RPC
-/// `complete_past_appointments` en Supabase.
-const Duration kAppointmentSlotDuration = Duration(minutes: 30);
 
 /// Genera los slots disponibles para una fecha concreta a partir de los
 /// horarios semanales de la clínica.
 ///
 /// Devuelve lista vacía si ese día no tiene horario configurado.
 /// Los slots cubren desde `open_time` hasta `close_time` exclusivo, con
-/// pasos de `step` (por defecto [kAppointmentSlotDuration]).
+/// pasos de [step] (duración configurada por la clínica).
 List<DateTime> generateSlotsForDate(
   DateTime date,
   List<Schedule> schedules, {
-  Duration step = kAppointmentSlotDuration,
+  required Duration step,
 }) {
   final dow = weekdayToDayOfWeek(date);
 
@@ -52,8 +78,10 @@ List<DateTime> generateSlotsForDate(
   final slots = <DateTime>[];
   var current = start;
   while (current.isBefore(end)) {
+    final next = current.add(step);
+    if (next.isAfter(end)) break;
     slots.add(current);
-    current = current.add(step);
+    current = next;
   }
   return slots;
 }

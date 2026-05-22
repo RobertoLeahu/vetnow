@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
+import '../../../shared/appointment_duration.dart';
 import '../utils/slot_generator.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
@@ -40,14 +41,17 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
     setState(() => _loading = true);
     try {
-      await ref
-          .read(appointmentRepositoryProvider)
-          .createAppointment(
+      final clinic = ref.read(clinicDetailProvider(widget.clinicId)).valueOrNull;
+      final durationMinutes = clinic?.appointmentDurationMinutes ??
+          kDefaultAppointmentDurationMinutes;
+
+      await ref.read(appointmentRepositoryProvider).createAppointment(
             clinicId: widget.clinicId,
             petId: _selectedPet!.id,
             ownerId: user.id,
             specialtyId: widget.specialty.id,
             scheduledAt: _selectedSlot!,
+            durationMinutes: durationMinutes,
           );
       ref.invalidate(myAppointmentsProvider);
       ref.invalidate(bookedSlotsProvider);
@@ -166,7 +170,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         return _StepTime(
           clinicId: widget.clinicId,
           date: _selectedDate!,
-          slots: generateSlotsForDate(_selectedDate!, schedules),
+          slotDuration: appointmentDurationFromMinutes(
+            clinic.appointmentDurationMinutes,
+          ),
+          slots: generateSlotsForDate(
+            _selectedDate!,
+            schedules,
+            step: appointmentDurationFromMinutes(
+              clinic.appointmentDurationMinutes,
+            ),
+          ),
           selectedSlot: _selectedSlot,
           onSelect: (s) => setState(() {
             _selectedSlot = s;
@@ -457,6 +470,7 @@ class _StepDateState extends State<_StepDate> {
 class _StepTime extends ConsumerStatefulWidget {
   final String clinicId;
   final DateTime date;
+  final Duration slotDuration;
   final List<DateTime> slots;
   final DateTime? selectedSlot;
   final ValueChanged<DateTime> onSelect;
@@ -465,6 +479,7 @@ class _StepTime extends ConsumerStatefulWidget {
   const _StepTime({
     required this.clinicId,
     required this.date,
+    required this.slotDuration,
     required this.slots,
     required this.selectedSlot,
     required this.onSelect,
@@ -521,10 +536,6 @@ class _StepTimeState extends ConsumerState<_StepTime> {
 
     return bookedAsync.when(
       data: (booked) {
-        final bookedTimes = booked
-            .map((d) => '${d.hour}:${d.minute.toString().padLeft(2, '0')}')
-            .toSet();
-
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -546,9 +557,11 @@ class _StepTimeState extends ConsumerState<_StepTime> {
               itemBuilder: (_, i) {
                 final slot = widget.slots[i];
                 final now = DateTime.now();
-                final timeKey =
-                    '${slot.hour}:${slot.minute.toString().padLeft(2, '0')}';
-                final isBooked = bookedTimes.contains(timeKey);
+                final isBooked = isSlotBlocked(
+                  slot,
+                  widget.slotDuration,
+                  booked,
+                );
                 final isPast = !slot.isAfter(now) &&
                     DateUtils.isSameDay(slot, now);
                 final isDisabled = isBooked || isPast;

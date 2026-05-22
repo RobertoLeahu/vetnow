@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme.dart';
+import '../../../shared/appointment_duration.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
@@ -32,6 +33,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   late TextEditingController _descCtrl;
 
   Set<String> _selectedSpecialtyIds = {};
+  int _appointmentDurationMinutes = kDefaultAppointmentDurationMinutes;
   List<_DaySchedule> _weekSchedule = [];
   File? _pickedLogo;
   bool _saving = false;
@@ -96,6 +98,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     _descCtrl.text = clinic.description ?? '';
     _selectedSpecialtyIds =
         clinic.specialties.map((s) => s.id).toSet();
+    _appointmentDurationMinutes = clinic.appointmentDurationMinutes;
 
     _weekSchedule = List.generate(
       7,
@@ -124,6 +127,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
       email: _emailCtrl.text,
       description: _descCtrl.text,
       specialtyIds: Set<String>.from(_selectedSpecialtyIds),
+      appointmentDurationMinutes: _appointmentDurationMinutes,
       weekSchedule: _weekSchedule.map((d) => d.copy()).toList(),
       pickedLogoPath: _pickedLogo?.path,
     );
@@ -140,6 +144,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     _emailCtrl.text = b.email;
     _descCtrl.text = b.description;
     _selectedSpecialtyIds = Set<String>.from(b.specialtyIds);
+    _appointmentDurationMinutes = b.appointmentDurationMinutes;
     _weekSchedule = b.weekSchedule.map((d) => d.copy()).toList();
     _pickedLogo = b.pickedLogoPath != null ? File(b.pickedLogoPath!) : null;
   }
@@ -152,6 +157,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         email: _emailCtrl.text,
         description: _descCtrl.text,
         specialtyIds: _selectedSpecialtyIds,
+        appointmentDurationMinutes: _appointmentDurationMinutes,
         weekSchedule: _weekSchedule,
         pickedLogoPath: _pickedLogo?.path,
       ) ??
@@ -322,6 +328,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         logoUrl: logoUrl,
         lat: lat,
         lng: lng,
+        appointmentDurationMinutes: _appointmentDurationMinutes,
       );
 
       await repo.upsertClinic(updated.toMap());
@@ -461,6 +468,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                     _buildSpecialtiesSection(
                       specialtiesAsync.valueOrNull ?? [],
                     ),
+                    const SizedBox(height: 24),
+                    _buildAppointmentDurationSection(),
                     const SizedBox(height: 24),
                     _buildScheduleSection(),
                     const SizedBox(height: 32),
@@ -665,6 +674,45 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
               );
             }).toList(),
           ),
+      ],
+    );
+  }
+
+  // ── Duración de citas ───────────────────────────────────────────
+
+  Widget _buildAppointmentDurationSection() {
+    return _Section(
+      title: 'Duración de las citas',
+      children: [
+        const Text(
+          'Cada franja reservable tendrá esta duración. Los propietarios verán '
+          'los horarios disponibles ajustados al guardar.',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textSecondary,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<int>(
+          initialValue: _appointmentDurationMinutes,
+          decoration: const InputDecoration(
+            labelText: 'Duración por cita',
+            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          ),
+          items: kAllowedAppointmentDurationsMinutes
+              .map(
+                (m) => DropdownMenuItem(
+                  value: m,
+                  child: Text(formatAppointmentDurationLabel(m)),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _appointmentDurationMinutes = value);
+          },
+        ),
       ],
     );
   }
@@ -881,6 +929,7 @@ class _ClinicProfileBaseline {
   final String email;
   final String description;
   final Set<String> specialtyIds;
+  final int appointmentDurationMinutes;
   final List<_DaySchedule> weekSchedule;
   final String? pickedLogoPath;
 
@@ -892,6 +941,7 @@ class _ClinicProfileBaseline {
     required this.email,
     required this.description,
     required this.specialtyIds,
+    required this.appointmentDurationMinutes,
     required this.weekSchedule,
     required this.pickedLogoPath,
   });
@@ -904,6 +954,7 @@ class _ClinicProfileBaseline {
     required String email,
     required String description,
     required Set<String> specialtyIds,
+    required int appointmentDurationMinutes,
     required List<_DaySchedule> weekSchedule,
     required String? pickedLogoPath,
   }) {
@@ -916,6 +967,9 @@ class _ClinicProfileBaseline {
     if (pickedLogoPath != this.pickedLogoPath) return true;
     if (specialtyIds.length != this.specialtyIds.length) return true;
     if (!specialtyIds.containsAll(this.specialtyIds)) return true;
+    if (appointmentDurationMinutes != this.appointmentDurationMinutes) {
+      return true;
+    }
     for (var i = 0; i < weekSchedule.length; i++) {
       if (!weekSchedule[i].sameAs(this.weekSchedule[i])) return true;
     }
