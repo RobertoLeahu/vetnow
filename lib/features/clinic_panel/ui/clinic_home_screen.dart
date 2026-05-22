@@ -37,6 +37,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
     final allAppointments = allAsync.valueOrNull ?? [];
     final pendingCount =
         allAppointments.where((a) => a.isPending).length;
+    final stats = ref.watch(clinicAppointmentStatsProvider);
 
     final today = DateFormat("EEEE, d 'de' MMMM", 'es').format(DateTime.now());
 
@@ -112,6 +113,17 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
+
+                  // ── Resumen de citas ─────────────────────────────
+                  const _SectionLabel(label: 'Resumen de actividad'),
+                  const SizedBox(height: 10),
+                  _AppointmentsSummaryCard(
+                    isLoading: appointmentsLoading,
+                    stats: stats,
+                    onTapAgenda: () => context.go('/clinic-agenda'),
+                  ),
+
+                  const SizedBox(height: 20),
 
                   // ── Accesos rápidos ──────────────────────────────
                   const _SectionLabel(label: 'Acceso rápido'),
@@ -554,6 +566,345 @@ class _QuickAccessCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Resumen de citas ──────────────────────────────────────────────────────────
+
+class _AppointmentsSummaryCard extends StatelessWidget {
+  final bool isLoading;
+  final ClinicAppointmentStats stats;
+  final VoidCallback onTapAgenda;
+
+  const _AppointmentsSummaryCard({
+    required this.isLoading,
+    required this.stats,
+    required this.onTapAgenda,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Vista general de tus citas',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: onTapAgenda,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Ver agenda',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 18, color: AppTheme.primary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const _SummaryPeriodLabel(
+            icon: Icons.today_rounded,
+            label: 'Hoy',
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.todayScheduled}',
+                  label: 'Programadas',
+                  icon: Icons.event_rounded,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.todayDone}',
+                  label: 'Realizadas',
+                  icon: Icons.check_circle_outline_rounded,
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.todayConfirmed}',
+                  label: 'Confirmadas',
+                  icon: Icons.verified_rounded,
+                  color: AppTheme.primaryDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.todayPending}',
+                  label: 'Por confirmar',
+                  icon: Icons.hourglass_top_rounded,
+                  color: Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ),
+          if (stats.uniquePatientsToday > 0) ...[
+            const SizedBox(height: 10),
+            _SummaryHighlightRow(
+              icon: Icons.pets_rounded,
+              text:
+                  '${stats.uniquePatientsToday} ${stats.uniquePatientsToday == 1 ? 'paciente confirmado' : 'pacientes confirmados'} hoy',
+            ),
+          ],
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          const _SummaryPeriodLabel(
+            icon: Icons.date_range_rounded,
+            label: 'Esta semana',
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.weekScheduled}',
+                  label: 'Programadas',
+                  icon: Icons.calendar_month_rounded,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.weekDone}',
+                  label: 'Realizadas',
+                  icon: Icons.task_alt_rounded,
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.weekConfirmed}',
+                  label: 'Confirmadas',
+                  icon: Icons.event_available_rounded,
+                  color: AppTheme.primaryDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryStatTile(
+                  value: '${stats.weekPending}',
+                  label: 'Por confirmar',
+                  icon: Icons.pending_actions_rounded,
+                  color: Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ),
+          if (stats.weekCancelled > 0 || stats.todayCancelled > 0) ...[
+            const SizedBox(height: 10),
+            _SummaryHighlightRow(
+              icon: Icons.cancel_outlined,
+              text: stats.weekCancelled > 0
+                  ? '${stats.weekCancelled} canceladas esta semana'
+                  : '${stats.todayCancelled} canceladas hoy',
+              muted: true,
+            ),
+          ],
+          if (stats.pendingConfirmTotal > 0) ...[
+            const SizedBox(height: 10),
+            _SummaryHighlightRow(
+              icon: Icons.notifications_active_outlined,
+              text:
+                  '${stats.pendingConfirmTotal} en total esperando tu confirmación',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryPeriodLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SummaryPeriodLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppTheme.primary),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryStatTile extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _SummaryStatTile({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryHighlightRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool muted;
+
+  const _SummaryHighlightRow({
+    required this.icon,
+    required this.text,
+    this.muted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: muted
+            ? AppTheme.background
+            : AppTheme.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: muted ? AppTheme.textSecondary : AppTheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: muted ? AppTheme.textSecondary : AppTheme.textPrimary,
+                fontWeight: muted ? FontWeight.normal : FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

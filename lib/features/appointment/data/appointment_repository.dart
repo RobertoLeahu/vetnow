@@ -3,9 +3,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
+import '../../../shared/appointment_duration.dart';
 import '../../../shared/models/pet.dart';
+import '../utils/slot_generator.dart';
 
 class AppointmentRepository {
+  /// Marca como realizadas las citas confirmadas cuyo slot ya terminó (RPC).
+  Future<void> _autoCompletePastAppointments() async {
+    try {
+      await supabase.rpc('complete_past_appointments');
+    } catch (e, st) {
+      debugPrint('[VetNow] complete_past_appointments: $e\n$st');
+    }
+  }
+
   /// Obtener mascotas del propietario actual
   Future<List<Pet>> fetchMyPets(String ownerId) async {
     final data = await supabase
@@ -25,7 +36,7 @@ class AppointmentRepository {
   /// Obtener slots ocupados de una clínica en una fecha.
   /// Usa RPC con SECURITY DEFINER para bypasear RLS y ver slots de todos los
   /// usuarios, devolviendo únicamente scheduled_at (sin datos personales).
-  Future<List<DateTime>> fetchBookedSlots(
+  Future<List<BookedSlot>> fetchBookedSlots(
     String clinicId,
     DateTime date,
   ) async {
@@ -39,9 +50,15 @@ class AppointmentRepository {
       'p_to': to.toIso8601String(),
     });
 
-    return (data as List)
-        .map((e) => parseScheduledAtColumn(e['scheduled_at']))
-        .toList();
+    return (data as List).map((e) {
+      final row = e as Map<String, dynamic>;
+      final mins = (row['duration_minutes'] as num?)?.toInt() ??
+          kDefaultAppointmentDurationMinutes;
+      return BookedSlot(
+        scheduledAt: parseScheduledAtColumn(row['scheduled_at']),
+        duration: Duration(minutes: mins),
+      );
+    }).toList();
   }
 
   /// Crear cita
@@ -51,6 +68,7 @@ class AppointmentRepository {
     required String ownerId,
     required String specialtyId,
     required DateTime scheduledAt,
+    required int durationMinutes,
     String? notes,
   }) async {
     await supabase.from('appointments').insert({
@@ -59,6 +77,7 @@ class AppointmentRepository {
       'owner_id': ownerId,
       'specialty_id': specialtyId,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
+      'duration_minutes': durationMinutes,
       'status': 'pending',
       'notes': notes,
     });
@@ -66,6 +85,7 @@ class AppointmentRepository {
 
   /// Obtener citas del propietario
   Future<List<Map<String, dynamic>>> fetchMyAppointments(String ownerId) async {
+    await _autoCompletePastAppointments();
     final data = await supabase
         .from('appointments')
         .select('''
@@ -83,6 +103,7 @@ class AppointmentRepository {
   Future<List<Map<String, dynamic>>> fetchClinicAppointments(
     String clinicId,
   ) async {
+    await _autoCompletePastAppointments();
     final data = await supabase
         .from('appointments')
         .select('''

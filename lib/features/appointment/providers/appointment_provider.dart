@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/appointment_repository.dart';
+import '../utils/slot_generator.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 
@@ -23,7 +24,7 @@ final myAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
 
 /// Slots ocupados para una clínica y fecha
 final bookedSlotsProvider =
-    FutureProvider.family<List<DateTime>, ({String clinicId, DateTime date})>((
+    FutureProvider.family<List<BookedSlot>, ({String clinicId, DateTime date})>((
       ref,
       params,
     ) async {

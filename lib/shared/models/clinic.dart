@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
+
+import '../appointment_duration.dart';
 import 'specialty.dart';
 
 class Clinic extends Equatable {
@@ -15,6 +17,7 @@ class Clinic extends Equatable {
   final String? phone;
   final String? email;
   final String? logoUrl;
+  final int appointmentDurationMinutes;
   final List<Specialty> specialties;
 
   /// Distancia en kilómetros desde la posición del usuario hasta la clínica.
@@ -34,6 +37,7 @@ class Clinic extends Equatable {
     this.phone,
     this.email,
     this.logoUrl,
+    this.appointmentDurationMinutes = kDefaultAppointmentDurationMinutes,
     this.specialties = const [],
     this.distanceKm,
   });
@@ -53,6 +57,9 @@ class Clinic extends Equatable {
       phone: map['phone'] as String?,
       email: map['email'] as String?,
       logoUrl: map['logo_url'] as String?,
+      appointmentDurationMinutes:
+          (map['appointment_duration_minutes'] as num?)?.toInt() ??
+              kDefaultAppointmentDurationMinutes,
       specialties: rawSpecialties
           .map((e) => Specialty.fromMap(e['specialties'] as Map<String, dynamic>))
           .toList(),
@@ -71,6 +78,7 @@ class Clinic extends Equatable {
         'phone': phone,
         'email': email,
         'logo_url': logoUrl,
+        'appointment_duration_minutes': appointmentDurationMinutes,
       };
 
   Clinic copyWith({
@@ -85,6 +93,7 @@ class Clinic extends Equatable {
     String? phone,
     String? email,
     String? logoUrl,
+    int? appointmentDurationMinutes,
     List<Specialty>? specialties,
     double? distanceKm,
   }) =>
@@ -100,6 +109,8 @@ class Clinic extends Equatable {
         phone: phone ?? this.phone,
         email: email ?? this.email,
         logoUrl: logoUrl ?? this.logoUrl,
+        appointmentDurationMinutes:
+            appointmentDurationMinutes ?? this.appointmentDurationMinutes,
         specialties: specialties ?? this.specialties,
         distanceKm: distanceKm ?? this.distanceKm,
       );
