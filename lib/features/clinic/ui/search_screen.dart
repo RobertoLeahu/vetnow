@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
@@ -36,6 +37,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchCtrl = TextEditingController();
+  bool _locating = false;
 
   @override
   void dispose() {
@@ -53,6 +55,85 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ]);
   }
 
+  Future<void> _openNearby() async {
+    setState(() => _locating = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        await _showLocationDeniedDialog(
+          title: 'Ubicación desactivada',
+          message:
+              'Activa el servicio de ubicación de tu dispositivo para ver las clínicas cercanas.',
+          openSettings: () => Geolocator.openLocationSettings(),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        await _showLocationDeniedDialog(
+          title: 'Permiso de ubicación necesario',
+          message:
+              'Para mostrarte las clínicas más cercanas necesitamos acceder a tu ubicación. Actívala en los ajustes de la app.',
+          openSettings: () => Geolocator.openAppSettings(),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 15),
+      );
+
+      if (!mounted) return;
+      context.push(
+        '/search/nearby',
+        extra: (lat: position.latitude, lng: position.longitude),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo obtener tu ubicación: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  Future<void> _showLocationDeniedDialog({
+    required String title,
+    required String message,
+    required Future<bool> Function() openSettings,
+  }) async {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await openSettings();
+            },
+            child: const Text('Abrir ajustes'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider).valueOrNull;
@@ -68,147 +149,152 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-            // Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Logo
-                    const Icon(
-                      Icons.pets_rounded,
-                      size: 36,
-                      color: AppTheme.primary,
-                    ),
-                    const SizedBox(height: 12),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Bienvenido a VetNow, '),
-                          TextSpan(
-                            text: '$firstName!',
-                            style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Buscador
-                    TextField(
-                      controller: _searchCtrl,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Encuentra clínicas o especialistas por ubicación',
-                        prefixIcon: Icon(Icons.search_rounded),
-                      ),
-                      onChanged: (v) => ref
-                          .read(searchFiltersProvider.notifier)
-                          .update((s) => s.copyWith(city: v)),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-
-            // Chips de especialidades
-            SliverToBoxAdapter(
-              child: specialtiesAsync.when(
-                data: (specialties) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8.0,
-                    runSpacing: 8.0,
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SpecialtyChip(
-                        label: 'Todas',
-                        icon: Icons.apps_rounded,
-                        selected: filters.specialtyId == null,
-                        onTap: () => ref
-                            .read(searchFiltersProvider.notifier)
-                            .update((s) => s.copyWith(clearSpecialty: true)),
+                      const Icon(
+                        Icons.pets_rounded,
+                        size: 36,
+                        color: AppTheme.primary,
                       ),
-                      ...specialties.map(
-                        (s) => _SpecialtyChip(
-                          label: s.name,
-                          icon: _specialtyIcon(s.name),
-                          selected: filters.specialtyId == s.id,
-                          onTap: () => ref
-                              .read(searchFiltersProvider.notifier)
-                              .update((f) => f.copyWith(specialtyId: s.id)),
+                      const SizedBox(height: 12),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          children: [
+                            const TextSpan(text: 'Bienvenido a VetNow, '),
+                            TextSpan(
+                              text: '$firstName!',
+                              style: const TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // Search field
+                      TextField(
+                        controller: _searchCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Buscar por nombre, ciudad o dirección',
+                          prefixIcon: Icon(Icons.search_rounded),
+                        ),
+                        onChanged: (v) => ref
+                            .read(searchFiltersProvider.notifier)
+                            .update((s) => s.copyWith(query: v)),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // "Cerca de mí" button
+                      _NearbyButton(
+                        loading: _locating,
+                        onTap: _locating ? null : _openNearby,
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
-                // Ajustar el loading para que ocupe algo más
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => const SizedBox.shrink(),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              // Specialty chips
+              SliverToBoxAdapter(
+                child: specialtiesAsync.when(
+                  data: (specialties) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        _SpecialtyChip(
+                          label: 'Todas',
+                          icon: Icons.apps_rounded,
+                          selected: filters.specialtyId == null,
+                          onTap: () => ref
+                              .read(searchFiltersProvider.notifier)
+                              .update((s) => s.copyWith(clearSpecialty: true)),
+                        ),
+                        ...specialties.map(
+                          (s) => _SpecialtyChip(
+                            label: s.name,
+                            icon: _specialtyIcon(s.name),
+                            selected: filters.specialtyId == s.id,
+                            onTap: () => ref
+                                .read(searchFiltersProvider.notifier)
+                                .update((f) => f.copyWith(specialtyId: s.id)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ),
 
-            // Título sección
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Clínicas disponibles',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Section title
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Clínicas disponibles',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // Lista de clínicas
-            clinicsAsync.when(
-              data: (clinics) => clinics.isEmpty
-                  ? const SliverToBoxAdapter(
-                      child: _EmptyState(
-                        icon: Icons.search_off_rounded,
-                        title: 'No hay clínicas con estos filtros',
-                        subtitle: 'Prueba con otra ciudad o especialidad',
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                          child: _ClinicCard(clinic: clinics[i]),
+              // Clinic list
+              clinicsAsync.when(
+                data: (clinics) => clinics.isEmpty
+                    ? const SliverToBoxAdapter(
+                        child: _EmptyState(
+                          icon: Icons.search_off_rounded,
+                          title: 'No hay clínicas con estos filtros',
+                          subtitle:
+                              'Prueba con otro nombre, ciudad o especialidad',
                         ),
-                        childCount: clinics.length,
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                            child: _ClinicCard(clinic: clinics[i]),
+                          ),
+                          childCount: clinics.length,
+                        ),
                       ),
-                    ),
-              loading: () => const SliverToBoxAdapter(
-                child: Center(child: CircularProgressIndicator()),
+                loading: () => const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $e'))),
               ),
-              error: (e, _) =>
-                  SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
         ),
@@ -216,6 +302,71 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 }
+
+// ── Nearby Button ────────────────────────────────────────────────
+
+class _NearbyButton extends StatelessWidget {
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _NearbyButton({
+    required this.loading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Row(
+          children: [
+            if (loading)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.primary,
+                ),
+              )
+            else
+              const Icon(
+                Icons.location_searching_rounded,
+                size: 20,
+                color: AppTheme.primary,
+              ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Buscar clínicas cerca de mí',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppTheme.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Specialty Chip ───────────────────────────────────────────────
 
 class _SpecialtyChip extends StatelessWidget {
   final String label;
@@ -263,6 +414,8 @@ class _SpecialtyChip extends StatelessWidget {
     );
   }
 }
+
+// ── Clinic Card ──────────────────────────────────────────────────
 
 class _ClinicCard extends StatelessWidget {
   final Clinic clinic;
@@ -317,11 +470,13 @@ class _ClinicCard extends StatelessWidget {
                         color: AppTheme.textSecondary,
                       ),
                       const SizedBox(width: 3),
-                      Text(
-                        clinic.city,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
+                      Expanded(
+                        child: Text(
+                          clinic.city,
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -368,6 +523,8 @@ class _ClinicCard extends StatelessWidget {
     );
   }
 }
+
+// ── Empty State ──────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final IconData icon;

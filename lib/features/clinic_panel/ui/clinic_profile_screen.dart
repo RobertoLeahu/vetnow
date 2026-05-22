@@ -36,6 +36,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   File? _pickedLogo;
   bool _saving = false;
   bool _initialized = false;
+  bool _geocodeAutoScheduled = false;
+  bool _geocodingInBackground = false;
   /// Evita quedar enganchados a otro perfil si cambia la clínica.
   String? _initializedForClinicId;
   _ClinicProfileBaseline? _baseline;
@@ -82,6 +84,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   void _initFromClinic(Clinic clinic, List<Schedule> schedules) {
     final sameClinic = _initializedForClinicId == clinic.id;
     if (_initialized && sameClinic) return;
+    if (!sameClinic) _geocodeAutoScheduled = false;
     _initialized = true;
     _initializedForClinicId = clinic.id;
 
@@ -226,6 +229,41 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   String _timeLabel(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+  /// Registra lat/lng automáticamente si la clínica aún no tiene coordenadas
+  /// (p. ej. registrada antes de activar la búsqueda geográfica).
+  Future<void> _ensureGeocodedIfNeeded(Clinic clinic) async {
+    if (clinic.lat != null && clinic.lng != null) return;
+    if (clinic.city.trim().isEmpty) return;
+    if (_geocodingInBackground) return;
+
+    setState(() => _geocodingInBackground = true);
+    try {
+      final repo = ref.read(clinicRepositoryProvider);
+      final coords = await repo.geocodeAddress(
+        address: clinic.address,
+        city: clinic.city,
+      );
+      if (!mounted || coords == null) return;
+
+      await repo.upsertClinic(
+        clinic.copyWith(lat: coords.lat, lng: coords.lng).toMap(),
+      );
+      ref.invalidate(myClinicProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Ubicación registrada. Tu clínica ya aparecerá en búsquedas cercanas.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _geocodingInBackground = false);
+    }
+  }
+
   Future<void> _pickLogo() async {
     final picked =
         await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 512);
@@ -250,14 +288,40 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         );
       }
 
+      final newAddress = _addressCtrl.text.trim();
+      final newCity = _cityCtrl.text.trim();
+
+      // Geocodificar solo si la dirección o ciudad ha cambiado, o si todavía
+      // no hay coordenadas guardadas. Esto respeta el rate limit de Nominatim.
+      double? lat = clinic.lat;
+      double? lng = clinic.lng;
+      final addressChanged =
+          newAddress != clinic.address || newCity != clinic.city;
+      var geocodeSucceeded = lat != null && lng != null;
+      if (addressChanged || lat == null || lng == null) {
+        final coords = await repo.geocodeAddress(
+          address: newAddress,
+          city: newCity,
+        );
+        if (coords != null) {
+          lat = coords.lat;
+          lng = coords.lng;
+          geocodeSucceeded = true;
+        } else {
+          geocodeSucceeded = false;
+        }
+      }
+
       final updated = clinic.copyWith(
         name: _nameCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        city: _cityCtrl.text.trim(),
+        address: newAddress,
+        city: newCity,
         phone: _phoneCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         logoUrl: logoUrl,
+        lat: lat,
+        lng: lng,
       );
 
       await repo.upsertClinic(updated.toMap());
@@ -284,8 +348,15 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
 
       if (mounted) {
         _captureBaseline();
+        final msg = geocodeSucceeded
+            ? 'Perfil actualizado'
+            : 'Perfil guardado, pero no se pudo obtener la ubicación. '
+                'Revisa dirección y ciudad (ej. "Valdemoro") y vuelve a guardar.';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil actualizado')),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: geocodeSucceeded ? null : Colors.orange.shade800,
+          ),
         );
       }
       return true;
@@ -339,6 +410,14 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           data: (schedules) {
             _initFromClinic(clinic, schedules);
 
+            if (!_geocodeAutoScheduled) {
+              _geocodeAutoScheduled = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _ensureGeocodedIfNeeded(clinic);
+              });
+            }
+
             return PopScope(
               canPop: !_hasUnsavedChanges(),
               onPopInvokedWithResult: (didPop, _) async {
@@ -373,6 +452,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   children: [
+                    if (clinic.lat == null || clinic.lng == null)
+                      _buildLocationBanner(clinic),
                     _buildLogoSection(clinic),
                     const SizedBox(height: 24),
                     _buildInfoSection(),
@@ -395,6 +476,42 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildLocationBanner(Clinic clinic) {
+    final hasAddress = clinic.city.trim().isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.location_off_rounded, color: Colors.amber.shade800),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _geocodingInBackground
+                  ? 'Registrando tu ubicación en el mapa…'
+                  : hasAddress
+                      ? 'Tu clínica aún no tiene coordenadas GPS. '
+                          'Completa dirección y ciudad, luego pulsa Guardar '
+                          'para aparecer en búsquedas cercanas.'
+                      : 'Indica la ciudad (ej. Valdemoro) y la dirección '
+                          'para que los propietarios te encuentren cerca.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.amber.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
