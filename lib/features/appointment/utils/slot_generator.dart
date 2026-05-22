@@ -13,16 +13,20 @@ Set<int> openDaysFromSchedules(List<Schedule> schedules) =>
   return (hour: int.parse(parts[0]), minute: int.parse(parts[1]));
 }
 
+/// Duración de cada slot de cita. Debe coincidir con la RPC
+/// `complete_past_appointments` en Supabase.
+const Duration kAppointmentSlotDuration = Duration(minutes: 30);
+
 /// Genera los slots disponibles para una fecha concreta a partir de los
 /// horarios semanales de la clínica.
 ///
 /// Devuelve lista vacía si ese día no tiene horario configurado.
 /// Los slots cubren desde `open_time` hasta `close_time` exclusivo, con
-/// pasos de `step` (por defecto 30 min).
+/// pasos de `step` (por defecto [kAppointmentSlotDuration]).
 List<DateTime> generateSlotsForDate(
   DateTime date,
   List<Schedule> schedules, {
-  Duration step = const Duration(minutes: 30),
+  Duration step = kAppointmentSlotDuration,
 }) {
   final dow = weekdayToDayOfWeek(date);
 

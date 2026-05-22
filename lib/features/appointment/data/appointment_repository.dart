@@ -6,6 +6,15 @@ import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/pet.dart';
 
 class AppointmentRepository {
+  /// Marca como realizadas las citas confirmadas cuyo slot ya terminó (RPC).
+  Future<void> _autoCompletePastAppointments() async {
+    try {
+      await supabase.rpc('complete_past_appointments');
+    } catch (e, st) {
+      debugPrint('[VetNow] complete_past_appointments: $e\n$st');
+    }
+  }
+
   /// Obtener mascotas del propietario actual
   Future<List<Pet>> fetchMyPets(String ownerId) async {
     final data = await supabase
@@ -66,6 +75,7 @@ class AppointmentRepository {
 
   /// Obtener citas del propietario
   Future<List<Map<String, dynamic>>> fetchMyAppointments(String ownerId) async {
+    await _autoCompletePastAppointments();
     final data = await supabase
         .from('appointments')
         .select('''
@@ -83,6 +93,7 @@ class AppointmentRepository {
   Future<List<Map<String, dynamic>>> fetchClinicAppointments(
     String clinicId,
   ) async {
+    await _autoCompletePastAppointments();
     final data = await supabase
         .from('appointments')
         .select('''
