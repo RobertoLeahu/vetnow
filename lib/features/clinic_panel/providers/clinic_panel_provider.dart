@@ -78,6 +78,125 @@ final todayConfirmedClinicAppointmentsProvider =
   return filterTodayConfirmedClinicAppointments(all);
 });
 
+DateTime _dateOnlyLocal(DateTime dt) {
+  final l = dt.toLocal();
+  return DateTime(l.year, l.month, l.day);
+}
+
+bool _isInCurrentWeek(DateTime scheduledAt) {
+  final d = _dateOnlyLocal(scheduledAt);
+  final today = _dateOnlyLocal(DateTime.now());
+  final monday = today.subtract(Duration(days: today.weekday - 1));
+  final sunday = monday.add(const Duration(days: 6));
+  return !d.isBefore(monday) && !d.isAfter(sunday);
+}
+
+/// Métricas de citas para el resumen del dashboard (hoy + semana actual).
+class ClinicAppointmentStats {
+  final int todayScheduled;
+  final int todayConfirmed;
+  final int todayPending;
+  final int todayDone;
+  final int todayCancelled;
+  final int weekScheduled;
+  final int weekConfirmed;
+  final int weekPending;
+  final int weekDone;
+  final int weekCancelled;
+  final int pendingConfirmTotal;
+  final int uniquePatientsToday;
+
+  const ClinicAppointmentStats({
+    this.todayScheduled = 0,
+    this.todayConfirmed = 0,
+    this.todayPending = 0,
+    this.todayDone = 0,
+    this.todayCancelled = 0,
+    this.weekScheduled = 0,
+    this.weekConfirmed = 0,
+    this.weekPending = 0,
+    this.weekDone = 0,
+    this.weekCancelled = 0,
+    this.pendingConfirmTotal = 0,
+    this.uniquePatientsToday = 0,
+  });
+}
+
+ClinicAppointmentStats computeClinicAppointmentStats(List<Appointment> all) {
+  final now = DateTime.now();
+  final today = _dateOnlyLocal(now);
+
+  var todayScheduled = 0;
+  var todayConfirmed = 0;
+  var todayPending = 0;
+  var todayDone = 0;
+  var todayCancelled = 0;
+  var weekScheduled = 0;
+  var weekConfirmed = 0;
+  var weekPending = 0;
+  var weekDone = 0;
+  var weekCancelled = 0;
+  var pendingConfirmTotal = 0;
+  final patientsToday = <String>{};
+
+  for (final a in all) {
+    final day = _dateOnlyLocal(a.scheduledAt);
+    final isToday = day == today;
+    final isWeek = _isInCurrentWeek(a.scheduledAt);
+
+    if (a.isPending) pendingConfirmTotal++;
+
+    if (isToday) {
+      if (a.isCancelled) {
+        todayCancelled++;
+      } else if (a.isDone) {
+        todayDone++;
+      } else if (a.isConfirmed) {
+        todayConfirmed++;
+        todayScheduled++;
+        patientsToday.add(a.petId);
+      } else if (a.isPending) {
+        todayPending++;
+        todayScheduled++;
+      }
+    }
+
+    if (isWeek) {
+      if (a.isCancelled) {
+        weekCancelled++;
+      } else if (a.isDone) {
+        weekDone++;
+      } else if (a.isConfirmed) {
+        weekConfirmed++;
+        weekScheduled++;
+      } else if (a.isPending) {
+        weekPending++;
+        weekScheduled++;
+      }
+    }
+  }
+
+  return ClinicAppointmentStats(
+    todayScheduled: todayScheduled,
+    todayConfirmed: todayConfirmed,
+    todayPending: todayPending,
+    todayDone: todayDone,
+    todayCancelled: todayCancelled,
+    weekScheduled: weekScheduled,
+    weekConfirmed: weekConfirmed,
+    weekPending: weekPending,
+    weekDone: weekDone,
+    weekCancelled: weekCancelled,
+    pendingConfirmTotal: pendingConfirmTotal,
+    uniquePatientsToday: patientsToday.length,
+  );
+}
+
+final clinicAppointmentStatsProvider = Provider<ClinicAppointmentStats>((ref) {
+  final all = ref.watch(clinicAppointmentsProvider).valueOrNull ?? [];
+  return computeClinicAppointmentStats(all);
+});
+
 // ── Expedientes médicos ───────────────────────────────────────────────────────
 
 final medicalNotesRepositoryProvider = Provider<MedicalNotesRepository>(
