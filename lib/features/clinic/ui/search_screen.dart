@@ -8,8 +8,8 @@ import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/appointment.dart';
-import '../../../shared/models/clinic.dart';
 import '../../../shared/models/pet.dart';
+import 'clinic_list_card.dart';
 
 IconData _specialtyIcon(String name) {
   final n = name
@@ -40,14 +40,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
-  final _searchCtrl = TextEditingController();
   bool _locating = false;
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
 
   Future<void> _onRefresh() async {
     ref.invalidate(favoriteClinicsProvider);
@@ -211,16 +204,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                       const SizedBox(height: 16),
 
-                      // Search field
-                      TextField(
-                        controller: _searchCtrl,
-                        decoration: const InputDecoration(
-                          hintText: 'Buscar por nombre, ciudad o dirección',
-                          prefixIcon: Icon(Icons.search_rounded),
+                      // Abre pantalla de búsqueda en vivo
+                      GestureDetector(
+                        onTap: () => context.push('/search/query'),
+                        child: const AbsorbPointer(
+                          child: TextField(
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              hintText:
+                                  'Buscar por nombre, ciudad o dirección',
+                              prefixIcon: Icon(Icons.search_rounded),
+                            ),
+                          ),
                         ),
-                        onChanged: (v) => ref
-                            .read(searchFiltersProvider.notifier)
-                            .update((s) => s.copyWith(query: v)),
                       ),
                       const SizedBox(height: 12),
 
@@ -317,7 +313,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       children: [
                         for (var i = 0; i < allFavs.length; i++) ...[
                           if (i > 0) const SizedBox(height: 10),
-                          _ClinicCard(clinic: allFavs[i]),
+                          ClinicListCard(clinic: allFavs[i]),
                         ],
                       ],
                     );
@@ -730,115 +726,6 @@ class _SpecialtyChip extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Clinic Card ──────────────────────────────────────────────────
-
-class _ClinicCard extends StatelessWidget {
-  final Clinic clinic;
-  const _ClinicCard({required this.clinic});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/search/clinic/${clinic.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.divider),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: AppTheme.surface,
-              backgroundImage: clinic.logoUrl != null
-                  ? NetworkImage(clinic.logoUrl!)
-                  : null,
-              child: clinic.logoUrl == null
-                  ? const Icon(
-                      Icons.local_hospital_rounded,
-                      color: AppTheme.primary,
-                      size: 28,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    clinic.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        size: 13,
-                        color: AppTheme.textSecondary,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          clinic.city,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (clinic.specialties.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: clinic.specialties
-                          .take(2)
-                          .map(
-                            (s) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              child: Text(
-                                s.name,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppTheme.textSecondary,
             ),
           ],
         ),

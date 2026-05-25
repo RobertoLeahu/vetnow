@@ -57,6 +57,18 @@ final searchFiltersProvider = StateProvider<SearchFilters>(
   (_) => const SearchFilters(),
 );
 
+/// Búsqueda por texto (nombre, ciudad, dirección) para la pantalla de búsqueda.
+final clinicTextSearchProvider =
+    FutureProvider.autoDispose.family<List<Clinic>, String>((ref, query) async {
+  final term = query.trim();
+  if (term.isEmpty) return [];
+  final specialtyId = ref.watch(searchFiltersProvider).specialtyId;
+  return ref.read(clinicRepositoryProvider).searchClinics(
+        query: term,
+        specialtyId: specialtyId,
+      );
+});
+
 // Clínicas cercanas (solo activo en NearbyScreen; usa especialidad y GPS).
 final clinicSearchProvider = FutureProvider.autoDispose<List<Clinic>>((ref) async {
   final filters = ref.watch(searchFiltersProvider);

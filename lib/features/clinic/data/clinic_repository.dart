@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/strings/search_text.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
@@ -24,14 +25,14 @@ class ClinicRepository {
 
     var clinics = (data as List).map((e) => Clinic.fromMap(e)).toList();
 
-    final term = query?.trim().toLowerCase();
+    final term = query?.trim();
     if (term != null && term.isNotEmpty) {
       clinics = clinics
           .where(
             (c) =>
-                c.name.toLowerCase().contains(term) ||
-                c.city.toLowerCase().contains(term) ||
-                c.address.toLowerCase().contains(term),
+                searchTextContains(c.name, term) ||
+                searchTextContains(c.city, term) ||
+                searchTextContains(c.address, term),
           )
           .toList();
     }

@@ -7,6 +7,7 @@ import '../features/auth/ui/login_screen.dart';
 import '../features/auth/ui/register_screen.dart';
 import '../features/auth/ui/role_selector_screen.dart';
 import '../features/clinic/ui/search_screen.dart';
+import '../features/clinic/ui/clinic_text_search_screen.dart';
 import '../features/clinic/ui/nearby_screen.dart';
 import '../features/clinic/ui/clinic_detail_screen.dart';
 import '../features/appointment/ui/appointments_screen.dart';
@@ -137,6 +138,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/search',
             builder: (_, __) => const SearchScreen(),
             routes: [
+              GoRoute(
+                path: 'query',
+                builder: (_, __) => const ClinicTextSearchScreen(),
+              ),
               GoRoute(
                 path: 'nearby',
                 builder: (_, state) {

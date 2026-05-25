@@ -168,6 +168,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         return _StepDate(
           selectedDate: _selectedDate,
           openDays: openDaysFromSchedules(schedules),
+          schedules: schedules,
+          slotDuration: appointmentDurationFromMinutes(
+            clinic.appointmentDurationMinutes,
+          ),
           onSelect: (d) => setState(() {
             _selectedDate = d;
             _selectedSlot = null;
@@ -300,10 +304,14 @@ class _StepIndicator extends StatelessWidget {
 class _StepDate extends StatefulWidget {
   final DateTime? selectedDate;
   final Set<int> openDays;
+  final List<Schedule> schedules;
+  final Duration slotDuration;
   final ValueChanged<DateTime> onSelect;
   const _StepDate({
     required this.selectedDate,
     required this.openDays,
+    required this.schedules,
+    required this.slotDuration,
     required this.onSelect,
   });
 
@@ -419,7 +427,12 @@ class _StepDateState extends State<_StepDate> {
               );
               final isClosed =
                   !widget.openDays.contains(date.weekday - 1);
-              final isDisabled = isPast || isClosed;
+              final hasBookableSlots = hasBookableSlotsForDate(
+                date,
+                widget.schedules,
+                step: widget.slotDuration,
+              );
+              final isDisabled = isPast || isClosed || !hasBookableSlots;
               final isSelected =
                   _selected != null && DateUtils.isSameDay(date, _selected);
               final isToday = DateUtils.isSameDay(date, today);

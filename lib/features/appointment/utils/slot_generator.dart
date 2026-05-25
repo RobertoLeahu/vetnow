@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../../shared/models/schedule.dart';
 
 /// Convierte `DateTime.weekday` (1=Lunes ... 7=Domingo) a la convención del
@@ -84,4 +86,23 @@ List<DateTime> generateSlotsForDate(
     current = next;
   }
   return slots;
+}
+
+/// `true` si el día tiene al menos un hueco reservable (horario configurado y,
+/// si es hoy, algún slot cuya hora aún no haya pasado).
+bool hasBookableSlotsForDate(
+  DateTime date,
+  List<Schedule> schedules, {
+  required Duration step,
+}) {
+  final slots = generateSlotsForDate(date, schedules, step: step);
+  if (slots.isEmpty) return false;
+
+  final now = DateTime.now();
+  if (!DateUtils.isSameDay(date, now)) return true;
+
+  return slots.any((slot) {
+    final isPast = !slot.isAfter(now) && DateUtils.isSameDay(slot, now);
+    return !isPast;
+  });
 }
