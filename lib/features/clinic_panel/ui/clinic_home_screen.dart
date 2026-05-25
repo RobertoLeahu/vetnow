@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../shared/models/pet.dart';
 import '../providers/clinic_panel_provider.dart';
@@ -39,7 +42,10 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
         allAppointments.where((a) => a.isPending).length;
     final stats = ref.watch(clinicAppointmentStatsProvider);
 
-    final today = DateFormat("EEEE, d 'de' MMMM", 'es').format(DateTime.now());
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final today = dateFormat(todayHeaderPattern(locale), locale)
+        .format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -82,7 +88,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   const SizedBox(height: 20),
 
                   // ── Citas del día ────────────────────────────────
-                  const _SectionLabel(label: 'Hoy'),
+                  _SectionLabel(label: l10n.today),
                   const SizedBox(height: 10),
                   _TodayAppointmentsCard(
                     isLoading: appointmentsLoading,
@@ -94,7 +100,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   const SizedBox(height: 20),
 
                   // ── Pacientes de hoy ─────────────────────────────
-                  const _SectionLabel(label: 'Pacientes de hoy'),
+                  _SectionLabel(label: l10n.todayPatients),
                   const SizedBox(height: 10),
                   _TodayPatientsCarousel(
                     isLoading: appointmentsLoading,
@@ -105,7 +111,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
 
                   // ── Citas por confirmar ──────────────────────────
                   if (!allAsync.isLoading && pendingCount > 0) ...[
-                    const _SectionLabel(label: 'Pendiente de tu confirmación'),
+                    _SectionLabel(label: l10n.pendingYourConfirmation),
                     const SizedBox(height: 10),
                     _PendingConfirmCard(
                       count: pendingCount,
@@ -115,7 +121,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   ],
 
                   // ── Resumen de citas ─────────────────────────────
-                  const _SectionLabel(label: 'Resumen de actividad'),
+                  _SectionLabel(label: l10n.activitySummary),
                   const SizedBox(height: 10),
                   _AppointmentsSummaryCard(
                     isLoading: appointmentsLoading,
@@ -126,7 +132,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   const SizedBox(height: 20),
 
                   // ── Accesos rápidos ──────────────────────────────
-                  const _SectionLabel(label: 'Acceso rápido'),
+                  _SectionLabel(label: l10n.quickAccess),
                   const SizedBox(height: 10),
                   _QuickAccessGrid(),
                 ]),
@@ -152,6 +158,7 @@ class _ClinicHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -162,7 +169,7 @@ class _ClinicHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                clinicName ?? 'Mi clínica',
+                clinicName ?? l10n.myClinicFallback,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -199,6 +206,7 @@ class _IncompleteProfileBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -216,7 +224,7 @@ class _IncompleteProfileBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Completa tu perfil',
+                  l10n.completeYourProfile,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.amber.shade900,
@@ -225,7 +233,7 @@ class _IncompleteProfileBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Los propietarios podrán encontrarte cuando completes los datos de tu clínica.',
+                  l10n.completeProfileBannerBody,
                   style: TextStyle(fontSize: 12, color: Colors.amber.shade800),
                 ),
               ],
@@ -241,7 +249,7 @@ class _IncompleteProfileBanner extends StatelessWidget {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Completar'),
+            child: Text(l10n.complete),
           ),
         ],
       ),
@@ -283,6 +291,7 @@ class _TodayAppointmentsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -314,28 +323,30 @@ class _TodayAppointmentsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        'citas confirmadas hoy',
-                        style: TextStyle(fontSize: 15, color: Colors.white70),
+                        l10n.confirmedAppointmentsToday,
+                        style: const TextStyle(
+                            fontSize: 15, color: Colors.white70),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 if (appointments.isEmpty)
-                  const Text(
-                    'Sin citas para hoy. Disfruta el día.',
-                    style: TextStyle(fontSize: 13, color: Colors.white70),
+                  Text(
+                    l10n.noAppointmentsTodayEnjoy,
+                    style: const TextStyle(
+                        fontSize: 13, color: Colors.white70),
                   )
                 else ...[
                   const Divider(color: Colors.white24, height: 1),
                   const SizedBox(height: 12),
                   Text(
                     appointments.length == 1
-                        ? 'Próxima cita'
-                        : 'Próximas citas',
+                        ? l10n.nextAppointment
+                        : l10n.nextAppointments,
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.white.withValues(alpha: 0.7),
@@ -360,16 +371,16 @@ class _TodayAppointmentsCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(50),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Ver agenda completa',
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.white),
+                          l10n.viewFullAgenda,
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.white),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded,
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward_rounded,
                             size: 15, color: Colors.white),
                       ],
                     ),
@@ -432,6 +443,7 @@ class _PendingConfirmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -460,7 +472,7 @@ class _PendingConfirmCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$count ${count == 1 ? 'cita esperando' : 'citas esperando'} confirmación',
+                    l10n.appointmentsAwaitingConfirmation(count),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -469,7 +481,7 @@ class _PendingConfirmCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Acepta o rechaza desde la agenda',
+                    l10n.acceptOrRejectFromAgenda,
                     style: TextStyle(
                         fontSize: 12, color: Colors.orange.shade700),
                   ),
@@ -490,13 +502,14 @@ class _PendingConfirmCard extends StatelessWidget {
 class _QuickAccessGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Row(
       children: [
         Expanded(
           child: _QuickAccessCard(
             icon: Icons.calendar_month_rounded,
-            label: 'Agenda',
-            subtitle: 'Gestiona tus citas',
+            label: l10n.agendaTitle,
+            subtitle: l10n.manageYourAppointments,
             onTap: () => context.go('/clinic-agenda'),
           ),
         ),
@@ -504,8 +517,8 @@ class _QuickAccessGrid extends StatelessWidget {
         Expanded(
           child: _QuickAccessCard(
             icon: Icons.people_rounded,
-            label: 'Pacientes',
-            subtitle: 'Expedientes médicos',
+            label: l10n.patientsTitle,
+            subtitle: l10n.medicalRecords,
             onTap: () => context.go('/clinic-patients'),
           ),
         ),
@@ -586,6 +599,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (isLoading) {
       return Container(
         height: 200,
@@ -612,10 +626,10 @@ class _AppointmentsSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Vista general de tus citas',
-                  style: TextStyle(
+                  l10n.appointmentsOverview,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
                   ),
@@ -623,18 +637,18 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: onTapAgenda,
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Ver agenda',
-                      style: TextStyle(
+                      l10n.viewAgenda,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primary,
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded,
+                    const Icon(Icons.chevron_right_rounded,
                         size: 18, color: AppTheme.primary),
                   ],
                 ),
@@ -642,9 +656,9 @@ class _AppointmentsSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const _SummaryPeriodLabel(
+          _SummaryPeriodLabel(
             icon: Icons.today_rounded,
-            label: 'Hoy',
+            label: l10n.today,
           ),
           const SizedBox(height: 8),
           Row(
@@ -652,7 +666,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.todayScheduled}',
-                  label: 'Programadas',
+                  label: l10n.scheduled,
                   icon: Icons.event_rounded,
                   color: AppTheme.primary,
                 ),
@@ -661,7 +675,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.todayDone}',
-                  label: 'Realizadas',
+                  label: l10n.statCompleted,
                   icon: Icons.check_circle_outline_rounded,
                   color: Colors.green.shade700,
                 ),
@@ -674,7 +688,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.todayConfirmed}',
-                  label: 'Confirmadas',
+                  label: l10n.statConfirmed,
                   icon: Icons.verified_rounded,
                   color: AppTheme.primaryDark,
                 ),
@@ -683,7 +697,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.todayPending}',
-                  label: 'Por confirmar',
+                  label: l10n.toConfirm,
                   icon: Icons.hourglass_top_rounded,
                   color: Colors.orange.shade700,
                 ),
@@ -694,16 +708,15 @@ class _AppointmentsSummaryCard extends StatelessWidget {
             const SizedBox(height: 10),
             _SummaryHighlightRow(
               icon: Icons.pets_rounded,
-              text:
-                  '${stats.uniquePatientsToday} ${stats.uniquePatientsToday == 1 ? 'paciente confirmado' : 'pacientes confirmados'} hoy',
+              text: l10n.confirmedPatientsToday(stats.uniquePatientsToday),
             ),
           ],
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 14),
-          const _SummaryPeriodLabel(
+          _SummaryPeriodLabel(
             icon: Icons.date_range_rounded,
-            label: 'Esta semana',
+            label: l10n.thisWeek,
           ),
           const SizedBox(height: 8),
           Row(
@@ -711,7 +724,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.weekScheduled}',
-                  label: 'Programadas',
+                  label: l10n.scheduled,
                   icon: Icons.calendar_month_rounded,
                   color: AppTheme.primary,
                 ),
@@ -720,7 +733,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.weekDone}',
-                  label: 'Realizadas',
+                  label: l10n.statCompleted,
                   icon: Icons.task_alt_rounded,
                   color: Colors.green.shade700,
                 ),
@@ -733,7 +746,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.weekConfirmed}',
-                  label: 'Confirmadas',
+                  label: l10n.statConfirmed,
                   icon: Icons.event_available_rounded,
                   color: AppTheme.primaryDark,
                 ),
@@ -742,7 +755,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
               Expanded(
                 child: _SummaryStatTile(
                   value: '${stats.weekPending}',
-                  label: 'Por confirmar',
+                  label: l10n.toConfirm,
                   icon: Icons.pending_actions_rounded,
                   color: Colors.orange.shade700,
                 ),
@@ -754,8 +767,8 @@ class _AppointmentsSummaryCard extends StatelessWidget {
             _SummaryHighlightRow(
               icon: Icons.cancel_outlined,
               text: stats.weekCancelled > 0
-                  ? '${stats.weekCancelled} canceladas esta semana'
-                  : '${stats.todayCancelled} canceladas hoy',
+                  ? l10n.cancelledThisWeek(stats.weekCancelled)
+                  : l10n.cancelledToday(stats.todayCancelled),
               muted: true,
             ),
           ],
@@ -763,8 +776,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
             const SizedBox(height: 10),
             _SummaryHighlightRow(
               icon: Icons.notifications_active_outlined,
-              text:
-                  '${stats.pendingConfirmTotal} en total esperando tu confirmación',
+              text: l10n.totalAwaitingConfirmation(stats.pendingConfirmTotal),
             ),
           ],
         ],
@@ -955,9 +967,9 @@ class _TodayPatientsCarousel extends StatelessWidget {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Text(
-          'Ningún paciente con cita confirmada para hoy.',
-          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+        child: Text(
+          context.l10n.noConfirmedPatientsToday,
+          style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           textAlign: TextAlign.center,
         ),
       );

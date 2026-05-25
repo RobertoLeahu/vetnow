@@ -8,6 +8,8 @@ import '../providers/pet_provider.dart';
 import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n_ext.dart';
 
 class PetsScreen extends ConsumerStatefulWidget {
   const PetsScreen({super.key});
@@ -24,16 +26,17 @@ class _PetsScreenState extends ConsumerState<PetsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final petsAsync = ref.watch(myPetsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis mascotas')),
+      appBar: AppBar(title: Text(l10n.myPetsTitle)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddPetSheet(context),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Añadir mascota'),
+        label: Text(l10n.addPet),
       ),
       body: petsAsync.when(
         data: (pets) => pets.isEmpty
@@ -65,7 +68,7 @@ class _PetsScreenState extends ConsumerState<PetsScreen> {
                 ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
       ),
     );
   }
@@ -107,6 +110,7 @@ class _EmptyPets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -119,25 +123,25 @@ class _EmptyPets extends StatelessWidget {
               color: AppTheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Aún no has añadido mascotas',
-              style: TextStyle(
+            Text(
+              l10n.noPetsYetTitle,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Añade a tu mascota para gestionar sus citas',
+            Text(
+              l10n.noPetsYetSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
-              label: const Text('Añadir mascota'),
+              label: Text(l10n.addPet),
             ),
           ],
         ),
@@ -161,6 +165,7 @@ class _SpeciesChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -182,7 +187,7 @@ class _SpeciesChip extends StatelessWidget {
               Text(species.emoji, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                species.label,
+                species.localizedLabel(l10n),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -243,6 +248,7 @@ class _PetFormPhotoAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Column(
         children: [
@@ -321,7 +327,7 @@ class _PetFormPhotoAvatar extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            uploading ? 'Subiendo foto…' : 'Toca para añadir o cambiar foto',
+            uploading ? l10n.uploadingPhoto : l10n.tapToAddPhoto,
             style: const TextStyle(
               fontSize: 12,
               color: AppTheme.textSecondary,
@@ -344,6 +350,7 @@ void _showPetPhotoSourceSheet(
   required void Function(ImageSource source) onChosen,
   VoidCallback? onRemove,
 }) {
+  final l10n = context.l10n;
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.white,
@@ -356,7 +363,7 @@ void _showPetPhotoSourceSheet(
         children: [
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Hacer foto'),
+            title: Text(l10n.takePhoto),
             onTap: () {
               Navigator.pop(sheetCtx);
               onChosen(ImageSource.camera);
@@ -364,7 +371,7 @@ void _showPetPhotoSourceSheet(
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Elegir de galería'),
+            title: Text(l10n.chooseFromGallery),
             onTap: () {
               Navigator.pop(sheetCtx);
               onChosen(ImageSource.gallery);
@@ -376,9 +383,9 @@ void _showPetPhotoSourceSheet(
                 Icons.delete_outline_rounded,
                 color: Colors.red,
               ),
-              title: const Text(
-                'Quitar foto de perfil',
-                style: TextStyle(color: Colors.red),
+              title: Text(
+                l10n.removeProfilePhoto,
+                style: const TextStyle(color: Colors.red),
               ),
               onTap: () {
                 Navigator.pop(sheetCtx);
@@ -432,6 +439,7 @@ class _PetCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onEdit,
@@ -460,7 +468,7 @@ class _PetCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${pet.species.emoji} ${pet.species.label}',
+                    '${pet.species.emoji} ${pet.species.localizedLabel(l10n)}',
                     style: const TextStyle(
                       color: AppTheme.primary,
                       fontSize: 13,
@@ -480,7 +488,7 @@ class _PetCard extends ConsumerWidget {
                   if (pet.birthDate != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      _calculateAge(pet.birthDate!),
+                      _calculateAge(pet.birthDate!, l10n),
                       style: const TextStyle(
                         color: AppTheme.textSecondary,
                         fontSize: 12,
@@ -492,7 +500,7 @@ class _PetCard extends ConsumerWidget {
             ),
             IconButton(
               icon: const Icon(Icons.edit_rounded, color: AppTheme.textSecondary),
-              tooltip: 'Editar mascota',
+              tooltip: l10n.editPetTooltip,
               onPressed: onEdit,
             ),
             IconButton(
@@ -504,18 +512,18 @@ class _PetCard extends ConsumerWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Eliminar mascota'),
-                    content: Text('¿Seguro que quieres eliminar a ${pet.name}?'),
+                    title: Text(l10n.deletePetTitle),
+                    content: Text(l10n.deletePetConfirm(pet.name)),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: const Text('Cancelar'),
+                        child: Text(l10n.cancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(true),
-                        child: const Text(
-                          'Eliminar',
-                          style: TextStyle(color: Colors.red),
+                        child: Text(
+                          l10n.delete,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -533,16 +541,16 @@ class _PetCard extends ConsumerWidget {
     );
   }
 
-  String _calculateAge(DateTime birthDate) {
+  String _calculateAge(DateTime birthDate, AppLocalizations l10n) {
     final now = DateTime.now();
     final years = now.year - birthDate.year;
     final months = now.month - birthDate.month;
     final totalMonths = years * 12 + months;
 
-    if (totalMonths < 1) return 'Menos de 1 mes';
-    if (totalMonths < 12) return '$totalMonths meses';
-    if (totalMonths < 24) return '1 año';
-    return '${totalMonths ~/ 12} años';
+    if (totalMonths < 1) return l10n.ageLessThanOneMonth;
+    if (totalMonths < 12) return l10n.ageMonths(totalMonths);
+    if (totalMonths < 24) return l10n.ageOneYear;
+    return l10n.ageYears(totalMonths ~/ 12);
   }
 }
 
@@ -585,8 +593,9 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'El nombre es obligatorio');
+      setState(() => _error = l10n.nameRequiredError);
       return;
     }
 
@@ -630,7 +639,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
       widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      setState(() => _error = 'Error al guardar: $e');
+      setState(() => _error = l10n.saveError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -638,6 +647,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -661,9 +671,9 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Nueva mascota',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            Text(
+              l10n.newPet,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             _PetFormPhotoAvatar(
@@ -678,13 +688,13 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nombre *'),
+              decoration: InputDecoration(labelText: l10n.nameRequired),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 14),
-            const Text(
-              'Especie',
-              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            Text(
+              l10n.species,
+              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 8),
             _SpeciesWrap(
@@ -694,7 +704,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
             const SizedBox(height: 14),
             TextField(
               controller: _breedCtrl,
-              decoration: const InputDecoration(labelText: 'Raza (opcional)'),
+              decoration: InputDecoration(labelText: l10n.breedOptional),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 14),
@@ -705,7 +715,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
                   initialDate: DateTime.now().subtract(const Duration(days: 365)),
                   firstDate: DateTime(2000),
                   lastDate: DateTime.now(),
-                  helpText: 'Fecha de nacimiento',
+                  helpText: l10n.birthDate,
                 );
                 if (picked != null) {
                   setState(() => _birthDate = picked);
@@ -727,7 +737,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
                     const SizedBox(width: 10),
                     Text(
                       _birthDate == null
-                          ? 'Fecha de nacimiento (opcional)'
+                          ? l10n.birthDateOptional
                           : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
                       style: TextStyle(
                         color: _birthDate == null
@@ -752,7 +762,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
               onPressed: _loading ? null : _save,
               child: _loading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Guardar mascota'),
+                  : Text(l10n.savePet),
             ),
           ],
         ),
@@ -813,8 +823,9 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'El nombre es obligatorio');
+      setState(() => _error = l10n.nameRequiredError);
       return;
     }
 
@@ -852,7 +863,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
       widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      setState(() => _error = 'Error al guardar: $e');
+      setState(() => _error = l10n.saveError(e.toString()));
     } finally {
       if (mounted) {
         setState(() {
@@ -865,6 +876,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final displayUrl = (_pickedPhoto == null && !_removePhoto)
         ? widget.pet.photoUrl
         : null;
@@ -892,9 +904,9 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Editar mascota',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            Text(
+              l10n.editPet,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             _PetFormPhotoAvatar(
@@ -916,13 +928,13 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nombre *'),
+              decoration: InputDecoration(labelText: l10n.nameRequired),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 14),
-            const Text(
-              'Especie',
-              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            Text(
+              l10n.species,
+              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 8),
             _SpeciesWrap(
@@ -932,7 +944,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
             const SizedBox(height: 14),
             TextField(
               controller: _breedCtrl,
-              decoration: const InputDecoration(labelText: 'Raza (opcional)'),
+              decoration: InputDecoration(labelText: l10n.breedOptional),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 14),
@@ -944,7 +956,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
                       _birthDate ?? DateTime.now().subtract(const Duration(days: 365)),
                   firstDate: DateTime(2000),
                   lastDate: DateTime.now(),
-                  helpText: 'Fecha de nacimiento',
+                  helpText: l10n.birthDate,
                 );
                 if (picked != null) {
                   setState(() => _birthDate = picked);
@@ -966,7 +978,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
                     const SizedBox(width: 10),
                     Text(
                       _birthDate == null
-                          ? 'Fecha de nacimiento (opcional)'
+                          ? l10n.birthDateOptional
                           : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
                       style: TextStyle(
                         color: _birthDate == null
@@ -991,7 +1003,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
               onPressed: _loading ? null : _save,
               child: _loading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Guardar cambios'),
+                  : Text(l10n.saveChanges),
             ),
           ],
         ),

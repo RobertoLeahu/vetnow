@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
 import '../../../app/theme.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
 import '../../pet/providers/pet_provider.dart';
 
@@ -31,13 +33,14 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
     final petsAsync = ref.watch(myPetsProvider);
     final selectedPetId = ref.watch(selectedPetFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Citas'),
+        title: Text(l10n.appointmentsTitle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(112),
           child: appointmentsAsync.when(
@@ -53,17 +56,17 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                     petsAsync.when(
                       data: (pets) => DropdownButtonFormField<String?>(
                         initialValue: selectedPetId,
-                        decoration: const InputDecoration(
-                          labelText: 'Mascota',
-                          contentPadding: EdgeInsets.symmetric(
+                        decoration: InputDecoration(
+                          labelText: l10n.petFilterLabel,
+                          contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 18,
                           ),
                         ),
                         items: [
-                          const DropdownMenuItem<String?>(
+                          DropdownMenuItem<String?>(
                             value: null,
-                            child: Text('Todas las mascotas'),
+                            child: Text(l10n.allPets),
                           ),
                           ...pets.map(
                             (p) => DropdownMenuItem<String?>(
@@ -81,10 +84,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                         height: 40,
                         child: Center(child: CircularProgressIndicator()),
                       ),
-                      error: (_, __) => const SizedBox(
+                      error: (_, __) => SizedBox(
                         height: 40,
                         child: Center(
-                          child: Text('No se pudieron cargar mascotas'),
+                          child: Text(l10n.petsLoadError),
                         ),
                       ),
                     ),
@@ -94,19 +97,19 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                       child: Row(
                         children: [
                           _TabChip(
-                            label: 'Programadas ($upcoming)',
+                            label: l10n.tabScheduled(upcoming),
                             index: 0,
                             controller: _tabController,
                           ),
                           const SizedBox(width: 8),
                           _TabChip(
-                            label: 'Realizadas ($done)',
+                            label: l10n.tabCompleted(done),
                             index: 1,
                             controller: _tabController,
                           ),
                           const SizedBox(width: 8),
                           _TabChip(
-                            label: 'Canceladas ($cancelled)',
+                            label: l10n.tabCancelled(cancelled),
                             index: 2,
                             controller: _tabController,
                           ),
@@ -134,19 +137,19 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
             children: [
               _AppointmentList(
                 appointments: upcoming,
-                emptyTitle: 'No tienes citas programadas',
-                emptySubtitle: 'Reserva una cita y aparecerá aquí.',
+                emptyTitle: l10n.noScheduledAppointmentsTitle,
+                emptySubtitle: l10n.noScheduledAppointmentsSubtitle,
                 onRefresh: _refreshAppointments,
               ),
               _AppointmentList(
                 appointments: done,
-                emptyTitle: 'No tienes citas realizadas',
-                emptySubtitle: 'Aquí verás el historial de tus visitas.',
+                emptyTitle: l10n.noCompletedAppointmentsTitle,
+                emptySubtitle: l10n.completedAppointmentsSubtitle,
                 onRefresh: _refreshAppointments,
               ),
               _AppointmentList(
                 appointments: cancelled,
-                emptyTitle: 'No tienes citas canceladas',
+                emptyTitle: l10n.noCancelledAppointmentsTitle,
                 emptySubtitle: '',
                 showDeleteButton: true,
                 onRefresh: _refreshAppointments,
@@ -155,7 +158,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text(context.l10n.errorWithDetails('$e'))),
       ),
     );
   }
@@ -265,7 +269,9 @@ class _AppointmentCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = DateFormat("EEE d MMM · HH:mm", 'es');
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final fmt = dateFormat(appointmentCardPattern(locale), locale);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -363,20 +369,18 @@ class _AppointmentCard extends ConsumerWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Cancelar cita'),
-                    content: const Text(
-                      '¿Seguro que quieres cancelar esta cita?',
-                    ),
+                    title: Text(l10n.cancelAppointment),
+                    content: Text(l10n.cancelAppointmentConfirm),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: const Text('No'),
+                        child: Text(l10n.no),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(true),
-                        child: const Text(
-                          'Sí, cancelar',
-                          style: TextStyle(color: Colors.red),
+                        child: Text(
+                          l10n.yesCancel,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -397,7 +401,7 @@ class _AppointmentCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(50),
                 ),
               ),
-              child: const Text('Cancelar cita'),
+              child: Text(l10n.cancelAppointment),
             ),
           ],
           if (showDeleteButton && appointment.isCancelled) ...[
@@ -407,20 +411,18 @@ class _AppointmentCard extends ConsumerWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Eliminar cita'),
-                    content: const Text(
-                      'Se borrará esta cita de tu historial. No se puede deshacer.',
-                    ),
+                    title: Text(l10n.deleteAppointment),
+                    content: Text(l10n.deleteAppointmentConfirm),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: const Text('No'),
+                        child: Text(l10n.no),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(true),
-                        child: const Text(
-                          'Sí, eliminar',
-                          style: TextStyle(color: Colors.red),
+                        child: Text(
+                          l10n.yesDelete,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -435,14 +437,14 @@ class _AppointmentCard extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('No se pudo eliminar: $e')),
+                        SnackBar(content: Text(l10n.deleteFailed(e.toString()))),
                       );
                     }
                   }
                 }
               },
               icon: const Icon(Icons.delete_outline_rounded, size: 18),
-              label: const Text('Eliminar'),
+              label: Text(l10n.delete),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
@@ -465,11 +467,12 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final config = switch (status) {
-      'confirmed' => (label: 'Confirmada', color: AppTheme.primary),
-      'cancelled' => (label: 'Cancelada', color: Colors.red),
-      'done' => (label: 'Realizada', color: Colors.grey),
-      _ => (label: 'Pendiente', color: Colors.orange),
+      'confirmed' => (label: l10n.statusConfirmed, color: AppTheme.primary),
+      'cancelled' => (label: l10n.statusCancelled, color: Colors.red),
+      'done' => (label: l10n.statusDone, color: Colors.grey),
+      _ => (label: l10n.statusPending, color: Colors.orange),
     };
 
     return Container(

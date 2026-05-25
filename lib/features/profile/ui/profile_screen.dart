@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../clinic/providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -11,12 +12,13 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final profile = ref.watch(profileProvider).valueOrNull;
     final favoritesAsync = ref.watch(favoriteClinicsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Perfil'),
+        title: Text(l10n.profileTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_rounded),
@@ -45,26 +47,26 @@ class ProfileScreen extends ConsumerWidget {
           // Opciones de perfil
           _ProfileMenuItem(
             icon: Icons.pets_rounded,
-            label: 'Mis mascotas',
+            label: l10n.myPets,
             onTap: () => context.go('/pets'),
           ),
           _ProfileMenuItem(
             icon: Icons.calendar_month_rounded,
-            label: 'Mis citas',
+            label: l10n.myAppointments,
             onTap: () => context.go('/appointments'),
           ),
           _ProfileMenuItem(
             icon: Icons.notifications_rounded,
-            label: 'Notificaciones',
+            label: l10n.notifications,
             onTap: () {},
           ),
 
           const SizedBox(height: 32),
 
           // Sección guardados
-          const Text(
-            'Guardados',
-            style: TextStyle(
+          Text(
+            l10n.saved,
+            style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
@@ -88,7 +90,7 @@ class ProfileScreen extends ConsumerWidget {
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text('Error al cargar favoritos: $e'),
+              child: Text(l10n.favoritesLoadError(e.toString())),
             ),
           ),
 
@@ -101,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
               if (context.mounted) context.go('/login');
             },
             icon: const Icon(Icons.logout_rounded, size: 16),
-            label: const Text('Cerrar sesión'),
+            label: Text(l10n.signOut),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red),
@@ -124,6 +126,7 @@ class _SavedClinicsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (clinics.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -133,24 +136,24 @@ class _SavedClinicsSection extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const Text(
-              'No has guardado ninguna clínica',
-              style: TextStyle(
+            Text(
+              l10n.noSavedClinicsTitle,
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Cuando guardes clínicas con el corazón, las verás aquí',
+            Text(
+              l10n.noSavedClinicsSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => context.go('/search'),
               icon: const Icon(Icons.search_rounded, size: 16),
-              label: const Text('Encontrar clínicas'),
+              label: Text(l10n.findClinics),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.textPrimary,
                 side: const BorderSide(color: AppTheme.divider),

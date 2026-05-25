@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 import '../providers/clinic_provider.dart';
 
@@ -112,13 +113,14 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final clinicsAsync = ref.watch(clinicSearchProvider);
     final filters = ref.watch(searchFiltersProvider);
     final specialtiesAsync = ref.watch(specialtiesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clínicas cercanas'),
+        title: Text(l10n.nearbyClinicsTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
@@ -139,7 +141,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                 runSpacing: 8,
                 children: [
                   _NearbySpecialtyChip(
-                    label: 'Todas',
+                    label: l10n.allSpecialties,
                     icon: Icons.apps_rounded,
                     selected: filters.specialtyId == null,
                     onTap: () => _setSpecialtyFilter(null),
@@ -209,7 +211,9 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                                 size: 64, color: AppTheme.textSecondary),
                             const SizedBox(height: 16),
                             Text(
-                              'No hay clínicas en ${filters.nearbyRadiusKm.toStringAsFixed(0)} km',
+                              l10n.noClinicsWithinRadius(
+                                filters.nearbyRadiusKm.toStringAsFixed(0),
+                              ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -220,8 +224,8 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                             const SizedBox(height: 8),
                             Text(
                               filters.specialtyId != null
-                                  ? 'Prueba con otra especialidad o amplía el radio de búsqueda.'
-                                  : 'Las clínicas necesitan tener su ubicación GPS registrada para aparecer aquí.',
+                                  ? l10n.nearbyTryOtherSpecialty
+                                  : l10n.nearbyNeedsGps,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                   color: AppTheme.textSecondary, fontSize: 13),
@@ -238,7 +242,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Text(
-                              '${clinics.length} clínica${clinics.length == 1 ? '' : 's'} cerca de ti',
+                              l10n.nearbyClinicsCount(clinics.length),
                               style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
@@ -262,7 +266,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text('Error: $e')),
+                  Center(child: Text(l10n.errorWithDetails('$e'))),
               ),
             ),
           ),
@@ -373,10 +377,10 @@ class _MapSection extends StatelessWidget {
                     size: 22,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Ver en el mapa',
-                      style: TextStyle(
+                      context.l10n.viewOnMap,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.textPrimary,

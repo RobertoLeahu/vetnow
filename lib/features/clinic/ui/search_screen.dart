@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../shared/models/pet.dart';
 import 'clinic_list_card.dart';
@@ -60,10 +62,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (!mounted) return;
+        final l10n = context.l10n;
         await _showLocationDeniedDialog(
-          title: 'Ubicación desactivada',
-          message:
-              'Activa el servicio de ubicación de tu dispositivo para ver las clínicas cercanas.',
+          title: l10n.locationDisabledTitle,
+          message: l10n.locationDisabledMessage,
           openSettings: () => Geolocator.openLocationSettings(),
         );
         return;
@@ -77,10 +79,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         if (!mounted) return;
+        final l10n = context.l10n;
         await _showLocationDeniedDialog(
-          title: 'Permiso de ubicación necesario',
-          message:
-              'Para mostrarte las clínicas más cercanas necesitamos acceder a tu ubicación. Actívala en los ajustes de la app.',
+          title: l10n.locationPermissionTitle,
+          message: l10n.locationPermissionMessage,
           openSettings: () => Geolocator.openAppSettings(),
         );
         return;
@@ -107,7 +109,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo obtener tu ubicación: $e')),
+        SnackBar(content: Text(context.l10n.locationFetchError('$e'))),
       );
     } finally {
       if (mounted) setState(() => _locating = false);
@@ -119,6 +121,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     required String message,
     required Future<bool> Function() openSettings,
   }) async {
+    final l10n = context.l10n;
     return showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -127,14 +130,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
               Navigator.of(dialogContext).pop();
               await openSettings();
             },
-            child: const Text('Abrir ajustes'),
+            child: Text(l10n.openSettings),
           ),
         ],
       ),
@@ -143,6 +146,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final profileAsync = ref.watch(profileProvider);
     final firstName = profileAsync.maybeWhen(
       data: (profile) => profile?.fullName.split(' ').first ?? '',
@@ -175,9 +179,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                       const SizedBox(height: 12),
                       firstName.isEmpty
-                          ? const Text(
-                              'Bienvenido a VetNow',
-                              style: TextStyle(
+                          ? Text(
+                              l10n.welcomeToVetNow,
+                              style: const TextStyle(
                                 fontSize: 24,
                                 color: AppTheme.textPrimary,
                                 fontWeight: FontWeight.w400,
@@ -191,7 +195,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                   fontWeight: FontWeight.w400,
                                 ),
                                 children: [
-                                  const TextSpan(text: 'Bienvenido a VetNow, '),
+                                  TextSpan(text: '${l10n.welcomeToVetNow}, '),
                                   TextSpan(
                                     text: '$firstName!',
                                     style: const TextStyle(
@@ -207,13 +211,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       // Abre pantalla de búsqueda en vivo
                       GestureDetector(
                         onTap: () => context.push('/search/query'),
-                        child: const AbsorbPointer(
+                        child: AbsorbPointer(
                           child: TextField(
                             readOnly: true,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Buscar por nombre, ciudad o dirección',
-                              prefixIcon: Icon(Icons.search_rounded),
+                            decoration: InputDecoration(
+                              hintText: l10n.searchHintNameCityAddress,
+                              prefixIcon: const Icon(Icons.search_rounded),
                             ),
                           ),
                         ),
@@ -245,7 +248,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       runSpacing: 8,
                       children: [
                         _SpecialtyChip(
-                          label: 'Todas',
+                          label: l10n.allSpecialties,
                           icon: Icons.apps_rounded,
                           selected: filters.specialtyId == null,
                           onTap: () {
@@ -282,12 +285,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
               // Section title
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    'Clínicas favoritas',
-                    style: TextStyle(
+                    l10n.favoriteClinics,
+                    style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textPrimary,
@@ -302,11 +305,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 data: (allFavs) {
                   Widget content;
                   if (allFavs.isEmpty) {
-                    content = const _EmptyState(
+                    content = _EmptyState(
                       icon: Icons.favorite_border_rounded,
-                      title: 'Todavía no tienes clínicas favoritas',
-                      subtitle:
-                          'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
+                      title: l10n.noFavoriteClinicsTitle,
+                      subtitle: l10n.noFavoriteClinicsSubtitle,
                     );
                   } else {
                     content = Column(
@@ -335,7 +337,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: _FavoritesSectionBox(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text('Error: $e')),
+                      child: Center(child: Text(l10n.errorWithDetails('$e'))),
                     ),
                   ),
                 ),
@@ -344,12 +346,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
               // Section title — Próximas citas
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    'Próximas citas',
-                    style: TextStyle(
+                    l10n.upcomingAppointments,
+                    style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textPrimary,
@@ -370,10 +372,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                   Widget content;
                   if (upcoming.isEmpty) {
-                    content = const _EmptyState(
+                    content = _EmptyState(
                       icon: Icons.calendar_today_rounded,
-                      title: 'No tienes citas programadas',
-                      subtitle: 'Reserva una cita y aparecerá aquí.',
+                      title: l10n.noScheduledAppointmentsTitle,
+                      subtitle: l10n.noScheduledAppointmentsSubtitle,
                     );
                   } else {
                     content = Column(
@@ -404,7 +406,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: _FavoritesSectionBox(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text('Error: $e')),
+                      child: Center(child: Text(l10n.errorWithDetails('$e'))),
                     ),
                   ),
                 ),
@@ -421,18 +423,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
 // ── Próxima cita card ─────────────────────────────────────────────
 
-class _UpcomingAppointmentCard extends StatelessWidget {
+class _UpcomingAppointmentCard extends ConsumerWidget {
   final Appointment appointment;
   const _UpcomingAppointmentCard({required this.appointment});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
     final slot = appointment.scheduledAt;
-    final dayName = DateFormat('EEEE', 'es').format(slot);
+    final dayName = dateFormat('EEEE', locale).format(slot);
     final dayCapitalized =
         dayName[0].toUpperCase() + dayName.substring(1);
-    final dateStr = DateFormat("d 'de' MMMM", 'es').format(slot);
-    final timeStr = DateFormat('HH:mm').format(slot);
+    final dateStr =
+        dateFormat(searchSlotDatePattern(locale), locale).format(slot);
+    final timeStr = dateFormat('HH:mm', locale).format(slot);
 
     final emoji = switch (appointment.petSpecies) {
       PetSpecies.dog => '🐶',
@@ -446,8 +451,8 @@ class _UpcomingAppointmentCard extends StatelessWidget {
     };
 
     final (badgeLabel, badgeColor) = appointment.isPending
-        ? ('Pendiente', Colors.orange.shade700)
-        : ('Confirmada', AppTheme.primary);
+        ? (l10n.statusPending, Colors.orange.shade700)
+        : (l10n.statusConfirmed, AppTheme.primary);
 
     return GestureDetector(
       onTap: () => context.go('/appointments'),
@@ -482,7 +487,7 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    DateFormat('d').format(slot),
+                    dateFormat('d', locale).format(slot),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -492,7 +497,7 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    DateFormat('MMM', 'es').format(slot),
+                    dateFormat('MMM', locale).format(slot),
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppTheme.textSecondary,
@@ -663,10 +668,10 @@ class _NearbyButton extends StatelessWidget {
                 color: AppTheme.primary,
               ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Buscar clínicas cerca de mí',
-                style: TextStyle(
+                context.l10n.searchClinicsNearMe,
+                style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

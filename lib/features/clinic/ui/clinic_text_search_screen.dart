@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import 'clinic_list_card.dart';
 
 /// Búsqueda en vivo por nombre, ciudad o dirección.
@@ -49,12 +50,13 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final resultsAsync = ref.watch(clinicTextSearchProvider(_debouncedQuery));
     final hasQuery = _debouncedQuery.trim().isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buscar clínicas'),
+        title: Text(l10n.searchClinicsTitle),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,7 +68,7 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
               focusNode: _focusNode,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Nombre, ciudad o dirección',
+                hintText: l10n.searchHintShort,
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchCtrl.text.isEmpty
                     ? null
@@ -85,13 +87,13 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
           ),
           Expanded(
             child: !hasQuery
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32),
                       child: Text(
-                        'Escribe para ver clínicas que coincidan',
+                        l10n.searchTypeToSeeResults,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 14,
                         ),
@@ -115,7 +117,7 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'No hay clínicas para "$_debouncedQuery"',
+                                  l10n.searchNoClinicsForQuery(_debouncedQuery),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 15,
@@ -124,10 +126,10 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                const Text(
-                                  'Prueba con otro nombre, ciudad o dirección',
+                                Text(
+                                  l10n.searchTryAnotherQuery,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     color: AppTheme.textSecondary,
                                   ),
@@ -148,7 +150,8 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
                     },
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
+                    error: (e, _) =>
+                        Center(child: Text(l10n.errorWithDetails('$e'))),
                   ),
           ),
         ],

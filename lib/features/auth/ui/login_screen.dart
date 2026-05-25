@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -27,7 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(profileProvider.future);
       if (mounted) context.go('/auth-resolve');
     } catch (e) {
-      setState(() => _error = 'Email o contraseña incorrectos');
+      setState(() => _error = context.l10n.loginErrorInvalidCredentials);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -35,6 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -43,22 +45,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Bienvenido 👋',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text(l10n.loginWelcome,
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('Inicia sesión en VetNow',
-                  style: TextStyle(color: Colors.grey)),
+              Text(l10n.loginSubtitle,
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 32),
               TextField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: l10n.email),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: InputDecoration(labelText: l10n.password),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -69,13 +71,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: _loading ? null : _login,
                 child: _loading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Iniciar sesión'),
+                    : Text(l10n.signIn),
               ),
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
                   onPressed: () => context.go('/role-selector'),
-                  child: const Text('¿No tienes cuenta? Regístrate'),
+                  child: Text(l10n.loginNoAccountRegister),
                 ),
               ),
             ],

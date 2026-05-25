@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../providers/appointment_provider.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/appointment_duration.dart';
 import '../utils/slot_generator.dart';
 import '../../../shared/models/clinic.dart';
@@ -66,9 +68,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       if (mounted) _showSuccess();
     } catch (e) {
       if (mounted) {
+        final l10n = context.l10n;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al reservar: $e'),
+            content: Text(l10n.bookingError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -80,6 +83,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   void _showSuccess() {
     final slot = _selectedSlot!;
+    final l10n = context.l10n;
+    final locale = ref.read(localeProvider);
+    final dateText =
+        dateFormat(appointmentAtPattern(locale), locale).format(slot);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -94,13 +101,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               size: 64,
             ),
             const SizedBox(height: 16),
-            const Text(
-              '¡Cita reservada!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.appointmentBookedTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              DateFormat("d 'de' MMMM 'a las' HH:mm", 'es').format(slot),
+              l10n.appointmentBookedBody(dateText),
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppTheme.textSecondary),
             ),
@@ -112,7 +119,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               Navigator.of(dialogContext).pop(); // 👈 cierra el dialog
               GoRouter.of(dialogContext).go('/appointments'); // 👈 navega
             },
-            child: const Text('Ver mis citas'),
+            child: Text(l10n.viewMyAppointments),
           ),
         ],
       ),
@@ -121,13 +128,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final clinicAsync = ref.watch(clinicDetailProvider(widget.clinicId));
     final schedulesAsync =
         ref.watch(clinicSchedulesProvider(widget.clinicId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reservar cita'),
+        title: Text(l10n.bookAppointmentTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: _step == 0
@@ -138,7 +146,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       body: clinicAsync.when(
         data: (clinic) {
           if (clinic == null) {
-            return const Center(child: Text('Clínica no encontrada'));
+            return Center(child: Text(l10n.clinicNotFound));
           }
           return schedulesAsync.when(
             data: (schedules) {
@@ -153,11 +161,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
       ),
     );
   }
@@ -232,6 +240,7 @@ class _NoSchedulesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Center(
@@ -244,21 +253,21 @@ class _NoSchedulesView extends StatelessWidget {
               color: AppTheme.textSecondary,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Esta clínica no acepta citas todavía',
+            Text(
+              l10n.clinicNoAppointmentsYetTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'La clínica aún no ha configurado sus horarios de atención.',
+            Text(
+              l10n.clinicNoSchedulesSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: const TextStyle(color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.pop(),
-              child: const Text('Volver'),
+              child: Text(l10n.back),
             ),
           ],
         ),
@@ -301,7 +310,7 @@ class _StepIndicator extends StatelessWidget {
 
 // ─── Paso 0: Fecha ────────────────────────────────────────────────────────────
 
-class _StepDate extends StatefulWidget {
+class _StepDate extends ConsumerStatefulWidget {
   final DateTime? selectedDate;
   final Set<int> openDays;
   final List<Schedule> schedules;
@@ -316,10 +325,10 @@ class _StepDate extends StatefulWidget {
   });
 
   @override
-  State<_StepDate> createState() => _StepDateState();
+  ConsumerState<_StepDate> createState() => _StepDateState();
 }
 
-class _StepDateState extends State<_StepDate> {
+class _StepDateState extends ConsumerState<_StepDate> {
   late DateTime _focusedMonth;
   DateTime? _selected;
 
@@ -332,6 +341,8 @@ class _StepDateState extends State<_StepDate> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
     final today = DateTime.now();
     final daysInMonth = DateUtils.getDaysInMonth(
       _focusedMonth.year,
@@ -339,6 +350,7 @@ class _StepDateState extends State<_StepDate> {
     );
     final firstWeekday =
         DateTime(_focusedMonth.year, _focusedMonth.month, 1).weekday % 7;
+    final weekdayLabels = l10n.weekdayLetters.split(',');
 
     return Column(
       children: [
@@ -358,7 +370,7 @@ class _StepDateState extends State<_StepDate> {
               ),
               Expanded(
                 child: Text(
-                  DateFormat('MMMM yyyy', 'es').format(_focusedMonth),
+                  dateFormat('MMMM yyyy', locale).format(_focusedMonth),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -383,7 +395,7 @@ class _StepDateState extends State<_StepDate> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
-            children: ['D', 'L', 'M', 'X', 'J', 'V', 'S']
+            children: weekdayLabels
                 .map(
                   (d) => Expanded(
                     child: Center(
@@ -477,7 +489,10 @@ class _StepDateState extends State<_StepDate> {
             child: ElevatedButton(
               onPressed: () => widget.onSelect(_selected!),
               child: Text(
-                "Continuar con el ${DateFormat("d 'de' MMMM", 'es').format(_selected!)}",
+                l10n.bookingContinueWithDate(
+                  dateFormat(monthDayPattern(locale), locale)
+                      .format(_selected!),
+                ),
               ),
             ),
           ),
@@ -522,6 +537,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (widget.slots.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -535,15 +551,15 @@ class _StepTimeState extends ConsumerState<_StepTime> {
                 color: AppTheme.textSecondary,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'No hay horarios disponibles ese día',
+              Text(
+                l10n.noSlotsThatDay,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: widget.onBackToDate,
-                child: const Text('Elegir otra fecha'),
+                child: Text(l10n.chooseAnotherDate),
               ),
             ],
           ),
@@ -555,14 +571,17 @@ class _StepTimeState extends ConsumerState<_StepTime> {
       bookedSlotsProvider((clinicId: widget.clinicId, date: widget.date)),
     );
 
+    final locale = ref.watch(localeProvider);
+    final timeFmt = dateFormat('HH:mm', locale);
+
     return bookedAsync.when(
       data: (booked) {
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              'Selecciona una hora',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.selectTime,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             GridView.builder(
@@ -608,7 +627,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
                     ),
                     child: Center(
                       child: Text(
-                        DateFormat('HH:mm').format(slot),
+                        timeFmt.format(slot),
                         style: TextStyle(
                           color: isDisabled
                               ? AppTheme.textSecondary
@@ -627,7 +646,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
     );
   }
 }
@@ -641,15 +660,16 @@ class _StepPet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final petsAsync = ref.watch(myPetsProvider);
 
     return petsAsync.when(
       data: (pets) => ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            '¿Para qué mascota es la cita?',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            l10n.bookingPetQuestion,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           if (pets.isEmpty)
@@ -667,14 +687,14 @@ class _StepPet extends ConsumerWidget {
                     color: AppTheme.textSecondary,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'No tienes mascotas registradas',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  Text(
+                    l10n.noPetsRegistered,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context.go('/pets'),
-                    child: const Text('Añadir mascota'),
+                    child: Text(l10n.addPet),
                   ),
                 ],
               ),
@@ -690,14 +710,14 @@ class _StepPet extends ConsumerWidget {
         ],
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
     );
   }
 }
 
 // ─── Paso 3: Confirmación ─────────────────────────────────────────────────────
 
-class _StepConfirm extends StatelessWidget {
+class _StepConfirm extends ConsumerWidget {
   final Clinic clinic;
   final Specialty specialty;
   final DateTime slot;
@@ -715,40 +735,45 @@ class _StepConfirm extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final dateFmt = dateFormat(weekdayMonthDayPattern(locale), locale);
+    final timeFmt = dateFormat('HH:mm', locale);
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
-          'Resumen de la cita',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          l10n.appointmentSummary,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 24),
         _SummaryCard(
           children: [
             _SummaryRow(
               icon: Icons.local_hospital_rounded,
-              label: 'Clínica',
+              label: l10n.clinicLabel,
               value: clinic.name,
             ),
             _SummaryRow(
               icon: Icons.medical_services_rounded,
-              label: 'Especialidad',
+              label: l10n.specialtyLabel,
               value: specialty.name,
             ),
             _SummaryRow(
               icon: Icons.calendar_today_rounded,
-              label: 'Fecha',
-              value: DateFormat("EEEE d 'de' MMMM", 'es').format(slot),
+              label: l10n.dateLabel,
+              value: dateFmt.format(slot),
             ),
             _SummaryRow(
               icon: Icons.access_time_rounded,
-              label: 'Hora',
-              value: DateFormat('HH:mm').format(slot),
+              label: l10n.timeLabel,
+              value: timeFmt.format(slot),
             ),
             _SummaryRow(
               icon: Icons.pets_rounded,
-              label: 'Mascota',
+              label: l10n.petLabel,
               value: pet.name,
             ),
           ],
@@ -758,7 +783,7 @@ class _StepConfirm extends StatelessWidget {
           onPressed: loading ? null : onConfirm,
           child: loading
               ? const CircularProgressIndicator(color: Colors.white)
-              : const Text('Confirmar reserva'),
+              : Text(l10n.confirmBooking),
         ),
       ],
     );

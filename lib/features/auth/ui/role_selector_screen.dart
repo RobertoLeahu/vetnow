@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/profile.dart';
 
 class RoleSelectorScreen extends StatelessWidget {
@@ -7,27 +8,28 @@ class RoleSelectorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('¿Cómo usarás VetNow?')),
-      body: const Padding(
-        padding: EdgeInsets.all(24),
+      appBar: AppBar(title: Text(l10n.roleSelectorTitle)),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Selecciona tu perfil',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            SizedBox(height: 32),
+            Text(l10n.selectYourProfile,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 32),
             _RoleCard(
               icon: Icons.pets,
-              title: 'Soy propietario',
-              subtitle: 'Busco clínicas y reservo citas para mi mascota',
+              title: l10n.roleOwnerTitle,
+              subtitle: l10n.roleOwnerSubtitle,
               role: UserRole.owner,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _RoleCard(
               icon: Icons.local_hospital,
-              title: 'Soy clínica',
-              subtitle: 'Gestiono mi agenda y recibo reservas',
+              title: l10n.roleClinicTitle,
+              subtitle: l10n.roleClinicSubtitle,
               role: UserRole.clinic,
             ),
           ],

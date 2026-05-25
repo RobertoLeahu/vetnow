@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/medical_note.dart';
 import '../../../shared/models/pet.dart';
 import '../data/medical_notes_repository.dart';
@@ -44,23 +48,23 @@ class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final patientsAsync = ref.watch(clinicPatientsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pacientes')),
+      appBar: AppBar(title: Text(l10n.patientsTitle)),
       body: patientsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: 'No se pudieron cargar los pacientes.',
+          message: l10n.patientsLoadError,
           onRetry: () => ref.invalidate(clinicPatientsProvider),
         ),
         data: (patients) {
           if (patients.isEmpty) {
             return _EmptyState(
               icon: Icons.people_outline_rounded,
-              title: 'Sin pacientes aún',
-              subtitle:
-                  'Los propietarios que reserven citas aparecerán aquí.',
+              title: l10n.noPatientsYetTitle,
+              subtitle: l10n.noPatientsYetSubtitle,
               onRefresh: _refreshPatients,
             );
           }
@@ -75,7 +79,7 @@ class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
                 child: TextField(
                   controller: _searchCtrl,
                   decoration: InputDecoration(
-                    hintText: 'Buscar paciente por nombre',
+                    hintText: l10n.searchPatientByName,
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: _query.isEmpty
                         ? null
@@ -113,7 +117,7 @@ class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                        'Sin resultados para "$_query"',
+                                        l10n.noResultsForQuery(_query),
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                           fontSize: 15,
@@ -122,9 +126,9 @@ class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 6),
-                                      const Text(
-                                        'Prueba con otro nombre.',
-                                        style: TextStyle(
+                                      Text(
+                                        l10n.tryAnotherName,
+                                        style: const TextStyle(
                                           fontSize: 13,
                                           color: AppTheme.textSecondary,
                                         ),
@@ -158,15 +162,19 @@ class _ClinicPatientsScreenState extends ConsumerState<ClinicPatientsScreen> {
   }
 }
 
-class _PatientCard extends StatelessWidget {
+class _PatientCard extends ConsumerWidget {
   final ClinicPatient patient;
   const _PatientCard({required this.patient});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
     final initials = _initials(patient.fullName);
-    final lastVisitLabel = DateFormat("d MMM yyyy", 'es')
-        .format(patient.lastAppointmentAt);
+    final lastVisitLabel = dateFormat(
+      lastAppointmentPattern(locale),
+      locale,
+    ).format(patient.lastAppointmentAt);
 
     return InkWell(
       onTap: () => context.push(
@@ -210,7 +218,7 @@ class _PatientCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Última cita · $lastVisitLabel',
+                    l10n.lastAppointment(lastVisitLabel),
                     style: TextStyle(
                       fontSize: 12,
                       height: 1.2,
@@ -253,24 +261,25 @@ class OwnerPetsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final petsAsync = ref.watch(ownerPetsForClinicProvider(ownerId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(ownerName.isNotEmpty ? ownerName : 'Mascotas'),
+        title: Text(ownerName.isNotEmpty ? ownerName : l10n.petsTitle),
       ),
       body: petsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: 'No se pudieron cargar las mascotas.',
+          message: l10n.petsLoadErrorClinic,
           onRetry: () => ref.invalidate(ownerPetsForClinicProvider(ownerId)),
         ),
         data: (pets) {
           if (pets.isEmpty) {
             return _EmptyState(
               icon: Icons.pets_rounded,
-              title: 'Sin mascotas registradas',
-              subtitle: 'Este propietario no tiene mascotas con visitas.',
+              title: l10n.noPetsRegisteredClinic,
+              subtitle: l10n.ownerNoPetsWithVisits,
               onRefresh: () async {
                 ref.invalidate(ownerPetsForClinicProvider(ownerId));
                 await ref.read(ownerPetsForClinicProvider(ownerId).future);
@@ -299,14 +308,15 @@ class OwnerPetsScreen extends ConsumerWidget {
   }
 }
 
-class _PetCard extends StatelessWidget {
+class _PetCard extends ConsumerWidget {
   final Pet pet;
   final String ownerId;
 
   const _PetCard({required this.pet, required this.ownerId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return InkWell(
       onTap: () => context.push(
         '/clinic-patients/$ownerId/${pet.id}',
@@ -351,7 +361,7 @@ class _PetCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _petSubtitle(),
+                    _petSubtitle(l10n),
                     style: const TextStyle(
                       fontSize: 13,
                       color: AppTheme.textSecondary,
@@ -370,20 +380,20 @@ class _PetCard extends StatelessWidget {
     );
   }
 
-  String _petSubtitle() {
-    final parts = <String>[pet.species.label];
+  String _petSubtitle(AppLocalizations l10n) {
+    final parts = <String>[pet.species.localizedLabel(l10n)];
     if (pet.breed != null && pet.breed!.isNotEmpty) parts.add(pet.breed!);
-    if (pet.birthDate != null) parts.add(_ageLabel(pet.birthDate!));
+    if (pet.birthDate != null) parts.add(_ageLabel(pet.birthDate!, l10n));
     return parts.join(' · ');
   }
 
-  String _ageLabel(DateTime birth) {
+  String _ageLabel(DateTime birth, AppLocalizations l10n) {
     final now = DateTime.now();
     final months = (now.year - birth.year) * 12 + now.month - birth.month;
-    if (months < 1) return 'recién nacido';
-    if (months < 12) return '$months ${months == 1 ? 'mes' : 'meses'}';
+    if (months < 1) return l10n.newborn;
+    if (months < 12) return l10n.ageMonths(months);
     final years = months ~/ 12;
-    return '$years ${years == 1 ? 'año' : 'años'}';
+    return l10n.ageYears(years);
   }
 }
 
@@ -403,37 +413,37 @@ class PetVisitsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final visitsAsync = ref.watch(petVisitsProvider(petId));
     final clinicAsync = ref.watch(myClinicProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(petName.isNotEmpty ? petName : 'Historial'),
+        title: Text(petName.isNotEmpty ? petName : l10n.history),
       ),
       body: clinicAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: 'Error al cargar la clínica.',
+          message: l10n.clinicLoadError,
           onRetry: () {},
         ),
         data: (clinic) {
           if (clinic == null) {
-            return const Center(child: Text('No se encontró la clínica.'));
+            return Center(child: Text(l10n.clinicNotFoundShort));
           }
 
           return visitsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _ErrorState(
-              message: 'No se pudo cargar el historial.',
+              message: l10n.historyLoadError,
               onRetry: () => ref.invalidate(petVisitsProvider(petId)),
             ),
             data: (visits) {
               if (visits.isEmpty) {
                 return _EmptyState(
                   icon: Icons.history_rounded,
-                  title: 'Sin citas con esta mascota',
-                  subtitle:
-                      'Las citas pendientes, confirmadas o realizadas aparecerán aquí para añadir notas.',
+                  title: l10n.noVisitsWithPetTitle,
+                  subtitle: l10n.noVisitsWithPetSubtitle,
                   onRefresh: () async {
                     ref.invalidate(petVisitsProvider(petId));
                     await ref.read(petVisitsProvider(petId).future);
@@ -454,7 +464,6 @@ class PetVisitsScreen extends ConsumerWidget {
                     visit: visits[i],
                     clinicId: clinic.id,
                     petId: petId,
-                    ref: ref,
                   ),
                 ),
               );
@@ -466,25 +475,25 @@ class PetVisitsScreen extends ConsumerWidget {
   }
 }
 
-class _VisitCard extends StatelessWidget {
+class _VisitCard extends ConsumerWidget {
   final PetVisit visit;
   final String clinicId;
   final String petId;
-  final WidgetRef ref;
 
   const _VisitCard({
     required this.visit,
     required this.clinicId,
     required this.petId,
-    required this.ref,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final dateFmt = DateFormat("d 'de' MMMM 'de' yyyy · HH:mm", 'es');
+  Widget build(BuildContext context, WidgetRef widgetRef) {
+    final l10n = context.l10n;
+    final locale = widgetRef.watch(localeProvider);
+    final dateFmt = dateFormat(visitDetailPattern(locale), locale);
     final hasNotes = visit.notes.isNotEmpty;
     final canNote = visit.canAddNotes;
-    final dateShort = DateFormat("d MMM yyyy", 'es');
+    final dateShort = dateFormat(visitShortDatePattern(locale), locale);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -547,8 +556,8 @@ class _VisitCard extends StatelessWidget {
 
           Text(
             hasNotes
-                ? 'Notas clínicas (${visit.notes.length})'
-                : 'Notas clínicas',
+                ? l10n.clinicalNotesCount(visit.notes.length)
+                : l10n.clinicalNotes,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -566,17 +575,23 @@ class _VisitCard extends StatelessWidget {
                   note: note,
                   dateShort: dateShort,
                   canModify: canNote,
-                  onEdit: () => _showNoteSheet(context, editingNote: note),
-                  onDelete: () => _confirmDeleteNote(context, note),
+                  onEdit: () => _showNoteSheet(
+                    context,
+                    widgetRef,
+                    editingNote: note,
+                  ),
+                  onDelete: () =>
+                      _confirmDeleteNote(context, widgetRef, note),
                 ),
               ),
             ),
 
           if (canNote)
             TextButton.icon(
-              onPressed: () => _showNoteSheet(context),
+              onPressed: () => _showNoteSheet(context, widgetRef),
               icon: const Icon(Icons.add_rounded, size: 16),
-              label: Text(hasNotes ? 'Añadir otra nota' : 'Añadir nota clínica'),
+              label: Text(
+                  hasNotes ? l10n.addAnotherNote : l10n.addClinicalNote),
               style: TextButton.styleFrom(
                 minimumSize: const Size(double.infinity, 40),
                 foregroundColor: AppTheme.primary,
@@ -603,7 +618,7 @@ class _VisitCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Confirma la cita en la agenda para poder añadir notas.',
+                      l10n.confirmAppointmentToAddNotes,
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,
@@ -619,7 +634,12 @@ class _VisitCard extends StatelessWidget {
     );
   }
 
-  void _showNoteSheet(BuildContext context, {MedicalNote? editingNote}) {
+  void _showNoteSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    MedicalNote? editingNote,
+  }) {
+    final l10n = context.l10n;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -646,7 +666,7 @@ class _VisitCard extends StatelessWidget {
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error al guardar: $e')),
+                SnackBar(content: Text(l10n.saveError('$e'))),
               );
             }
           }
@@ -655,24 +675,27 @@ class _VisitCard extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDeleteNote(BuildContext context, MedicalNote note) async {
+  Future<void> _confirmDeleteNote(
+    BuildContext context,
+    WidgetRef ref,
+    MedicalNote note,
+  ) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar nota'),
-        content: const Text(
-          '¿Seguro que quieres eliminar esta nota clínica? No se puede deshacer.',
-        ),
+        title: Text(l10n.deleteNoteTitle),
+        content: Text(l10n.deleteNoteConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -686,7 +709,7 @@ class _VisitCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo eliminar: $e')),
+          SnackBar(content: Text(l10n.deleteFailed('$e'))),
         );
       }
     }
@@ -699,10 +722,11 @@ class _VisitStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final config = switch (status) {
-      'confirmed' => (label: 'Confirmada', color: AppTheme.primary),
-      'done' => (label: 'Realizada', color: Colors.grey),
-      _ => (label: 'Pendiente', color: Colors.orange),
+      'confirmed' => (label: l10n.statusConfirmed, color: AppTheme.primary),
+      'done' => (label: l10n.statusDone, color: Colors.grey),
+      _ => (label: l10n.statusPending, color: Colors.orange),
     };
 
     return Container(
@@ -740,6 +764,10 @@ class _ClinicalNoteBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dateLabel = note.updatedAt != note.createdAt
+        ? l10n.editedOn(dateShort.format(note.updatedAt))
+        : dateShort.format(note.createdAt);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -769,9 +797,7 @@ class _ClinicalNoteBlock extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  note.updatedAt != note.createdAt
-                      ? 'Editado ${dateShort.format(note.updatedAt)}'
-                      : dateShort.format(note.createdAt),
+                  dateLabel,
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary.withValues(alpha: 0.9),
@@ -788,9 +814,10 @@ class _ClinicalNoteBlock extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     foregroundColor: AppTheme.primary,
                   ),
-                  child: const Text(
-                    'Editar',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  child: Text(
+                    l10n.edit,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
                 TextButton(
@@ -802,9 +829,10 @@ class _ClinicalNoteBlock extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     foregroundColor: Colors.red,
                   ),
-                  child: const Text(
-                    'Eliminar',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  child: Text(
+                    l10n.delete,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -846,6 +874,7 @@ class _NoteSheetState extends State<_NoteSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
 
     return Container(
@@ -871,7 +900,7 @@ class _NoteSheetState extends State<_NoteSheet> {
           ),
           const SizedBox(height: 20),
           Text(
-            widget.editingNote == null ? 'Nueva nota' : 'Editar nota',
+            widget.editingNote == null ? l10n.newNote : l10n.editNote,
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -881,8 +910,8 @@ class _NoteSheetState extends State<_NoteSheet> {
           const SizedBox(height: 4),
           Text(
             widget.editingNote == null
-                ? 'Puedes añadir varias notas por visita.'
-                : 'Actualiza el texto de esta nota.',
+                ? l10n.newNoteHint
+                : l10n.editNoteHint,
             style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 16),
@@ -892,7 +921,7 @@ class _NoteSheetState extends State<_NoteSheet> {
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              hintText: 'Ej. Revisión general, vacuna antirrábica aplicada…',
+              hintText: l10n.noteHintExample,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -931,8 +960,8 @@ class _NoteSheetState extends State<_NoteSheet> {
                   )
                 : Text(
                     widget.editingNote == null
-                        ? 'Guardar nota'
-                        : 'Guardar cambios',
+                        ? l10n.saveNote
+                        : l10n.saveChanges,
                   ),
           ),
         ],
@@ -1034,7 +1063,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onRetry,
-              child: const Text('Reintentar'),
+              child: Text(context.l10n.retry),
             ),
           ],
         ),

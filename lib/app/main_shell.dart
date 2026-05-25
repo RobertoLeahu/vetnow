@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../l10n/l10n_ext.dart';
 import '../app/theme.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/clinic_panel/providers/clinic_panel_provider.dart';
@@ -35,6 +36,7 @@ class MainShell extends ConsumerWidget {
   }
 
   Widget _ownerNavBar(BuildContext context) {
+    final l10n = context.l10n;
     final location = GoRouterState.of(context).matchedLocation;
     int index = 0;
     if (location.startsWith('/search')) index = 0;
@@ -60,28 +62,29 @@ class MainShell extends ConsumerWidget {
             break;
         }
       },
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.search_rounded),
-          label: 'Buscar',
+          icon: const Icon(Icons.search_rounded),
+          label: l10n.navSearch,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month_rounded),
-          label: 'Citas',
+          icon: const Icon(Icons.calendar_month_rounded),
+          label: l10n.navAppointments,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.pets_rounded),
-          label: 'Mascotas',
+          icon: const Icon(Icons.pets_rounded),
+          label: l10n.navPets,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person_rounded),
-          label: 'Perfil',
+          icon: const Icon(Icons.person_rounded),
+          label: l10n.navProfile,
         ),
       ],
     );
   }
 
   Widget _clinicNavBar(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final location = GoRouterState.of(context).matchedLocation;
     int index = 0;
     if (location.startsWith('/clinic-home')) index = 0;
@@ -92,22 +95,22 @@ class MainShell extends ConsumerWidget {
     return BottomNavigationBar(
       currentIndex: index,
       onTap: (i) => _onClinicNavTap(context, ref, i, index, location),
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_rounded),
-          label: 'Inicio',
+          icon: const Icon(Icons.dashboard_rounded),
+          label: l10n.navClinicHome,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month_rounded),
-          label: 'Agenda',
+          icon: const Icon(Icons.calendar_month_rounded),
+          label: l10n.navClinicAgenda,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.people_rounded),
-          label: 'Pacientes',
+          icon: const Icon(Icons.people_rounded),
+          label: l10n.navClinicPatients,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.store_rounded),
-          label: 'Mi clínica',
+          icon: const Icon(Icons.store_rounded),
+          label: l10n.navMyClinic,
         ),
       ],
     );

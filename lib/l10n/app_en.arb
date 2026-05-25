@@ -1,0 +1,580 @@
+{
+  "@@locale": "en",
+  "loginWelcome": "Welcome 👋",
+  "loginSubtitle": "Sign in to VetNow",
+  "email": "Email",
+  "password": "Password",
+  "loginErrorInvalidCredentials": "Incorrect email or password",
+  "signIn": "Sign in",
+  "loginNoAccountRegister": "Don't have an account? Sign up",
+  "createAccount": "Create account",
+  "registerClinicTitle": "Clinic registration",
+  "registerOwnerTitle": "Owner registration",
+  "fullName": "Full name",
+  "fillAllFields": "Fill in all fields",
+  "registerMustAcceptLegal": "You must accept the privacy policy and terms",
+  "registerError": "Registration error: {error}",
+  "@registerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyPolicyLink": "Privacy Policy",
+  "termsAndConditionsLink": "Terms and Conditions",
+  "consentPrefix": "I have read and accept the ",
+  "roleSelectorTitle": "How will you use VetNow?",
+  "selectYourProfile": "Select your profile",
+  "roleOwnerTitle": "I'm a pet owner",
+  "roleOwnerSubtitle": "I look for clinics and book appointments for my pet",
+  "roleClinicTitle": "I'm a clinic",
+  "roleClinicSubtitle": "I manage my schedule and receive bookings",
+  "settingsTitle": "Settings",
+  "account": "Account",
+  "termsAndConditions": "Terms and conditions",
+  "personalization": "Personalization",
+  "privacyAndPolicy": "Privacy policy",
+  "deleteMyAccount": "Delete my account",
+  "signOut": "Sign out",
+  "cancel": "Cancel",
+  "signOutConfirmMessage": "Are you sure you want to sign out?",
+  "signOutError": "Error signing out: {error}",
+  "@signOutError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirmBody": "This will delete your personal data and sign you out. It cannot be undone.\n\nDo you want to continue?",
+  "deleteAccount": "Delete account",
+  "deleteAccountError": "Could not delete account: {error}",
+  "@deleteAccountError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appVersionLabel": "App version: 5.271.0",
+  "darkMode": "Dark mode",
+  "enabled": "On",
+  "disabled": "Off",
+  "language": "Language",
+  "languageSpanish": "Spanish",
+  "languageEnglish": "English",
+  "selectLanguage": "Select language",
+  "profileTitle": "Profile",
+  "myPets": "My pets",
+  "myAppointments": "My appointments",
+  "notifications": "Notifications",
+  "saved": "Saved",
+  "favoritesLoadError": "Error loading favorites: {error}",
+  "@favoritesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noSavedClinicsTitle": "You haven't saved any clinics",
+  "noSavedClinicsSubtitle": "When you save clinics with the heart icon, they'll appear here",
+  "findClinics": "Find clinics",
+  "personalData": "Personal details",
+  "emailAddress": "Email address",
+  "phonePrefix": "Prefix",
+  "phoneNumber": "Phone number",
+  "changePassword": "Change password",
+  "saveChanges": "Save changes",
+  "noChangesToSave": "No changes to save",
+  "dataSaved": "Data saved",
+  "saveError": "Error saving: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordMinLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordUpdated": "Password updated",
+  "newPassword": "New password",
+  "confirmPassword": "Confirm password",
+  "updatePassword": "Update password",
+  "errorWithDetails": "Error: {error}",
+  "@errorWithDetails": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navSearch": "Search",
+  "navAppointments": "Appointments",
+  "navPets": "Pets",
+  "navProfile": "Profile",
+  "navClinicHome": "Home",
+  "navClinicAgenda": "Schedule",
+  "navClinicPatients": "Patients",
+  "navMyClinic": "My clinic",
+  "welcomeToVetNow": "Welcome to VetNow",
+  "welcomeToVetNowName": "Welcome to VetNow, {name}!",
+  "@welcomeToVetNowName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHintNameCityAddress": "Search by name, city, or address",
+  "searchClinicsNearMe": "Search clinics near me",
+  "allSpecialties": "All",
+  "favoriteClinics": "Favorite clinics",
+  "noFavoriteClinicsTitle": "You don't have favorite clinics yet",
+  "noFavoriteClinicsSubtitle": "Browse and tap the heart on any clinic to add it here.",
+  "upcomingAppointments": "Upcoming appointments",
+  "noScheduledAppointmentsTitle": "You have no scheduled appointments",
+  "noScheduledAppointmentsSubtitle": "Book an appointment and it will appear here.",
+  "statusPending": "Pending",
+  "statusConfirmed": "Confirmed",
+  "locationDisabledTitle": "Location disabled",
+  "locationDisabledMessage": "Turn on location services on your device to see nearby clinics.",
+  "locationPermissionTitle": "Location permission required",
+  "locationPermissionMessage": "To show you the nearest clinics we need access to your location. Enable it in the app settings.",
+  "openSettings": "Open settings",
+  "locationFetchError": "Could not get your location: {error}",
+  "@locationFetchError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchClinicsTitle": "Search clinics",
+  "searchHintShort": "Name, city, or address",
+  "searchTypeToSeeResults": "Type to see matching clinics",
+  "searchNoClinicsForQuery": "No clinics for \"{query}\"",
+  "@searchNoClinicsForQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchTryAnotherQuery": "Try another name, city, or address",
+  "clinicNotFound": "Clinic not found",
+  "aboutUs": "About us",
+  "specialties": "Specialties",
+  "clinicNoSpecialtiesConfigured": "This clinic has no specialties configured",
+  "bookAppointment": "Book appointment",
+  "selectSpecialty": "Select specialty",
+  "nearbyClinicsTitle": "Nearby clinics",
+  "viewOnMap": "View on map",
+  "noClinicsWithinRadius": "No clinics within {km} km",
+  "@noClinicsWithinRadius": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "nearbyTryOtherSpecialty": "Try another specialty or widen the search radius.",
+  "nearbyNeedsGps": "Clinics need a registered GPS location to appear here.",
+  "nearbyClinicsCount": "{count, plural, =1{1 clinic near you} other{{count} clinics near you}}",
+  "@nearbyClinicsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appointmentsTitle": "Appointments",
+  "petFilterLabel": "Pet",
+  "allPets": "All pets",
+  "petsLoadError": "Could not load pets",
+  "tabScheduled": "Scheduled ({count})",
+  "@tabScheduled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCompleted": "Completed ({count})",
+  "@tabCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCancelled": "Cancelled ({count})",
+  "@tabCancelled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noCompletedAppointmentsTitle": "You have no completed appointments",
+  "completedAppointmentsSubtitle": "Your visit history will appear here.",
+  "noCancelledAppointmentsTitle": "You have no cancelled appointments",
+  "statusDone": "Completed",
+  "statusCancelled": "Cancelled",
+  "cancelAppointment": "Cancel appointment",
+  "cancelAppointmentConfirm": "Are you sure you want to cancel this appointment?",
+  "no": "No",
+  "yesCancel": "Yes, cancel",
+  "deleteAppointment": "Delete appointment",
+  "deleteAppointmentConfirm": "This appointment will be removed from your history. It cannot be undone.",
+  "yesDelete": "Yes, delete",
+  "delete": "Delete",
+  "deleteFailed": "Could not delete: {error}",
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "bookAppointmentTitle": "Book appointment",
+  "bookingError": "Booking error: {error}",
+  "@bookingError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appointmentBookedTitle": "Appointment booked!",
+  "appointmentBookedBody": "{date}",
+  "@appointmentBookedBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "viewMyAppointments": "View my appointments",
+  "clinicNoAppointmentsYetTitle": "This clinic does not accept appointments yet",
+  "clinicNoSchedulesSubtitle": "The clinic has not set its opening hours yet.",
+  "back": "Back",
+  "noSlotsThatDay": "No time slots available that day",
+  "chooseAnotherDate": "Choose another date",
+  "selectTime": "Select a time",
+  "bookingPetQuestion": "Which pet is the appointment for?",
+  "noPetsRegistered": "You have no registered pets",
+  "addPet": "Add pet",
+  "appointmentSummary": "Appointment summary",
+  "clinicLabel": "Clinic",
+  "specialtyLabel": "Specialty",
+  "dateLabel": "Date",
+  "timeLabel": "Time",
+  "petLabel": "Pet",
+  "confirmBooking": "Confirm booking",
+  "bookingContinueWithDate": "Continue with {date}",
+  "@bookingContinueWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weekdayLetters": "S,M,T,W,T,F,S",
+  "myPetsTitle": "My pets",
+  "noPetsYetTitle": "You haven't added any pets yet",
+  "noPetsYetSubtitle": "Add your pet to manage their appointments",
+  "uploadingPhoto": "Uploading photo…",
+  "tapToAddPhoto": "Tap to add or change photo",
+  "takePhoto": "Take photo",
+  "chooseFromGallery": "Choose from gallery",
+  "removeProfilePhoto": "Remove profile photo",
+  "editPetTooltip": "Edit pet",
+  "deletePetTitle": "Delete pet",
+  "deletePetConfirm": "Are you sure you want to delete {name}?",
+  "@deletePetConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newPet": "New pet",
+  "editPet": "Edit pet",
+  "nameRequired": "Name *",
+  "nameRequiredError": "Name is required",
+  "species": "Species",
+  "breedOptional": "Breed (optional)",
+  "birthDate": "Date of birth",
+  "birthDateOptional": "Date of birth (optional)",
+  "savePet": "Save pet",
+  "ageLessThanOneMonth": "Less than 1 month",
+  "ageMonths": "{count, plural, =1{1 month} other{{count} months}}",
+  "@ageMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageOneYear": "1 year",
+  "ageYears": "{count, plural, =1{1 year} other{{count} years}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "speciesDog": "Dog",
+  "speciesCat": "Cat",
+  "speciesRabbit": "Rabbit",
+  "speciesHamster": "Hamster",
+  "speciesBird": "Bird",
+  "speciesReptile": "Reptile",
+  "speciesFerret": "Ferret",
+  "speciesOther": "Other",
+  "myClinicFallback": "My clinic",
+  "today": "Today",
+  "completeYourProfile": "Complete your profile",
+  "completeProfileBannerBody": "Owners will be able to find you when you complete your clinic details.",
+  "complete": "Complete",
+  "todayPatients": "Today's patients",
+  "pendingYourConfirmation": "Awaiting your confirmation",
+  "appointmentsAwaitingConfirmation": "{count, plural, =1{1 appointment awaiting confirmation} other{{count} appointments awaiting confirmation}}",
+  "@appointmentsAwaitingConfirmation": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "acceptOrRejectFromAgenda": "Accept or decline from the schedule",
+  "activitySummary": "Activity summary",
+  "quickAccess": "Quick access",
+  "manageYourAppointments": "Manage your appointments",
+  "medicalRecords": "Medical records",
+  "confirmedAppointmentsToday": "confirmed appointments today",
+  "noAppointmentsTodayEnjoy": "No appointments today. Enjoy your day.",
+  "nextAppointment": "Next appointment",
+  "nextAppointments": "Upcoming appointments",
+  "viewFullAgenda": "View full schedule",
+  "appointmentsOverview": "Overview of your appointments",
+  "viewAgenda": "View schedule",
+  "scheduled": "Scheduled",
+  "statConfirmed": "Confirmed",
+  "statCompleted": "Completed",
+  "toConfirm": "Pending confirmation",
+  "confirmedPatientsToday": "{count, plural, =1{1 confirmed patient today} other{{count} confirmed patients today}}",
+  "@confirmedPatientsToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "thisWeek": "This week",
+  "cancelledThisWeek": "{count} cancelled this week",
+  "@cancelledThisWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cancelledToday": "{count} cancelled today",
+  "@cancelledToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalAwaitingConfirmation": "{count} total awaiting your confirmation",
+  "@totalAwaitingConfirmation": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noConfirmedPatientsToday": "No patients with a confirmed appointment today.",
+  "agendaTitle": "Schedule",
+  "clinicProfileNotFound": "Clinic profile not found.",
+  "dateFilter": "Date",
+  "tomorrow": "Tomorrow",
+  "allAppointments": "All appointments",
+  "tabPending": "Pending ({count})",
+  "@tabPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabConfirmedCount": "Confirmed ({count})",
+  "@tabConfirmedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPendingAppointments": "No pending appointments",
+  "newBookingsAppearHere": "New bookings will appear here.",
+  "noConfirmedAppointments": "No confirmed appointments",
+  "noCompletedAppointmentsClinic": "No completed appointments",
+  "noCancelledAppointmentsClinic": "No cancelled appointments",
+  "confirmAppointment": "Confirm appointment",
+  "confirmAppointmentBody": "Confirm this appointment? The owner will see the updated status.",
+  "yesConfirm": "Yes, confirm",
+  "confirm": "Confirm",
+  "denyAppointment": "Decline appointment",
+  "denyAppointmentBody": "The appointment will be cancelled and the owner will see the change.",
+  "yesDeny": "Yes, decline",
+  "deny": "Decline",
+  "markAsDoneTitle": "Mark as completed",
+  "markAsDoneBody": "Mark this appointment as completed?",
+  "yesMark": "Yes, mark",
+  "markAsDone": "Mark as completed",
+  "deleteAppointmentClinicBody": "This appointment will be removed from history. It cannot be undone.",
+  "patientsTitle": "Patients",
+  "patientsLoadError": "Could not load patients.",
+  "noPatientsYetTitle": "No patients yet",
+  "noPatientsYetSubtitle": "Owners who book appointments will appear here.",
+  "searchPatientByName": "Search patient by name",
+  "noResultsForQuery": "No results for \"{query}\"",
+  "@noResultsForQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "tryAnotherName": "Try another name.",
+  "lastAppointment": "Last appointment · {date}",
+  "@lastAppointment": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "petsTitle": "Pets",
+  "petsLoadErrorClinic": "Could not load pets.",
+  "noPetsRegisteredClinic": "No registered pets",
+  "ownerNoPetsWithVisits": "This owner has no pets with visits.",
+  "history": "History",
+  "clinicLoadError": "Error loading clinic.",
+  "clinicNotFoundShort": "Clinic not found.",
+  "historyLoadError": "Could not load history.",
+  "noVisitsWithPetTitle": "No appointments with this pet",
+  "noVisitsWithPetSubtitle": "Pending, confirmed, or completed appointments will appear here to add notes.",
+  "clinicalNotes": "Clinical notes",
+  "clinicalNotesCount": "Clinical notes ({count})",
+  "@clinicalNotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addAnotherNote": "Add another note",
+  "addClinicalNote": "Add clinical note",
+  "confirmAppointmentToAddNotes": "Confirm the appointment in the schedule to add notes.",
+  "deleteNoteTitle": "Delete note",
+  "deleteNoteConfirm": "Are you sure you want to delete this clinical note? It cannot be undone.",
+  "editedOn": "Edited {date}",
+  "@editedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Edit",
+  "newNote": "New note",
+  "editNote": "Edit note",
+  "newNoteHint": "You can add several notes per visit.",
+  "editNoteHint": "Update the text of this note.",
+  "noteHintExample": "e.g. General check-up, rabies vaccine given…",
+  "saveNote": "Save note",
+  "retry": "Retry",
+  "newborn": "newborn",
+  "ageOneMonth": "1 month",
+  "myClinicTitle": "My clinic",
+  "unsavedChangesTitle": "Unsaved changes",
+  "unsavedChangesBody": "You changed the clinic profile or hours without saving. What do you want to do?",
+  "save": "Save",
+  "discardChanges": "Discard changes",
+  "saveTooltip": "Save",
+  "schedulesLoadError": "Error loading hours: {error}",
+  "@schedulesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationRegisteredSnack": "Location saved. Your clinic will now appear in nearby searches.",
+  "profileUpdated": "Profile updated",
+  "profileSavedNoLocation": "Profile saved, but location could not be obtained. Check address and city (e.g. \"Valdemoro\") and save again.",
+  "registeringLocation": "Registering your location on the map…",
+  "locationBannerNeedsSave": "Your clinic has no GPS coordinates yet. Fill in address and city, then tap Save to appear in nearby searches.",
+  "locationBannerEnterCity": "Enter the city (e.g. Valdemoro) and address so owners can find you nearby.",
+  "basicInformation": "Basic information",
+  "clinicName": "Clinic name",
+  "address": "Address",
+  "city": "City",
+  "phone": "Phone",
+  "contactEmail": "Contact email",
+  "description": "Description",
+  "requiredField": "Required field",
+  "loadingSpecialties": "Loading specialties…",
+  "appointmentDurationTitle": "Appointment duration",
+  "appointmentDurationHelp": "Each bookable slot will use this duration. Owners will see available times adjusted when you save.",
+  "durationPerAppointment": "Duration per appointment",
+  "weeklyHours": "Weekly schedule",
+  "closed": "Closed",
+  "dayMonday": "Monday",
+  "dayTuesday": "Tuesday",
+  "dayWednesday": "Wednesday",
+  "dayThursday": "Thursday",
+  "dayFriday": "Friday",
+  "daySaturday": "Saturday",
+  "daySunday": "Sunday",
+  "durationMinutes": "{minutes} minutes",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationOneHour": "1 hour",
+  "durationOneHourThirty": "1 hour 30 min",
+  "durationTwoHours": "2 hours",
+  "durationHours": "{hours} hours",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours} h {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyPolicyTitle": "Privacy policy",
+  "termsOfServiceTitle": "Terms and conditions"
+}
