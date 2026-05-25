@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/clinic_repository.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
@@ -13,10 +14,11 @@ final clinicRepositoryProvider = Provider<ClinicRepository>(
 class SearchFilters {
   /// Texto libre: busca por nombre de clínica, ciudad o dirección.
   final String query;
+  /// Especialidad seleccionada; solo aplica a la búsqueda de clínicas cercanas.
   final String? specialtyId;
 
-  /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] y se ignora
-  /// el filtro de [query].
+  /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] en
+  /// [clinicSearchProvider] (cercanas). [query] no filtra favoritos.
   final bool isNearbyMode;
   final double? userLat;
   final double? userLng;
@@ -55,24 +57,19 @@ final searchFiltersProvider = StateProvider<SearchFilters>(
   (_) => const SearchFilters(),
 );
 
-// Resultados de búsqueda reactivos a los filtros
-final clinicSearchProvider = FutureProvider<List<Clinic>>((ref) async {
+// Clínicas cercanas (solo activo en NearbyScreen; usa especialidad y GPS).
+final clinicSearchProvider = FutureProvider.autoDispose<List<Clinic>>((ref) async {
   final filters = ref.watch(searchFiltersProvider);
-  final repo = ref.watch(clinicRepositoryProvider);
-
-  if (filters.isNearbyMode &&
-      filters.userLat != null &&
-      filters.userLng != null) {
-    return repo.searchClinicsNearby(
-      userLat: filters.userLat!,
-      userLng: filters.userLng!,
-      radiusKm: filters.nearbyRadiusKm,
-      specialtyId: filters.specialtyId,
-    );
+  if (!filters.isNearbyMode ||
+      filters.userLat == null ||
+      filters.userLng == null) {
+    return [];
   }
 
-  return repo.searchClinics(
-    query: filters.query,
+  return ref.watch(clinicRepositoryProvider).searchClinicsNearby(
+    userLat: filters.userLat!,
+    userLng: filters.userLng!,
+    radiusKm: filters.nearbyRadiusKm,
     specialtyId: filters.specialtyId,
   );
 });
@@ -102,3 +99,21 @@ void invalidateClinicBookingData(WidgetRef ref, String clinicId) {
   ref.invalidate(clinicSchedulesProvider(clinicId));
   ref.invalidate(clinicDetailProvider(clinicId));
 }
+
+// ── Favoritos ────────────────────────────────────────────────────
+
+/// IDs de clínicas favoritas del propietario logueado.
+final favoriteClinicIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final user = ref.watch(authStateProvider).valueOrNull?.session?.user;
+  if (user == null) return {};
+  return ref.watch(clinicRepositoryProvider).fetchFavoriteClinicIds(user.id);
+});
+
+/// Clínicas favoritas completas (para la lista en SearchScreen).
+final favoriteClinicsProvider =
+    FutureProvider.autoDispose<List<Clinic>>((ref) async {
+  final user = ref.watch(authStateProvider).valueOrNull?.session?.user;
+  if (user == null) return [];
+  return ref.watch(clinicRepositoryProvider).fetchFavoriteClinics(user.id);
+});

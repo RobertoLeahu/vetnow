@@ -46,11 +46,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _onRefresh() async {
-    ref.invalidate(clinicSearchProvider);
+    ref.invalidate(favoriteClinicsProvider);
     ref.invalidate(specialtiesProvider);
     ref.invalidate(profileProvider);
     await Future.wait([
-      ref.read(clinicSearchProvider.future),
+      ref.read(favoriteClinicsProvider.future),
       ref.read(specialtiesProvider.future),
     ]);
   }
@@ -93,6 +93,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
 
       if (!mounted) return;
+      ref.read(searchFiltersProvider.notifier).update(
+            (s) => s.copyWith(
+              isNearbyMode: true,
+              userLat: position.latitude,
+              userLng: position.longitude,
+            ),
+          );
+      ref.invalidate(clinicSearchProvider);
       context.push(
         '/search/nearby',
         extra: (lat: position.latitude, lng: position.longitude),
@@ -139,8 +147,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final profile = ref.watch(profileProvider).valueOrNull;
     final firstName = profile?.fullName.split(' ').first ?? '';
     final specialtiesAsync = ref.watch(specialtiesProvider);
-    final clinicsAsync = ref.watch(clinicSearchProvider);
+    final favoritesAsync = ref.watch(favoriteClinicsProvider);
     final filters = ref.watch(searchFiltersProvider);
+    final specialties = specialtiesAsync.valueOrNull ?? [];
 
     return Scaffold(
       body: SafeArea(
@@ -207,35 +216,41 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
-              // Specialty chips
+              // Specialty chips (solo filtran clínicas cercanas)
               SliverToBoxAdapter(
                 child: specialtiesAsync.when(
-                  data: (specialties) => Padding(
+                  data: (_) => Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 8,
                     ),
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      spacing: 8.0,
-                      runSpacing: 8.0,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _SpecialtyChip(
                           label: 'Todas',
                           icon: Icons.apps_rounded,
                           selected: filters.specialtyId == null,
-                          onTap: () => ref
-                              .read(searchFiltersProvider.notifier)
-                              .update((s) => s.copyWith(clearSpecialty: true)),
+                          onTap: () {
+                            ref.read(searchFiltersProvider.notifier).update(
+                                  (s) => s.copyWith(clearSpecialty: true),
+                                );
+                            ref.invalidate(clinicSearchProvider);
+                          },
                         ),
                         ...specialties.map(
                           (s) => _SpecialtyChip(
                             label: s.name,
                             icon: _specialtyIcon(s.name),
                             selected: filters.specialtyId == s.id,
-                            onTap: () => ref
-                                .read(searchFiltersProvider.notifier)
-                                .update((f) => f.copyWith(specialtyId: s.id)),
+                            onTap: () {
+                              ref.read(searchFiltersProvider.notifier).update(
+                                    (f) => f.copyWith(specialtyId: s.id),
+                                  );
+                              ref.invalidate(clinicSearchProvider);
+                            },
                           ),
                         ),
                       ],
@@ -256,7 +271,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    'Clínicas disponibles',
+                    'Clínicas favoritas',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -267,37 +282,79 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // Clinic list
-              clinicsAsync.when(
-                data: (clinics) => clinics.isEmpty
-                    ? const SliverToBoxAdapter(
-                        child: _EmptyState(
-                          icon: Icons.search_off_rounded,
-                          title: 'No hay clínicas con estos filtros',
-                          subtitle:
-                              'Prueba con otro nombre, ciudad o especialidad',
-                        ),
-                      )
-                    : SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                            child: _ClinicCard(clinic: clinics[i]),
-                          ),
-                          childCount: clinics.length,
-                        ),
-                      ),
+              // Favorite clinics (lista fija; no depende de chips ni búsqueda)
+              favoritesAsync.when(
+                data: (allFavs) {
+                  Widget content;
+                  if (allFavs.isEmpty) {
+                    content = const _EmptyState(
+                      icon: Icons.favorite_border_rounded,
+                      title: 'Todavía no tienes clínicas favoritas',
+                      subtitle:
+                          'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
+                    );
+                  } else {
+                    content = Column(
+                      children: [
+                        for (var i = 0; i < allFavs.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 10),
+                          _ClinicCard(clinic: allFavs[i]),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return SliverToBoxAdapter(
+                    child: _FavoritesSectionBox(child: content),
+                  );
+                },
                 loading: () => const SliverToBoxAdapter(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
                 ),
                 error: (e, _) => SliverToBoxAdapter(
-                    child: Center(child: Text('Error: $e'))),
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: Text('Error: $e')),
+                    ),
+                  ),
+                ),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Recuadro de sección (solo contenido; el título va fuera) ─────
+
+class _FavoritesSectionBox extends StatelessWidget {
+  final Widget child;
+
+  const _FavoritesSectionBox({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: child,
       ),
     );
   }

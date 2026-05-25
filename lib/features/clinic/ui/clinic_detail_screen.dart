@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
 import '../../../shared/models/specialty.dart';
@@ -26,6 +27,9 @@ class ClinicDetailScreen extends ConsumerWidget {
                 backgroundColor: AppTheme.background,
                 foregroundColor: AppTheme.textPrimary,
                 elevation: 0,
+                actions: [
+                  _FavoriteButton(clinicId: clinicId),
+                ],
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -165,6 +169,39 @@ class ClinicDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
+    );
+  }
+}
+
+// ─── Botón de favorito ───────────────────────────────────────────────────────
+
+class _FavoriteButton extends ConsumerWidget {
+  final String clinicId;
+  const _FavoriteButton({required this.clinicId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ids = ref.watch(favoriteClinicIdsProvider).valueOrNull ?? {};
+    final isFav = ids.contains(clinicId);
+
+    return IconButton(
+      icon: Icon(
+        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+        color: isFav ? Colors.red : null,
+      ),
+      onPressed: () async {
+        final user =
+            ref.read(authStateProvider).valueOrNull?.session?.user;
+        if (user == null) return;
+        final repo = ref.read(clinicRepositoryProvider);
+        if (isFav) {
+          await repo.removeFavorite(user.id, clinicId);
+        } else {
+          await repo.addFavorite(user.id, clinicId);
+        }
+        ref.invalidate(favoriteClinicIdsProvider);
+        ref.invalidate(favoriteClinicsProvider);
+      },
     );
   }
 }
