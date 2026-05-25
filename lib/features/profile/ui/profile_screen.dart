@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../clinic/providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../shared/models/clinic.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -10,6 +12,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider).valueOrNull;
+    final favoritesAsync = ref.watch(favoriteClinicsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -69,42 +72,23 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(16),
+          favoritesAsync.when(
+            data: (favorites) => _SavedClinicsSection(clinics: favorites),
+            loading: () => Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-            child: Column(
-              children: [
-                const Text(
-                  'No has guardado ninguna clínica',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Cuando guardes perfiles de clínicas, los verás aquí',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/search'),
-                  icon: const Icon(Icons.search_rounded, size: 16),
-                  label: const Text('Encontrar clínicas'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.textPrimary,
-                    side: const BorderSide(color: AppTheme.divider),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    minimumSize: const Size(0, 44),
-                  ),
-                ),
-              ],
+            error: (e, _) => Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text('Error al cargar favoritos: $e'),
             ),
           ),
 
@@ -128,6 +112,139 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SavedClinicsSection extends StatelessWidget {
+  final List<Clinic> clinics;
+
+  const _SavedClinicsSection({required this.clinics});
+
+  @override
+  Widget build(BuildContext context) {
+    if (clinics.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'No has guardado ninguna clínica',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Cuando guardes clínicas con el corazón, las verás aquí',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => context.go('/search'),
+              icon: const Icon(Icons.search_rounded, size: 16),
+              label: const Text('Encontrar clínicas'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textPrimary,
+                side: const BorderSide(color: AppTheme.divider),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                minimumSize: const Size(0, 44),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < clinics.length; i++) ...[
+            if (i > 0) const Divider(height: 1, color: AppTheme.divider),
+            _SavedClinicTile(clinic: clinics[i]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedClinicTile extends StatelessWidget {
+  final Clinic clinic;
+
+  const _SavedClinicTile({required this.clinic});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/search/clinic/${clinic.id}'),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white,
+              backgroundImage: clinic.logoUrl != null && clinic.logoUrl!.isNotEmpty
+                  ? NetworkImage(clinic.logoUrl!)
+                  : null,
+              child: clinic.logoUrl == null || clinic.logoUrl!.isEmpty
+                  ? const Icon(
+                      Icons.local_hospital_rounded,
+                      color: AppTheme.primary,
+                      size: 20,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    clinic.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    clinic.city,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.textSecondary,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
