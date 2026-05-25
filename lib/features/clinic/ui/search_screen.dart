@@ -454,7 +454,7 @@ class _UpcomingAppointmentCard extends StatelessWidget {
         : ('Confirmada', AppTheme.primary);
 
     return GestureDetector(
-      onTap: () => context.push('/appointments'),
+      onTap: () => context.go('/appointments'),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
