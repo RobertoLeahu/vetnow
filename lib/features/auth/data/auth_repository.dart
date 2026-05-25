@@ -17,6 +17,8 @@ class AuthRepository {
     required String password,
     required String fullName,
     required UserRole role,
+    DateTime? privacyAcceptedAt,
+    DateTime? termsAcceptedAt,
   }) async {
     final response = await supabase.auth.signUp(
       email: email,
@@ -26,11 +28,14 @@ class AuthRepository {
     final user = response.user;
     if (user == null) throw Exception('Error al crear el usuario');
 
-    // Insertar perfil con rol
     await supabase.from('profiles').insert({
       'id': user.id,
       'role': role.name,
       'full_name': fullName,
+      if (privacyAcceptedAt != null)
+        'privacy_accepted_at': privacyAcceptedAt.toIso8601String(),
+      if (termsAcceptedAt != null)
+        'terms_accepted_at': termsAcceptedAt.toIso8601String(),
     });
 
     // Para clínicas, crear fila mínima en la tabla clinics
@@ -85,11 +90,14 @@ class AuthRepository {
     await supabase.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-  /// Elimina la cuenta del usuario actual (perfil) y cierra sesión.
+  /// Elimina todos los datos del usuario (RGPD: derecho de supresión) y cierra sesión.
   Future<void> deleteCurrentAccount() async {
     final user = currentUser;
     if (user == null) throw Exception('No hay usuario autenticado');
 
+    await supabase.from('pets').delete().eq('owner_id', user.id);
+    await supabase.from('appointments').delete().eq('owner_id', user.id);
+    await supabase.from('clinic_favorites').delete().eq('owner_id', user.id);
     await supabase.from('profiles').delete().eq('id', user.id);
     await signOut();
   }

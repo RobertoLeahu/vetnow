@@ -16,6 +16,8 @@ import '../features/profile/ui/profile_screen.dart';
 import '../features/profile/ui/settings_screen.dart';
 import '../features/profile/ui/account_screen.dart';
 import '../features/profile/ui/personalization_screen.dart';
+import '../features/profile/ui/legal_text_screen.dart';
+import '../shared/legal/legal_texts.dart';
 import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
@@ -161,6 +163,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'personalization',
                     builder: (_, __) => const PersonalizationScreen(),
+                  ),
+                  GoRoute(
+                    path: 'privacy',
+                    builder: (_, __) => const LegalTextScreen(
+                      title: 'Política de privacidad',
+                      content: kPrivacyPolicy,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'terms',
+                    builder: (_, __) => const LegalTextScreen(
+                      title: 'Términos y condiciones',
+                      content: kTermsOfService,
+                    ),
                   ),
                 ],
               ),
