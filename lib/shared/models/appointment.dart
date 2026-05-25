@@ -55,11 +55,17 @@ class Appointment extends Equatable {
           )
         : PetSpecies.other;
 
+    final street = readNestedString('clinics', 'address') ?? '';
+    final city = readNestedString('clinics', 'city') ?? '';
+    final clinicAddress = street.isNotEmpty && city.isNotEmpty
+        ? '$street, $city'
+        : (street.isNotEmpty ? street : (city.isNotEmpty ? city : '—'));
+
     return Appointment(
       id: map['id'] as String,
       clinicId: map['clinic_id'] as String,
       clinicName: readNestedString('clinics', 'name') ?? '—',
-      clinicAddress: readNestedString('clinics', 'city') ?? '—',
+      clinicAddress: clinicAddress,
       petId: map['pet_id'] as String,
       petName: readNestedString('pets', 'name') ?? '—',
       petSpecies: petSpecies,

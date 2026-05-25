@@ -512,6 +512,7 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
                         Icons.access_time_rounded,
@@ -519,11 +520,34 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                         color: AppTheme.textSecondary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '$dayCapitalized, $dateStr · $timeStr',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textSecondary,
+                      Expanded(
+                        child: Text(
+                          '$dayCapitalized, $dateStr · $timeStr',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Text(
+                          badgeLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: badgeColor,
+                          ),
                         ),
                       ),
                     ],
@@ -533,12 +557,15 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                     children: [
                       Text(emoji, style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 6),
-                      Text(
-                        appointment.petName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                      Expanded(
+                        child: Text(
+                          appointment.petName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -565,24 +592,6 @@ class _UpcomingAppointmentCard extends StatelessWidget {
                     ],
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Status badge
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Text(
-                badgeLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: badgeColor,
-                ),
               ),
             ),
           ],

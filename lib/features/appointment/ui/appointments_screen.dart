@@ -302,6 +302,27 @@ class _AppointmentCard extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                size: 13,
+                color: AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  appointment.clinicAddress,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
             children: [
               const Icon(
                 Icons.calendar_today_rounded,
@@ -323,11 +344,14 @@ class _AppointmentCard extends ConsumerWidget {
                 color: AppTheme.textSecondary,
               ),
               const SizedBox(width: 6),
-              Text(
-                appointment.petName,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  appointment.petName,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
