@@ -56,6 +56,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             termsAcceptedAt: now,
           );
       ref.invalidate(profileProvider);
+      await ref.read(profileProvider.future);
       if (mounted) context.go('/auth-resolve');
     } catch (e) {
       setState(() => _error = 'Error al registrarse: ${e.toString()}');
@@ -107,7 +108,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onChanged: (v) =>
                     setState(() => _privacyAccepted = v ?? false),
                 linkText: 'Política de Privacidad',
-                onLinkTap: () => context.push('/profile/settings/privacy'),
+                onLinkTap: () => context.push('/legal/privacy'),
               ),
               const SizedBox(height: 8),
               _ConsentRow(
@@ -115,7 +116,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onChanged: (v) =>
                     setState(() => _termsAccepted = v ?? false),
                 linkText: 'Términos y Condiciones',
-                onLinkTap: () => context.push('/profile/settings/terms'),
+                onLinkTap: () => context.push('/legal/terms'),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),

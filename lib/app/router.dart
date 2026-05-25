@@ -57,22 +57,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           loc == '/login' ||
           loc == '/register' ||
           loc == '/role-selector';
+      final isLegalRoute =
+          loc == '/legal/privacy' || loc == '/legal/terms';
+      final isPublicRoute = isAuthRoute || isLegalRoute;
 
       if (!isLoggedIn) {
         if (loc == '/auth-resolve') return '/login';
-        if (!isAuthRoute) return '/login';
+        if (!isPublicRoute) return '/login';
         return null;
       }
 
       // Sesión activa: esperar perfil antes de mostrar rutas del shell por rol
       if (profileAsync.isLoading) {
-        if (loc != '/auth-resolve' && !isAuthRoute) return '/auth-resolve';
+        if (loc != '/auth-resolve' && !isPublicRoute) return '/auth-resolve';
         return null;
       }
 
       final role = profileAsync.valueOrNull?.role ?? UserRole.owner;
 
       if (loc == '/auth-resolve') {
+        if (profileAsync.isLoading || profileAsync.valueOrNull == null) {
+          return null;
+        }
         return role == UserRole.clinic ? '/clinic-home' : '/search';
       }
 
@@ -100,6 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (_, state) =>
             RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        builder: (_, __) => const LegalTextScreen(
+          title: 'Política de privacidad',
+          content: kPrivacyPolicy,
+        ),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        builder: (_, __) => const LegalTextScreen(
+          title: 'Términos y condiciones',
+          content: kTermsOfService,
+        ),
       ),
       GoRoute(
         path: '/auth-resolve',
@@ -163,20 +183,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'personalization',
                     builder: (_, __) => const PersonalizationScreen(),
-                  ),
-                  GoRoute(
-                    path: 'privacy',
-                    builder: (_, __) => const LegalTextScreen(
-                      title: 'Política de privacidad',
-                      content: kPrivacyPolicy,
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'terms',
-                    builder: (_, __) => const LegalTextScreen(
-                      title: 'Términos y condiciones',
-                      content: kTermsOfService,
-                    ),
                   ),
                 ],
               ),

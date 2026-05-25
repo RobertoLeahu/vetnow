@@ -108,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
                 _SettingsMenuItem(
                   icon: Icons.description_outlined,
                   label: 'Términos y condiciones',
-                  onTap: () => context.push('/profile/settings/terms'),
+                  onTap: () => context.push('/legal/terms'),
                 ),
                 _SettingsMenuItem(
                   icon: Icons.tune_rounded,
@@ -119,7 +119,7 @@ class SettingsScreen extends ConsumerWidget {
                 _SettingsMenuItem(
                   icon: Icons.privacy_tip_outlined,
                   label: 'Política y privacidad',
-                  onTap: () => context.push('/profile/settings/privacy'),
+                  onTap: () => context.push('/legal/privacy'),
                 ),
                 _SettingsMenuItem(
                   icon: Icons.delete_outline_rounded,
