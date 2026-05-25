@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../../../shared/models/appointment.dart';
 import '../../../shared/models/clinic.dart';
+import '../../../shared/models/pet.dart';
 
 IconData _specialtyIcon(String name) {
   final n = name
@@ -49,9 +53,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ref.invalidate(favoriteClinicsProvider);
     ref.invalidate(specialtiesProvider);
     ref.invalidate(profileProvider);
+    ref.invalidate(myAppointmentsProvider);
     await Future.wait([
       ref.read(favoriteClinicsProvider.future),
       ref.read(specialtiesProvider.future),
+      ref.read(myAppointmentsProvider.future),
     ]);
   }
 
@@ -148,6 +154,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final firstName = profile?.fullName.split(' ').first ?? '';
     final specialtiesAsync = ref.watch(specialtiesProvider);
     final favoritesAsync = ref.watch(favoriteClinicsProvider);
+    final appointmentsAsync = ref.watch(myAppointmentsProvider);
     final filters = ref.watch(searchFiltersProvider);
     final specialties = specialtiesAsync.valueOrNull ?? [];
 
@@ -326,6 +333,75 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Section title — Próximas citas
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Próximas citas',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              // Próximas citas (contenido dentro del recuadro)
+              appointmentsAsync.when(
+                data: (all) {
+                  final now = DateTime.now();
+                  final upcoming = all
+                      .where((a) => a.isUpcoming && a.scheduledAt.isAfter(now))
+                      .take(3)
+                      .toList();
+
+                  Widget content;
+                  if (upcoming.isEmpty) {
+                    content = const _EmptyState(
+                      icon: Icons.calendar_today_rounded,
+                      title: 'No tienes citas programadas',
+                      subtitle: 'Reserva una cita y aparecerá aquí.',
+                    );
+                  } else {
+                    content = Column(
+                      children: [
+                        for (var i = 0; i < upcoming.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 10),
+                          _UpcomingAppointmentCard(
+                            appointment: upcoming[i],
+                          ),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return SliverToBoxAdapter(
+                    child: _FavoritesSectionBox(child: content),
+                  );
+                },
+                loading: () => const SliverToBoxAdapter(
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                ),
+                error: (e, _) => SliverToBoxAdapter(
+                  child: _FavoritesSectionBox(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: Text('Error: $e')),
+                    ),
+                  ),
+                ),
+              ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
@@ -335,7 +411,176 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-// ── Recuadro de sección (solo contenido; el título va fuera) ─────
+// ── Próxima cita card ─────────────────────────────────────────────
+
+class _UpcomingAppointmentCard extends StatelessWidget {
+  final Appointment appointment;
+  const _UpcomingAppointmentCard({required this.appointment});
+
+  @override
+  Widget build(BuildContext context) {
+    final slot = appointment.scheduledAt;
+    final dayName = DateFormat('EEEE', 'es').format(slot);
+    final dayCapitalized =
+        dayName[0].toUpperCase() + dayName.substring(1);
+    final dateStr = DateFormat("d 'de' MMMM", 'es').format(slot);
+    final timeStr = DateFormat('HH:mm').format(slot);
+
+    final emoji = switch (appointment.petSpecies) {
+      PetSpecies.dog => '🐶',
+      PetSpecies.cat => '🐱',
+      PetSpecies.rabbit => '🐰',
+      PetSpecies.hamster => '🐹',
+      PetSpecies.bird => '🦜',
+      PetSpecies.reptile => '🦎',
+      PetSpecies.ferret => '🦦',
+      PetSpecies.other => '🐾',
+    };
+
+    final (badgeLabel, badgeColor) = appointment.isPending
+        ? ('Pendiente', Colors.orange.shade700)
+        : ('Confirmada', AppTheme.primary);
+
+    return GestureDetector(
+      onTap: () => context.push('/appointments'),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date column
+            Container(
+              width: 56,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    dayCapitalized.substring(0, 3),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('d').format(slot),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMM', 'es').format(slot),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Info column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$dayCapitalized, $dateStr · $timeStr',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 6),
+                      Text(
+                        appointment.petName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.local_hospital_rounded,
+                        size: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          appointment.clinicName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Status badge
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Text(
+                badgeLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: badgeColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Recuadro de sección (título fuera; contenido dentro) ─────────
 
 class _FavoritesSectionBox extends StatelessWidget {
   final Widget child;

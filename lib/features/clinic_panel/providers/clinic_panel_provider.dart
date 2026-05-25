@@ -47,7 +47,7 @@ List<Appointment> filterTodayClinicAppointments(List<Appointment> all) {
   final now = DateTime.now();
   return all.where((a) {
     final local = a.scheduledAt.toLocal();
-    return a.isUpcoming &&
+    return a.isConfirmed &&
         local.year == now.year &&
         local.month == now.month &&
         local.day == now.day;
@@ -65,7 +65,7 @@ List<Appointment> filterTodayConfirmedClinicAppointments(List<Appointment> all) 
   }).toList();
 }
 
-/// Citas de hoy (pending + confirmed) para el resumen del dashboard.
+/// Citas confirmadas de hoy para la tarjeta principal del dashboard.
 final todayClinicAppointmentsProvider = Provider<List<Appointment>>((ref) {
   final all = ref.watch(clinicAppointmentsProvider).valueOrNull ?? [];
   return filterTodayClinicAppointments(all);

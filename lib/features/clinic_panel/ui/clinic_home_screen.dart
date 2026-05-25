@@ -317,7 +317,7 @@ class _TodayAppointmentsCard extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 6),
                       child: Text(
-                        'citas pendientes hoy',
+                        'citas confirmadas hoy',
                         style: TextStyle(fontSize: 15, color: Colors.white70),
                       ),
                     ),
