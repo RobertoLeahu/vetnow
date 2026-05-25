@@ -150,8 +150,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(profileProvider).valueOrNull;
-    final firstName = profile?.fullName.split(' ').first ?? '';
+    final profileAsync = ref.watch(profileProvider);
+    final firstName = profileAsync.maybeWhen(
+      data: (profile) => profile?.fullName.split(' ').first ?? '',
+      orElse: () => '',
+    );
     final specialtiesAsync = ref.watch(specialtiesProvider);
     final favoritesAsync = ref.watch(favoriteClinicsProvider);
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
@@ -178,25 +181,34 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         color: AppTheme.primary,
                       ),
                       const SizedBox(height: 12),
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 24,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          children: [
-                            const TextSpan(text: 'Bienvenido a VetNow, '),
-                            TextSpan(
-                              text: '$firstName!',
-                              style: const TextStyle(
-                                color: AppTheme.primary,
-                                fontWeight: FontWeight.bold,
+                      firstName.isEmpty
+                          ? const Text(
+                              'Bienvenido a VetNow',
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            )
+                          : RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'Bienvenido a VetNow, '),
+                                  TextSpan(
+                                    text: '$firstName!',
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
                       const SizedBox(height: 16),
 
                       // Search field

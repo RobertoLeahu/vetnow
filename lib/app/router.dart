@@ -16,6 +16,8 @@ import '../features/profile/ui/profile_screen.dart';
 import '../features/profile/ui/settings_screen.dart';
 import '../features/profile/ui/account_screen.dart';
 import '../features/profile/ui/personalization_screen.dart';
+import '../features/profile/ui/legal_text_screen.dart';
+import '../shared/legal/legal_texts.dart';
 import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
@@ -55,22 +57,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           loc == '/login' ||
           loc == '/register' ||
           loc == '/role-selector';
+      final isLegalRoute =
+          loc == '/legal/privacy' || loc == '/legal/terms';
+      final isPublicRoute = isAuthRoute || isLegalRoute;
 
       if (!isLoggedIn) {
         if (loc == '/auth-resolve') return '/login';
-        if (!isAuthRoute) return '/login';
+        if (!isPublicRoute) return '/login';
         return null;
       }
 
       // Sesión activa: esperar perfil antes de mostrar rutas del shell por rol
       if (profileAsync.isLoading) {
-        if (loc != '/auth-resolve' && !isAuthRoute) return '/auth-resolve';
+        if (loc != '/auth-resolve' && !isPublicRoute) return '/auth-resolve';
         return null;
       }
 
       final role = profileAsync.valueOrNull?.role ?? UserRole.owner;
 
       if (loc == '/auth-resolve') {
+        if (profileAsync.isLoading || profileAsync.valueOrNull == null) {
+          return null;
+        }
         return role == UserRole.clinic ? '/clinic-home' : '/search';
       }
 
@@ -98,6 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (_, state) =>
             RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        builder: (_, __) => const LegalTextScreen(
+          title: 'Política de privacidad',
+          content: kPrivacyPolicy,
+        ),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        builder: (_, __) => const LegalTextScreen(
+          title: 'Términos y condiciones',
+          content: kTermsOfService,
+        ),
       ),
       GoRoute(
         path: '/auth-resolve',

@@ -24,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         password: _passCtrl.text.trim(),
       );
       ref.invalidate(profileProvider);
+      await ref.read(profileProvider.future);
       if (mounted) context.go('/auth-resolve');
     } catch (e) {
       setState(() => _error = 'Email o contraseña incorrectos');

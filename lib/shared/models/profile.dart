@@ -8,6 +8,8 @@ class Profile extends Equatable {
   final String fullName;
   final String? phone;
   final String? avatarUrl;
+  final DateTime? privacyAcceptedAt;
+  final DateTime? termsAcceptedAt;
 
   const Profile({
     required this.id,
@@ -15,6 +17,8 @@ class Profile extends Equatable {
     required this.fullName,
     this.phone,
     this.avatarUrl,
+    this.privacyAcceptedAt,
+    this.termsAcceptedAt,
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
@@ -24,6 +28,12 @@ class Profile extends Equatable {
       fullName: map['full_name'] as String,
       phone: map['phone'] as String?,
       avatarUrl: map['avatar_url'] as String?,
+      privacyAcceptedAt: map['privacy_accepted_at'] != null
+          ? DateTime.parse(map['privacy_accepted_at'] as String)
+          : null,
+      termsAcceptedAt: map['terms_accepted_at'] != null
+          ? DateTime.parse(map['terms_accepted_at'] as String)
+          : null,
     );
   }
 
@@ -33,6 +43,8 @@ class Profile extends Equatable {
     'full_name': fullName,
     'phone': phone,
     'avatar_url': avatarUrl,
+    'privacy_accepted_at': privacyAcceptedAt?.toIso8601String(),
+    'terms_accepted_at': termsAcceptedAt?.toIso8601String(),
   };
 
   @override
