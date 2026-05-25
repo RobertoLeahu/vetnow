@@ -8,6 +8,27 @@ import '../../../app/theme.dart';
 import '../../../shared/models/clinic.dart';
 import '../providers/clinic_provider.dart';
 
+IconData _nearbySpecialtyIcon(String name) {
+  final n = name
+      .toLowerCase()
+      .replaceAll(RegExp(r'[áàä]'), 'a')
+      .replaceAll(RegExp(r'[éèë]'), 'e')
+      .replaceAll(RegExp(r'[íìï]'), 'i')
+      .replaceAll(RegExp(r'[óòö]'), 'o')
+      .replaceAll(RegExp(r'[úùü]'), 'u');
+
+  if (n.contains('medicina')) return Icons.medical_services_rounded;
+  if (n.contains('dermat')) return Icons.healing_rounded;
+  if (n.contains('cardio')) return Icons.favorite_rounded;
+  if (n.contains('traumat')) return Icons.set_meal_rounded;
+  if (n.contains('oftalm')) return Icons.visibility_rounded;
+  if (n.contains('exotic') || n.contains('exot')) return Icons.pets_rounded;
+  if (n.contains('urgenc') || n.contains('24')) {
+    return Icons.local_hospital_rounded;
+  }
+  return Icons.medical_information_outlined;
+}
+
 class NearbyScreen extends ConsumerStatefulWidget {
   final double userLat;
   final double userLng;
@@ -80,10 +101,20 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
     }
   }
 
+  void _setSpecialtyFilter(String? specialtyId) {
+    ref.read(searchFiltersProvider.notifier).update(
+          (s) => specialtyId == null
+              ? s.copyWith(clearSpecialty: true)
+              : s.copyWith(specialtyId: specialtyId),
+        );
+    ref.invalidate(clinicSearchProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final clinicsAsync = ref.watch(clinicSearchProvider);
     final filters = ref.watch(searchFiltersProvider);
+    final specialtiesAsync = ref.watch(specialtiesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -100,6 +131,43 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
       ),
       body: Column(
         children: [
+          specialtiesAsync.when(
+            data: (specialties) => Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _NearbySpecialtyChip(
+                    label: 'Todas',
+                    icon: Icons.apps_rounded,
+                    selected: filters.specialtyId == null,
+                    onTap: () => _setSpecialtyFilter(null),
+                  ),
+                  ...specialties.map(
+                    (s) => _NearbySpecialtyChip(
+                      label: s.name,
+                      icon: _nearbySpecialtyIcon(s.name),
+                      selected: filters.specialtyId == s.id,
+                      onTap: () => _setSpecialtyFilter(s.id),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            loading: () => const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
           // Map section
           _MapSection(
             expanded: _mapExpanded,
@@ -150,10 +218,12 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Las clínicas necesitan tener su ubicación GPS registrada para aparecer aquí.',
+                            Text(
+                              filters.specialtyId != null
+                                  ? 'Prueba con otra especialidad o amplía el radio de búsqueda.'
+                                  : 'Las clínicas necesitan tener su ubicación GPS registrada para aparecer aquí.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: AppTheme.textSecondary, fontSize: 13),
                             ),
                           ],
@@ -197,6 +267,56 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Specialty chip (cercanas) ────────────────────────────────────
+
+class _NearbySpecialtyChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NearbySpecialtyChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primary : AppTheme.surface,
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? Colors.white : AppTheme.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

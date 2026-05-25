@@ -93,6 +93,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
 
       if (!mounted) return;
+      ref.read(searchFiltersProvider.notifier).update(
+            (s) => s.copyWith(
+              isNearbyMode: true,
+              userLat: position.latitude,
+              userLng: position.longitude,
+            ),
+          );
+      ref.invalidate(clinicSearchProvider);
       context.push(
         '/search/nearby',
         extra: (lat: position.latitude, lng: position.longitude),
@@ -141,6 +149,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final specialtiesAsync = ref.watch(specialtiesProvider);
     final favoritesAsync = ref.watch(favoriteClinicsProvider);
     final filters = ref.watch(searchFiltersProvider);
+    final specialties = specialtiesAsync.valueOrNull ?? [];
 
     return Scaffold(
       body: SafeArea(
@@ -207,35 +216,41 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
-              // Specialty chips
+              // Specialty chips (solo filtran clínicas cercanas)
               SliverToBoxAdapter(
                 child: specialtiesAsync.when(
-                  data: (specialties) => Padding(
+                  data: (_) => Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 8,
                     ),
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      spacing: 8.0,
-                      runSpacing: 8.0,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _SpecialtyChip(
                           label: 'Todas',
                           icon: Icons.apps_rounded,
                           selected: filters.specialtyId == null,
-                          onTap: () => ref
-                              .read(searchFiltersProvider.notifier)
-                              .update((s) => s.copyWith(clearSpecialty: true)),
+                          onTap: () {
+                            ref.read(searchFiltersProvider.notifier).update(
+                                  (s) => s.copyWith(clearSpecialty: true),
+                                );
+                            ref.invalidate(clinicSearchProvider);
+                          },
                         ),
                         ...specialties.map(
                           (s) => _SpecialtyChip(
                             label: s.name,
                             icon: _specialtyIcon(s.name),
                             selected: filters.specialtyId == s.id,
-                            onTap: () => ref
-                                .read(searchFiltersProvider.notifier)
-                                .update((f) => f.copyWith(specialtyId: s.id)),
+                            onTap: () {
+                              ref.read(searchFiltersProvider.notifier).update(
+                                    (f) => f.copyWith(specialtyId: s.id),
+                                  );
+                              ref.invalidate(clinicSearchProvider);
+                            },
                           ),
                         ),
                       ],
@@ -267,20 +282,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // Favorite clinics (content inside bordered section)
+              // Favorite clinics (lista fija; no depende de chips ni búsqueda)
               favoritesAsync.when(
                 data: (allFavs) {
-                  final term = filters.query.trim().toLowerCase();
-                  final filtered = allFavs.where((c) {
-                    final matchText = term.isEmpty ||
-                        c.name.toLowerCase().contains(term) ||
-                        c.city.toLowerCase().contains(term) ||
-                        c.address.toLowerCase().contains(term);
-                    final matchSpecialty = filters.specialtyId == null ||
-                        c.specialties.any((s) => s.id == filters.specialtyId);
-                    return matchText && matchSpecialty;
-                  }).toList();
-
                   Widget content;
                   if (allFavs.isEmpty) {
                     content = const _EmptyState(
@@ -289,19 +293,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       subtitle:
                           'Explora y pulsa el corazón en cualquier clínica para añadirla aquí.',
                     );
-                  } else if (filtered.isEmpty) {
-                    content = const _EmptyState(
-                      icon: Icons.search_off_rounded,
-                      title: 'Ninguna favorita coincide con los filtros',
-                      subtitle:
-                          'Prueba con otro nombre, ciudad o especialidad',
-                    );
                   } else {
                     content = Column(
                       children: [
-                        for (var i = 0; i < filtered.length; i++) ...[
+                        for (var i = 0; i < allFavs.length; i++) ...[
                           if (i > 0) const SizedBox(height: 10),
-                          _ClinicCard(clinic: filtered[i]),
+                          _ClinicCard(clinic: allFavs[i]),
                         ],
                       ],
                     );

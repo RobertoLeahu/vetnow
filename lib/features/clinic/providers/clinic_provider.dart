@@ -14,10 +14,11 @@ final clinicRepositoryProvider = Provider<ClinicRepository>(
 class SearchFilters {
   /// Texto libre: busca por nombre de clínica, ciudad o dirección.
   final String query;
+  /// Especialidad seleccionada; solo aplica a la búsqueda de clínicas cercanas.
   final String? specialtyId;
 
-  /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] y se ignora
-  /// el filtro de [query].
+  /// Modo proximidad GPS. Si es true se usa [userLat] / [userLng] en
+  /// [clinicSearchProvider] (cercanas). [query] no filtra favoritos.
   final bool isNearbyMode;
   final double? userLat;
   final double? userLng;
@@ -56,24 +57,19 @@ final searchFiltersProvider = StateProvider<SearchFilters>(
   (_) => const SearchFilters(),
 );
 
-// Resultados de búsqueda reactivos a los filtros
-final clinicSearchProvider = FutureProvider<List<Clinic>>((ref) async {
+// Clínicas cercanas (solo activo en NearbyScreen; usa especialidad y GPS).
+final clinicSearchProvider = FutureProvider.autoDispose<List<Clinic>>((ref) async {
   final filters = ref.watch(searchFiltersProvider);
-  final repo = ref.watch(clinicRepositoryProvider);
-
-  if (filters.isNearbyMode &&
-      filters.userLat != null &&
-      filters.userLng != null) {
-    return repo.searchClinicsNearby(
-      userLat: filters.userLat!,
-      userLng: filters.userLng!,
-      radiusKm: filters.nearbyRadiusKm,
-      specialtyId: filters.specialtyId,
-    );
+  if (!filters.isNearbyMode ||
+      filters.userLat == null ||
+      filters.userLng == null) {
+    return [];
   }
 
-  return repo.searchClinics(
-    query: filters.query,
+  return ref.watch(clinicRepositoryProvider).searchClinicsNearby(
+    userLat: filters.userLat!,
+    userLng: filters.userLng!,
+    radiusKm: filters.nearbyRadiusKm,
     specialtyId: filters.specialtyId,
   );
 });
