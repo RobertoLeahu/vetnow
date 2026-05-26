@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/specialty.dart';
 
 class ClinicDetailScreen extends ConsumerWidget {
@@ -12,13 +13,14 @@ class ClinicDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final clinicAsync = ref.watch(clinicDetailProvider(clinicId));
 
     return Scaffold(
       body: clinicAsync.when(
         data: (clinic) {
           if (clinic == null) {
-            return const Center(child: Text('Clínica no encontrada'));
+            return Center(child: Text(l10n.clinicNotFound));
           }
           return CustomScrollView(
             slivers: [
@@ -81,9 +83,9 @@ class ClinicDetailScreen extends ConsumerWidget {
                         _InfoRow(icon: Icons.email, text: clinic.email!),
                       if (clinic.description != null) ...[
                         const SizedBox(height: 16),
-                        const Text(
-                          'Sobre nosotros',
-                          style: TextStyle(
+                        Text(
+                          l10n.aboutUs,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -98,9 +100,9 @@ class ClinicDetailScreen extends ConsumerWidget {
                       // Especialidades
                       if (clinic.specialties.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        const Text(
-                          'Especialidades',
-                          style: TextStyle(
+                        Text(
+                          l10n.specialties,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -121,9 +123,9 @@ class ClinicDetailScreen extends ConsumerWidget {
                         onPressed: () {
                           if (clinic.specialties.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(
-                                  'Esta clínica no tiene especialidades configuradas',
+                                  l10n.clinicNoSpecialtiesConfigured,
                                 ),
                               ),
                             );
@@ -157,7 +159,7 @@ class ClinicDetailScreen extends ConsumerWidget {
                           );
                         },
                         icon: const Icon(Icons.calendar_today),
-                        label: const Text('Reservar cita'),
+                        label: Text(l10n.bookAppointment),
                       ),
                     ],
                   ),
@@ -167,7 +169,7 @@ class ClinicDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l10n.errorWithDetails('$e'))),
       ),
     );
   }
@@ -221,6 +223,7 @@ class _SpecialtySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -240,9 +243,9 @@ class _SpecialtySheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Selecciona especialidad',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            Text(
+              l10n.selectSpecialty,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...specialties.map(

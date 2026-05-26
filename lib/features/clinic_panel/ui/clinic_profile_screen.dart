@@ -6,7 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme.dart';
-import '../../../shared/appointment_duration.dart';
+import '../../../l10n/l10n_ext.dart';
+import '../../../shared/appointment_duration.dart' show kAllowedAppointmentDurationsMinutes, kDefaultAppointmentDurationMinutes;
 import '../../../shared/models/clinic.dart';
 import '../../../shared/models/schedule.dart';
 import '../../../shared/models/specialty.dart';
@@ -167,15 +168,13 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     if (!_hasUnsavedChanges()) return true;
     if (!mounted) return true;
 
+    final l10n = context.l10n;
     final action = await showDialog<_UnsavedExitAction>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cambios sin guardar'),
-        content: const Text(
-          'Has modificado el perfil o los horarios de la clínica sin guardar. '
-          '¿Qué deseas hacer?',
-        ),
+        title: Text(l10n.unsavedChangesTitle),
+        content: Text(l10n.unsavedChangesBody),
         actions: [
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -189,7 +188,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
-                  child: const Text('Guardar'),
+                  child: Text(l10n.save),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
@@ -198,7 +197,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
-                  child: const Text('Descartar cambios'),
+                  child: Text(l10n.discardChanges),
                 ),
               ],
             ),
@@ -258,11 +257,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Ubicación registrada. Tu clínica ya aparecerá en búsquedas cercanas.',
-            ),
-          ),
+          SnackBar(content: Text(context.l10n.locationRegisteredSnack)),
         );
       }
     } finally {
@@ -356,10 +351,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
 
       if (mounted) {
         _captureBaseline();
+        final l10n = context.l10n;
         final msg = geocodeSucceeded
-            ? 'Perfil actualizado'
-            : 'Perfil guardado, pero no se pudo obtener la ubicación. '
-                'Revisa dirección y ciudad (ej. "Valdemoro") y vuelve a guardar.';
+            ? l10n.profileUpdated
+            : l10n.profileSavedNoLocation;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
@@ -371,7 +366,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e')),
+          SnackBar(content: Text(context.l10n.saveError('$e'))),
         );
       }
       return false;
@@ -382,6 +377,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final clinicAsync = ref.watch(myClinicProvider);
     final schedulesAsync = ref.watch(mySchedulesProvider);
     final specialtiesAsync = ref.watch(specialtiesProvider);
@@ -391,15 +387,13 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(l10n.errorWithDetails('$e'))),
       ),
       data: (clinic) {
         if (clinic == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Mi clínica')),
-            body: const Center(
-              child: Text('No se encontró el perfil de clínica.'),
-            ),
+            appBar: AppBar(title: Text(l10n.myClinicTitle)),
+            body: Center(child: Text(l10n.clinicProfileNotFound)),
           );
         }
 
@@ -408,12 +402,12 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         // horarios guardados nunca se cargan. Esperar a tener datos de horarios.
         return schedulesAsync.when(
           loading: () => Scaffold(
-            appBar: AppBar(title: const Text('Mi clínica')),
+            appBar: AppBar(title: Text(l10n.myClinicTitle)),
             body: const Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => Scaffold(
-            appBar: AppBar(title: const Text('Mi clínica')),
-            body: Center(child: Text('Error al cargar horarios: $e')),
+            appBar: AppBar(title: Text(l10n.myClinicTitle)),
+            body: Center(child: Text(l10n.schedulesLoadError('$e'))),
           ),
           data: (schedules) {
             _initFromClinic(clinic, schedules);
@@ -436,7 +430,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
               },
               child: Scaffold(
               appBar: AppBar(
-                title: const Text('Mi clínica'),
+                title: Text(l10n.myClinicTitle),
                 actions: [
                   _saving
                       ? const Padding(
@@ -450,7 +444,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                       : IconButton(
                           onPressed: () => _save(clinic),
                           icon: const Icon(Icons.check_rounded),
-                          tooltip: 'Guardar',
+                          tooltip: l10n.saveTooltip,
                         ),
                 ],
               ),
@@ -490,6 +484,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   }
 
   Widget _buildLocationBanner(Clinic clinic) {
+    final l10n = context.l10n;
     final hasAddress = clinic.city.trim().isNotEmpty;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -507,13 +502,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           Expanded(
             child: Text(
               _geocodingInBackground
-                  ? 'Registrando tu ubicación en el mapa…'
+                  ? l10n.registeringLocation
                   : hasAddress
-                      ? 'Tu clínica aún no tiene coordenadas GPS. '
-                          'Completa dirección y ciudad, luego pulsa Guardar '
-                          'para aparecer en búsquedas cercanas.'
-                      : 'Indica la ciudad (ej. Valdemoro) y la dirección '
-                          'para que los propietarios te encuentren cerca.',
+                      ? l10n.locationBannerNeedsSave
+                      : l10n.locationBannerEnterCity,
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.amber.shade900,
@@ -570,54 +562,55 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   // ── Info básica ─────────────────────────────────────────────────
 
   Widget _buildInfoSection() {
+    final l10n = context.l10n;
     return _Section(
-      title: 'Información básica',
+      title: l10n.basicInformation,
       children: [
         TextFormField(
           controller: _nameCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Nombre de la clínica',
-            prefixIcon: Icon(Icons.business_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.clinicName,
+            prefixIcon: const Icon(Icons.business_rounded),
           ),
           validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _addressCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Dirección',
-            prefixIcon: Icon(Icons.location_on_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.address,
+            prefixIcon: const Icon(Icons.location_on_rounded),
           ),
           validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _cityCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Ciudad',
-            prefixIcon: Icon(Icons.location_city_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.city,
+            prefixIcon: const Icon(Icons.location_city_rounded),
           ),
           validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _phoneCtrl,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
-            labelText: 'Teléfono',
-            prefixIcon: Icon(Icons.phone_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.phone,
+            prefixIcon: const Icon(Icons.phone_rounded),
           ),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _emailCtrl,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: 'Email de contacto',
-            prefixIcon: Icon(Icons.email_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.contactEmail,
+            prefixIcon: const Icon(Icons.email_rounded),
           ),
         ),
         const SizedBox(height: 12),
@@ -625,7 +618,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
           controller: _descCtrl,
           maxLines: 3,
           decoration: InputDecoration(
-            labelText: 'Descripción',
+            labelText: l10n.description,
             prefixIcon: const Icon(Icons.description_rounded),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -647,11 +640,12 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   // ── Especialidades ──────────────────────────────────────────────
 
   Widget _buildSpecialtiesSection(List<Specialty> catalog) {
+    final l10n = context.l10n;
     return _Section(
-      title: 'Especialidades',
+      title: l10n.specialties,
       children: [
         if (catalog.isEmpty)
-          const Text('Cargando especialidades…')
+          Text(l10n.loadingSpecialties)
         else
           Wrap(
             spacing: 8,
@@ -682,13 +676,13 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   // ── Duración de citas ───────────────────────────────────────────
 
   Widget _buildAppointmentDurationSection() {
+    final l10n = context.l10n;
     return _Section(
-      title: 'Duración de las citas',
+      title: l10n.appointmentDurationTitle,
       children: [
-        const Text(
-          'Cada franja reservable tendrá esta duración. Los propietarios verán '
-          'los horarios disponibles ajustados al guardar.',
-          style: TextStyle(
+        Text(
+          l10n.appointmentDurationHelp,
+          style: const TextStyle(
             fontSize: 13,
             color: AppTheme.textSecondary,
             height: 1.35,
@@ -697,15 +691,16 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         const SizedBox(height: 12),
         DropdownButtonFormField<int>(
           initialValue: _appointmentDurationMinutes,
-          decoration: const InputDecoration(
-            labelText: 'Duración por cita',
-            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: InputDecoration(
+            labelText: l10n.durationPerAppointment,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           ),
           items: kAllowedAppointmentDurationsMinutes
               .map(
                 (m) => DropdownMenuItem(
                   value: m,
-                  child: Text(formatAppointmentDurationLabel(m)),
+                  child: Text(formatAppointmentDurationLabel(m, l10n)),
                 ),
               )
               .toList(),
@@ -721,8 +716,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
   // ── Horarios ────────────────────────────────────────────────────
 
   Widget _buildScheduleSection() {
+    final l10n = context.l10n;
+    final dayNames = weekdayNames(l10n);
     return _Section(
-      title: 'Horarios semanales',
+      title: l10n.weeklyHours,
       children: List.generate(7, (i) {
         final day = _weekSchedule[i];
         return Padding(
@@ -743,7 +740,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
               SizedBox(
                 width: 80,
                 child: Text(
-                  Schedule.dayNames[i],
+                  dayNames[i],
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: day.active
@@ -766,9 +763,9 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                   onTap: () => _pickTime(i, isOpen: false),
                 ),
               ] else
-                const Text(
-                  'Cerrado',
-                  style: TextStyle(
+                Text(
+                  l10n.closed,
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 13,
                   ),
@@ -828,7 +825,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     return ElevatedButton.icon(
       onPressed: _saving ? null : () => _save(clinic),
       icon: const Icon(Icons.save_rounded, size: 18),
-      label: const Text('Guardar cambios'),
+      label: Text(context.l10n.saveChanges),
     );
   }
 
@@ -840,7 +837,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         if (mounted) context.go('/login');
       },
       icon: const Icon(Icons.logout_rounded, size: 16),
-      label: const Text('Cerrar sesión'),
+      label: Text(context.l10n.signOut),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.red,
         side: const BorderSide(color: Colors.red),

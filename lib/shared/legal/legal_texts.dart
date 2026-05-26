@@ -1,3 +1,5 @@
+import 'legal_texts_en.dart';
+
 const String kPrivacyPolicy = '''
 POLÍTICA DE PRIVACIDAD Y PROTECCIÓN DE DATOS
 
@@ -144,3 +146,9 @@ Los presentes Términos se rigen por la legislación española. Para la resoluci
 • Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo (RGPD).
 • Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y Garantía de los Derechos Digitales (LOPDGDD).
 ''';
+
+String privacyPolicyForLocale(String languageCode) =>
+    languageCode == 'en' ? kPrivacyPolicyEn : kPrivacyPolicy;
+
+String termsOfServiceForLocale(String languageCode) =>
+    languageCode == 'en' ? kTermsOfServiceEn : kTermsOfService;

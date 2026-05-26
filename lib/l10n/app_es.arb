@@ -1,0 +1,580 @@
+{
+  "@@locale": "es",
+  "loginWelcome": "Bienvenido 👋",
+  "loginSubtitle": "Inicia sesión en VetNow",
+  "email": "Email",
+  "password": "Contraseña",
+  "loginErrorInvalidCredentials": "Email o contraseña incorrectos",
+  "signIn": "Iniciar sesión",
+  "loginNoAccountRegister": "¿No tienes cuenta? Regístrate",
+  "createAccount": "Crear cuenta",
+  "registerClinicTitle": "Registro de clínica",
+  "registerOwnerTitle": "Registro de propietario",
+  "fullName": "Nombre completo",
+  "fillAllFields": "Rellena todos los campos",
+  "registerMustAcceptLegal": "Debes aceptar la política de privacidad y los términos",
+  "registerError": "Error al registrarse: {error}",
+  "@registerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyPolicyLink": "Política de Privacidad",
+  "termsAndConditionsLink": "Términos y Condiciones",
+  "consentPrefix": "He leído y acepto la ",
+  "roleSelectorTitle": "¿Cómo usarás VetNow?",
+  "selectYourProfile": "Selecciona tu perfil",
+  "roleOwnerTitle": "Soy propietario",
+  "roleOwnerSubtitle": "Busco clínicas y reservo citas para mi mascota",
+  "roleClinicTitle": "Soy clínica",
+  "roleClinicSubtitle": "Gestiono mi agenda y recibo reservas",
+  "settingsTitle": "Ajustes",
+  "account": "Cuenta",
+  "termsAndConditions": "Términos y condiciones",
+  "personalization": "Personalización",
+  "privacyAndPolicy": "Política y privacidad",
+  "deleteMyAccount": "Eliminar mi cuenta",
+  "signOut": "Cerrar sesión",
+  "cancel": "Cancelar",
+  "signOutConfirmMessage": "¿Seguro que quieres cerrar sesión?",
+  "signOutError": "Error al cerrar sesión: {error}",
+  "@signOutError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirmBody": "Esta acción eliminará tus datos personales y cerrará tu sesión. No se puede deshacer.\n\n¿Deseas continuar?",
+  "deleteAccount": "Eliminar cuenta",
+  "deleteAccountError": "No se pudo eliminar la cuenta: {error}",
+  "@deleteAccountError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appVersionLabel": "App version: 5.271.0",
+  "darkMode": "Modo oscuro",
+  "enabled": "Activado",
+  "disabled": "Desactivado",
+  "language": "Idioma",
+  "languageSpanish": "Español",
+  "languageEnglish": "Inglés",
+  "selectLanguage": "Seleccionar idioma",
+  "profileTitle": "Perfil",
+  "myPets": "Mis mascotas",
+  "myAppointments": "Mis citas",
+  "notifications": "Notificaciones",
+  "saved": "Guardados",
+  "favoritesLoadError": "Error al cargar favoritos: {error}",
+  "@favoritesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noSavedClinicsTitle": "No has guardado ninguna clínica",
+  "noSavedClinicsSubtitle": "Cuando guardes clínicas con el corazón, las verás aquí",
+  "findClinics": "Encontrar clínicas",
+  "personalData": "Datos personales",
+  "emailAddress": "Correo electrónico",
+  "phonePrefix": "Prefijo",
+  "phoneNumber": "Número de teléfono",
+  "changePassword": "Cambiar contraseña",
+  "saveChanges": "Guardar cambios",
+  "noChangesToSave": "No hay cambios que guardar",
+  "dataSaved": "Datos guardados",
+  "saveError": "Error al guardar: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+  "passwordsDoNotMatch": "Las contraseñas no coinciden",
+  "passwordUpdated": "Contraseña actualizada",
+  "newPassword": "Nueva contraseña",
+  "confirmPassword": "Confirmar contraseña",
+  "updatePassword": "Actualizar contraseña",
+  "errorWithDetails": "Error: {error}",
+  "@errorWithDetails": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navSearch": "Buscar",
+  "navAppointments": "Citas",
+  "navPets": "Mascotas",
+  "navProfile": "Perfil",
+  "navClinicHome": "Inicio",
+  "navClinicAgenda": "Agenda",
+  "navClinicPatients": "Pacientes",
+  "navMyClinic": "Mi clínica",
+  "welcomeToVetNow": "Bienvenido a VetNow",
+  "welcomeToVetNowName": "Bienvenido a VetNow, {name}!",
+  "@welcomeToVetNowName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHintNameCityAddress": "Buscar por nombre, ciudad o dirección",
+  "searchClinicsNearMe": "Buscar clínicas cerca de mí",
+  "allSpecialties": "Todas",
+  "favoriteClinics": "Clínicas favoritas",
+  "noFavoriteClinicsTitle": "Todavía no tienes clínicas favoritas",
+  "noFavoriteClinicsSubtitle": "Explora y pulsa el corazón en cualquier clínica para añadirla aquí.",
+  "upcomingAppointments": "Próximas citas",
+  "noScheduledAppointmentsTitle": "No tienes citas programadas",
+  "noScheduledAppointmentsSubtitle": "Reserva una cita y aparecerá aquí.",
+  "statusPending": "Pendiente",
+  "statusConfirmed": "Confirmada",
+  "locationDisabledTitle": "Ubicación desactivada",
+  "locationDisabledMessage": "Activa el servicio de ubicación de tu dispositivo para ver las clínicas cercanas.",
+  "locationPermissionTitle": "Permiso de ubicación necesario",
+  "locationPermissionMessage": "Para mostrarte las clínicas más cercanas necesitamos acceder a tu ubicación. Actívala en los ajustes de la app.",
+  "openSettings": "Abrir ajustes",
+  "locationFetchError": "No se pudo obtener tu ubicación: {error}",
+  "@locationFetchError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchClinicsTitle": "Buscar clínicas",
+  "searchHintShort": "Nombre, ciudad o dirección",
+  "searchTypeToSeeResults": "Escribe para ver clínicas que coincidan",
+  "searchNoClinicsForQuery": "No hay clínicas para \"{query}\"",
+  "@searchNoClinicsForQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchTryAnotherQuery": "Prueba con otro nombre, ciudad o dirección",
+  "clinicNotFound": "Clínica no encontrada",
+  "aboutUs": "Sobre nosotros",
+  "specialties": "Especialidades",
+  "clinicNoSpecialtiesConfigured": "Esta clínica no tiene especialidades configuradas",
+  "bookAppointment": "Reservar cita",
+  "selectSpecialty": "Selecciona especialidad",
+  "nearbyClinicsTitle": "Clínicas cercanas",
+  "viewOnMap": "Ver en el mapa",
+  "noClinicsWithinRadius": "No hay clínicas en {km} km",
+  "@noClinicsWithinRadius": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "nearbyTryOtherSpecialty": "Prueba con otra especialidad o amplía el radio de búsqueda.",
+  "nearbyNeedsGps": "Las clínicas necesitan tener su ubicación GPS registrada para aparecer aquí.",
+  "nearbyClinicsCount": "{count, plural, =1{1 clínica cerca de ti} other{{count} clínicas cerca de ti}}",
+  "@nearbyClinicsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appointmentsTitle": "Citas",
+  "petFilterLabel": "Mascota",
+  "allPets": "Todas las mascotas",
+  "petsLoadError": "No se pudieron cargar mascotas",
+  "tabScheduled": "Programadas ({count})",
+  "@tabScheduled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCompleted": "Realizadas ({count})",
+  "@tabCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCancelled": "Canceladas ({count})",
+  "@tabCancelled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noCompletedAppointmentsTitle": "No tienes citas realizadas",
+  "completedAppointmentsSubtitle": "Aquí verás el historial de tus visitas.",
+  "noCancelledAppointmentsTitle": "No tienes citas canceladas",
+  "statusDone": "Realizada",
+  "statusCancelled": "Cancelada",
+  "cancelAppointment": "Cancelar cita",
+  "cancelAppointmentConfirm": "¿Seguro que quieres cancelar esta cita?",
+  "no": "No",
+  "yesCancel": "Sí, cancelar",
+  "deleteAppointment": "Eliminar cita",
+  "deleteAppointmentConfirm": "Se borrará esta cita de tu historial. No se puede deshacer.",
+  "yesDelete": "Sí, eliminar",
+  "delete": "Eliminar",
+  "deleteFailed": "No se pudo eliminar: {error}",
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "bookAppointmentTitle": "Reservar cita",
+  "bookingError": "Error al reservar: {error}",
+  "@bookingError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appointmentBookedTitle": "¡Cita reservada!",
+  "appointmentBookedBody": "{date}",
+  "@appointmentBookedBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "viewMyAppointments": "Ver mis citas",
+  "clinicNoAppointmentsYetTitle": "Esta clínica no acepta citas todavía",
+  "clinicNoSchedulesSubtitle": "La clínica aún no ha configurado sus horarios de atención.",
+  "back": "Volver",
+  "noSlotsThatDay": "No hay horarios disponibles ese día",
+  "chooseAnotherDate": "Elegir otra fecha",
+  "selectTime": "Selecciona una hora",
+  "bookingPetQuestion": "¿Para qué mascota es la cita?",
+  "noPetsRegistered": "No tienes mascotas registradas",
+  "addPet": "Añadir mascota",
+  "appointmentSummary": "Resumen de la cita",
+  "clinicLabel": "Clínica",
+  "specialtyLabel": "Especialidad",
+  "dateLabel": "Fecha",
+  "timeLabel": "Hora",
+  "petLabel": "Mascota",
+  "confirmBooking": "Confirmar reserva",
+  "bookingContinueWithDate": "Continuar con el {date}",
+  "@bookingContinueWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weekdayLetters": "D,L,M,X,J,V,S",
+  "myPetsTitle": "Mis mascotas",
+  "noPetsYetTitle": "Aún no has añadido mascotas",
+  "noPetsYetSubtitle": "Añade a tu mascota para gestionar sus citas",
+  "uploadingPhoto": "Subiendo foto…",
+  "tapToAddPhoto": "Toca para añadir o cambiar foto",
+  "takePhoto": "Hacer foto",
+  "chooseFromGallery": "Elegir de galería",
+  "removeProfilePhoto": "Quitar foto de perfil",
+  "editPetTooltip": "Editar mascota",
+  "deletePetTitle": "Eliminar mascota",
+  "deletePetConfirm": "¿Seguro que quieres eliminar a {name}?",
+  "@deletePetConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newPet": "Nueva mascota",
+  "editPet": "Editar mascota",
+  "nameRequired": "Nombre *",
+  "nameRequiredError": "El nombre es obligatorio",
+  "species": "Especie",
+  "breedOptional": "Raza (opcional)",
+  "birthDate": "Fecha de nacimiento",
+  "birthDateOptional": "Fecha de nacimiento (opcional)",
+  "savePet": "Guardar mascota",
+  "ageLessThanOneMonth": "Menos de 1 mes",
+  "ageMonths": "{count, plural, =1{1 mes} other{{count} meses}}",
+  "@ageMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageOneYear": "1 año",
+  "ageYears": "{count, plural, =1{1 año} other{{count} años}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "speciesDog": "Perro",
+  "speciesCat": "Gato",
+  "speciesRabbit": "Conejo",
+  "speciesHamster": "Hámster",
+  "speciesBird": "Ave",
+  "speciesReptile": "Reptil",
+  "speciesFerret": "Hurón",
+  "speciesOther": "Otro",
+  "myClinicFallback": "Mi clínica",
+  "today": "Hoy",
+  "completeYourProfile": "Completa tu perfil",
+  "completeProfileBannerBody": "Los propietarios podrán encontrarte cuando completes los datos de tu clínica.",
+  "complete": "Completar",
+  "todayPatients": "Pacientes de hoy",
+  "pendingYourConfirmation": "Pendiente de tu confirmación",
+  "appointmentsAwaitingConfirmation": "{count, plural, =1{1 cita esperando confirmación} other{{count} citas esperando confirmación}}",
+  "@appointmentsAwaitingConfirmation": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "acceptOrRejectFromAgenda": "Acepta o rechaza desde la agenda",
+  "activitySummary": "Resumen de actividad",
+  "quickAccess": "Acceso rápido",
+  "manageYourAppointments": "Gestiona tus citas",
+  "medicalRecords": "Expedientes médicos",
+  "confirmedAppointmentsToday": "citas confirmadas hoy",
+  "noAppointmentsTodayEnjoy": "Sin citas para hoy. Disfruta el día.",
+  "nextAppointment": "Próxima cita",
+  "nextAppointments": "Próximas citas",
+  "viewFullAgenda": "Ver agenda completa",
+  "appointmentsOverview": "Vista general de tus citas",
+  "viewAgenda": "Ver agenda",
+  "scheduled": "Programadas",
+  "statConfirmed": "Confirmadas",
+  "statCompleted": "Realizadas",
+  "toConfirm": "Por confirmar",
+  "confirmedPatientsToday": "{count, plural, =1{1 paciente confirmado hoy} other{{count} pacientes confirmados hoy}}",
+  "@confirmedPatientsToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "thisWeek": "Esta semana",
+  "cancelledThisWeek": "{count} canceladas esta semana",
+  "@cancelledThisWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cancelledToday": "{count} canceladas hoy",
+  "@cancelledToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalAwaitingConfirmation": "{count} en total esperando tu confirmación",
+  "@totalAwaitingConfirmation": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noConfirmedPatientsToday": "Ningún paciente con cita confirmada para hoy.",
+  "agendaTitle": "Agenda",
+  "clinicProfileNotFound": "No se encontró el perfil de clínica.",
+  "dateFilter": "Fecha",
+  "tomorrow": "Mañana",
+  "allAppointments": "Todas las citas",
+  "tabPending": "Pendientes ({count})",
+  "@tabPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabConfirmedCount": "Confirmadas ({count})",
+  "@tabConfirmedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPendingAppointments": "No hay citas pendientes",
+  "newBookingsAppearHere": "Las nuevas reservas aparecerán aquí.",
+  "noConfirmedAppointments": "No hay citas confirmadas",
+  "noCompletedAppointmentsClinic": "No hay citas realizadas",
+  "noCancelledAppointmentsClinic": "No hay citas canceladas",
+  "confirmAppointment": "Confirmar cita",
+  "confirmAppointmentBody": "¿Confirmas esta cita? El propietario verá el estado actualizado.",
+  "yesConfirm": "Sí, confirmar",
+  "confirm": "Confirmar",
+  "denyAppointment": "Denegar cita",
+  "denyAppointmentBody": "La cita quedará cancelada y el propietario verá el cambio.",
+  "yesDeny": "Sí, denegar",
+  "deny": "Denegar",
+  "markAsDoneTitle": "Marcar como realizada",
+  "markAsDoneBody": "¿Marcar esta cita como realizada?",
+  "yesMark": "Sí, marcar",
+  "markAsDone": "Marcar como realizada",
+  "deleteAppointmentClinicBody": "Se borrará esta cita del historial. No se puede deshacer.",
+  "patientsTitle": "Pacientes",
+  "patientsLoadError": "No se pudieron cargar los pacientes.",
+  "noPatientsYetTitle": "Sin pacientes aún",
+  "noPatientsYetSubtitle": "Los propietarios que reserven citas aparecerán aquí.",
+  "searchPatientByName": "Buscar paciente por nombre",
+  "noResultsForQuery": "Sin resultados para \"{query}\"",
+  "@noResultsForQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "tryAnotherName": "Prueba con otro nombre.",
+  "lastAppointment": "Última cita · {date}",
+  "@lastAppointment": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "petsTitle": "Mascotas",
+  "petsLoadErrorClinic": "No se pudieron cargar las mascotas.",
+  "noPetsRegisteredClinic": "Sin mascotas registradas",
+  "ownerNoPetsWithVisits": "Este propietario no tiene mascotas con visitas.",
+  "history": "Historial",
+  "clinicLoadError": "Error al cargar la clínica.",
+  "clinicNotFoundShort": "No se encontró la clínica.",
+  "historyLoadError": "No se pudo cargar el historial.",
+  "noVisitsWithPetTitle": "Sin citas con esta mascota",
+  "noVisitsWithPetSubtitle": "Las citas pendientes, confirmadas o realizadas aparecerán aquí para añadir notas.",
+  "clinicalNotes": "Notas clínicas",
+  "clinicalNotesCount": "Notas clínicas ({count})",
+  "@clinicalNotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addAnotherNote": "Añadir otra nota",
+  "addClinicalNote": "Añadir nota clínica",
+  "confirmAppointmentToAddNotes": "Confirma la cita en la agenda para poder añadir notas.",
+  "deleteNoteTitle": "Eliminar nota",
+  "deleteNoteConfirm": "¿Seguro que quieres eliminar esta nota clínica? No se puede deshacer.",
+  "editedOn": "Editado {date}",
+  "@editedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Editar",
+  "newNote": "Nueva nota",
+  "editNote": "Editar nota",
+  "newNoteHint": "Puedes añadir varias notas por visita.",
+  "editNoteHint": "Actualiza el texto de esta nota.",
+  "noteHintExample": "Ej. Revisión general, vacuna antirrábica aplicada…",
+  "saveNote": "Guardar nota",
+  "retry": "Reintentar",
+  "newborn": "recién nacido",
+  "ageOneMonth": "1 mes",
+  "myClinicTitle": "Mi clínica",
+  "unsavedChangesTitle": "Cambios sin guardar",
+  "unsavedChangesBody": "Has modificado el perfil o los horarios de la clínica sin guardar. ¿Qué deseas hacer?",
+  "save": "Guardar",
+  "discardChanges": "Descartar cambios",
+  "saveTooltip": "Guardar",
+  "schedulesLoadError": "Error al cargar horarios: {error}",
+  "@schedulesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationRegisteredSnack": "Ubicación registrada. Tu clínica ya aparecerá en búsquedas cercanas.",
+  "profileUpdated": "Perfil actualizado",
+  "profileSavedNoLocation": "Perfil guardado, pero no se pudo obtener la ubicación. Revisa dirección y ciudad (ej. \"Valdemoro\") y vuelve a guardar.",
+  "registeringLocation": "Registrando tu ubicación en el mapa…",
+  "locationBannerNeedsSave": "Tu clínica aún no tiene coordenadas GPS. Completa dirección y ciudad, luego pulsa Guardar para aparecer en búsquedas cercanas.",
+  "locationBannerEnterCity": "Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios te encuentren cerca.",
+  "basicInformation": "Información básica",
+  "clinicName": "Nombre de la clínica",
+  "address": "Dirección",
+  "city": "Ciudad",
+  "phone": "Teléfono",
+  "contactEmail": "Email de contacto",
+  "description": "Descripción",
+  "requiredField": "Campo obligatorio",
+  "loadingSpecialties": "Cargando especialidades…",
+  "appointmentDurationTitle": "Duración de las citas",
+  "appointmentDurationHelp": "Cada franja reservable tendrá esta duración. Los propietarios verán los horarios disponibles ajustados al guardar.",
+  "durationPerAppointment": "Duración por cita",
+  "weeklyHours": "Horarios semanales",
+  "closed": "Cerrado",
+  "dayMonday": "Lunes",
+  "dayTuesday": "Martes",
+  "dayWednesday": "Miércoles",
+  "dayThursday": "Jueves",
+  "dayFriday": "Viernes",
+  "daySaturday": "Sábado",
+  "daySunday": "Domingo",
+  "durationMinutes": "{minutes} minutos",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationOneHour": "1 hora",
+  "durationOneHourThirty": "1 hora 30 min",
+  "durationTwoHours": "2 horas",
+  "durationHours": "{hours} horas",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours} h {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyPolicyTitle": "Política de privacidad",
+  "termsOfServiceTitle": "Términos y condiciones"
+}

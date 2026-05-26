@@ -3,24 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   Future<void> _handleSignOut(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Seguro que quieres cerrar sesión?'),
+        title: Text(l10n.signOut),
+        content: Text(l10n.signOutConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Cerrar sesión'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -35,31 +37,29 @@ class SettingsScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cerrar sesión: $e')),
+          SnackBar(content: Text(l10n.signOutError(e.toString()))),
         );
       }
     }
   }
 
   Future<void> _handleDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar mi cuenta'),
-        content: const Text(
-          'Esta acción eliminará tus datos personales y cerrará tu sesión. '
-          'No se puede deshacer.\n\n¿Deseas continuar?',
-        ),
+        title: Text(l10n.deleteMyAccount),
+        content: Text(l10n.deleteAccountConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'Eliminar cuenta',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.deleteAccount,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -75,7 +75,7 @@ class SettingsScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo eliminar la cuenta: $e')),
+          SnackBar(content: Text(l10n.deleteAccountError(e.toString()))),
         );
       }
     }
@@ -83,11 +83,13 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Ajustes',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.settingsTitle,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
@@ -102,48 +104,43 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 _SettingsMenuItem(
                   icon: Icons.person_rounded,
-                  label: 'Cuenta',
+                  label: l10n.account,
                   onTap: () => context.push('/profile/settings/account'),
                 ),
                 _SettingsMenuItem(
                   icon: Icons.description_outlined,
-                  label: 'Términos y condiciones',
+                  label: l10n.termsAndConditions,
                   onTap: () => context.push('/legal/terms'),
                 ),
                 _SettingsMenuItem(
+                  icon: Icons.privacy_tip_outlined,
+                  label: l10n.privacyAndPolicy,
+                  onTap: () => context.push('/legal/privacy'),
+                ),
+                _SettingsMenuItem(
                   icon: Icons.tune_rounded,
-                  label: 'Personalización',
+                  label: l10n.personalization,
                   onTap: () =>
                       context.push('/profile/settings/personalization'),
                 ),
                 _SettingsMenuItem(
-                  icon: Icons.privacy_tip_outlined,
-                  label: 'Política y privacidad',
-                  onTap: () => context.push('/legal/privacy'),
+                  icon: Icons.logout_rounded,
+                  label: l10n.signOut,
+                  onTap: () => _handleSignOut(context, ref),
                 ),
                 _SettingsMenuItem(
                   icon: Icons.delete_outline_rounded,
-                  label: 'Eliminar mi cuenta',
+                  label: l10n.deleteMyAccount,
                   onTap: () => _handleDeleteAccount(context, ref),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.logout_rounded,
-                  label: 'Cerrar sesión',
-                  onTap: () => _handleSignOut(context, ref),
-                ),
-                const _SettingsMenuItem(
-                  icon: Icons.flag_outlined,
-                  label: 'Cambiar el país',
-                  trailingText: 'ES',
                 ),
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 18),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 18),
             child: Text(
-              'App version: 5.271.0',
-              style: TextStyle(
+              l10n.appVersionLabel,
+              style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 12,
               ),

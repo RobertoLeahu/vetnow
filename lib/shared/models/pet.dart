@@ -23,16 +23,6 @@ extension PetSpeciesX on PetSpecies {
     PetSpecies.other => '🐾',
   };
 
-  String get label => switch (this) {
-    PetSpecies.dog => 'Perro',
-    PetSpecies.cat => 'Gato',
-    PetSpecies.rabbit => 'Conejo',
-    PetSpecies.hamster => 'Hámster',
-    PetSpecies.bird => 'Ave',
-    PetSpecies.reptile => 'Reptil',
-    PetSpecies.ferret => 'Hurón',
-    PetSpecies.other => 'Otro',
-  };
 }
 
 class Pet extends Equatable {

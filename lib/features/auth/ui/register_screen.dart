@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers/auth_provider.dart';
 import '../../../shared/models/profile.dart';
 import '../../../app/theme.dart';
@@ -26,16 +27,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool get _canSubmit => _privacyAccepted && _termsAccepted && !_loading;
 
   Future<void> _register() async {
+    final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty ||
         _emailCtrl.text.trim().isEmpty ||
         _passCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'Rellena todos los campos');
+      setState(() => _error = l10n.fillAllFields);
       return;
     }
     if (!_privacyAccepted || !_termsAccepted) {
-      setState(
-        () => _error = 'Debes aceptar la política de privacidad y los términos',
-      );
+      setState(() => _error = l10n.registerMustAcceptLegal);
       return;
     }
     setState(() {
@@ -59,7 +59,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await ref.read(profileProvider.future);
       if (mounted) context.go('/auth-resolve');
     } catch (e) {
-      setState(() => _error = 'Error al registrarse: ${e.toString()}');
+      setState(() => _error = l10n.registerError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -67,8 +67,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear cuenta')),
+      appBar: AppBar(title: Text(l10n.createAccount)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -77,8 +78,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             children: [
               Text(
                 widget.role == UserRole.clinic
-                    ? 'Registro de clínica'
-                    : 'Registro de propietario',
+                    ? l10n.registerClinicTitle
+                    : l10n.registerOwnerTitle,
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -87,27 +88,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _nameCtrl,
-                decoration:
-                    const InputDecoration(labelText: 'Nombre completo'),
+                decoration: InputDecoration(labelText: l10n.fullName),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: l10n.email),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: InputDecoration(labelText: l10n.password),
               ),
               const SizedBox(height: 24),
               _ConsentRow(
                 value: _privacyAccepted,
                 onChanged: (v) =>
                     setState(() => _privacyAccepted = v ?? false),
-                linkText: 'Política de Privacidad',
+                consentPrefix: l10n.consentPrefix,
+                linkText: l10n.privacyPolicyLink,
                 onLinkTap: () => context.push('/legal/privacy'),
               ),
               const SizedBox(height: 8),
@@ -115,7 +116,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 value: _termsAccepted,
                 onChanged: (v) =>
                     setState(() => _termsAccepted = v ?? false),
-                linkText: 'Términos y Condiciones',
+                consentPrefix: l10n.consentPrefix,
+                linkText: l10n.termsAndConditionsLink,
                 onLinkTap: () => context.push('/legal/terms'),
               ),
               if (_error != null) ...[
@@ -129,7 +131,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: _canSubmit ? _register : null,
                   child: _loading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Crear cuenta'),
+                      : Text(l10n.createAccount),
                 ),
               ),
             ],
@@ -143,12 +145,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 class _ConsentRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool?> onChanged;
+  final String consentPrefix;
   final String linkText;
   final VoidCallback onLinkTap;
 
   const _ConsentRow({
     required this.value,
     required this.onChanged,
+    required this.consentPrefix,
     required this.linkText,
     required this.onLinkTap,
   });
@@ -172,7 +176,7 @@ class _ConsentRow extends StatelessWidget {
                 color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               children: [
-                const TextSpan(text: 'He leído y acepto la '),
+                TextSpan(text: consentPrefix),
                 TextSpan(
                   text: linkText,
                   style: const TextStyle(

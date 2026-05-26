@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 
 ({String prefix, String number}) _splitPhone(String? raw) {
   if (raw == null || raw.trim().isEmpty) {
@@ -81,7 +82,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     if (newSerialized == _initialPhoneSerialized) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay cambios que guardar')),
+          SnackBar(content: Text(context.l10n.noChangesToSave)),
         );
       }
       return;
@@ -97,13 +98,13 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       _initialPhoneSerialized = newSerialized;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Datos guardados')),
+          SnackBar(content: Text(context.l10n.dataSaved)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e')),
+          SnackBar(content: Text(context.l10n.saveError(e.toString()))),
         );
       }
     } finally {
@@ -132,25 +133,26 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final profileAsync = ref.watch(profileProvider);
     final email = ref.watch(authRepositoryProvider).currentUser?.email ?? '';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cuenta'),
+        title: Text(l10n.account),
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l10n.errorWithDetails(e.toString()))),
         data: (profile) {
           _seedFromProfile(profile?.phone);
 
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
-                'Datos personales',
-                style: TextStyle(
+              Text(
+                l10n.personalData,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -158,8 +160,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ),
               const SizedBox(height: 16),
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Correo electrónico',
+                decoration: InputDecoration(
+                  labelText: l10n.emailAddress,
                 ),
                 child: Text(
                   email.isEmpty ? '—' : email,
@@ -178,8 +180,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     child: TextField(
                       controller: _prefixCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Prefijo',
+                      decoration: InputDecoration(
+                        labelText: l10n.phonePrefix,
                       ),
                     ),
                   ),
@@ -188,8 +190,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     child: TextField(
                       controller: _numberCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Número de teléfono',
+                      decoration: InputDecoration(
+                        labelText: l10n.phoneNumber,
                       ),
                     ),
                   ),
@@ -199,7 +201,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.lock_outline_rounded),
-                title: const Text('Cambiar contraseña'),
+                title: Text(l10n.changePassword),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => _showChangePasswordSheet(context),
               ),
@@ -216,7 +218,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Guardar cambios'),
+                    : Text(l10n.saveChanges),
               ),
             ],
           );
@@ -251,14 +253,15 @@ class _ChangePasswordSheetContentState
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     final n = _newCtrl.text;
     final c = _confirmCtrl.text;
     if (n.length < 6) {
-      setState(() => _error = 'La contraseña debe tener al menos 6 caracteres');
+      setState(() => _error = l10n.passwordMinLength);
       return;
     }
     if (n != c) {
-      setState(() => _error = 'Las contraseñas no coinciden');
+      setState(() => _error = l10n.passwordsDoNotMatch);
       return;
     }
 
@@ -271,11 +274,11 @@ class _ChangePasswordSheetContentState
       await ref.read(authRepositoryProvider).updatePassword(n);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contraseña actualizada')),
+        SnackBar(content: Text(context.l10n.passwordUpdated)),
       );
       widget.onSuccess();
     } catch (e) {
-      setState(() => _error = 'Error: $e');
+      setState(() => _error = context.l10n.errorWithDetails(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -283,6 +286,7 @@ class _ChangePasswordSheetContentState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
@@ -300,22 +304,21 @@ class _ChangePasswordSheetContentState
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Cambiar contraseña',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          Text(
+            l10n.changePassword,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _newCtrl,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Nueva contraseña'),
+            decoration: InputDecoration(labelText: l10n.newPassword),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _confirmCtrl,
             obscureText: true,
-            decoration:
-                const InputDecoration(labelText: 'Confirmar contraseña'),
+            decoration: InputDecoration(labelText: l10n.confirmPassword),
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
@@ -333,7 +336,7 @@ class _ChangePasswordSheetContentState
                       color: Colors.white,
                     ),
                   )
-                : const Text('Actualizar contraseña'),
+                : Text(l10n.updatePassword),
           ),
         ],
       ),

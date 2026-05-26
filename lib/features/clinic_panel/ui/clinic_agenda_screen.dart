@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../appointment/providers/appointment_provider.dart';
 import '../../../shared/models/appointment.dart';
 import '../providers/clinic_panel_provider.dart';
@@ -16,11 +19,11 @@ enum AgendaDateFilter {
 }
 
 extension AgendaDateFilterX on AgendaDateFilter {
-  String get label => switch (this) {
-        AgendaDateFilter.today => 'Hoy',
-        AgendaDateFilter.tomorrow => 'Mañana',
-        AgendaDateFilter.thisWeek => 'Esta semana',
-        AgendaDateFilter.all => 'Todas las citas',
+  String label(AppLocalizations l10n) => switch (this) {
+        AgendaDateFilter.today => l10n.today,
+        AgendaDateFilter.tomorrow => l10n.tomorrow,
+        AgendaDateFilter.thisWeek => l10n.thisWeek,
+        AgendaDateFilter.all => l10n.allAppointments,
       };
 }
 
@@ -92,6 +95,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final clinicAsync = ref.watch(myClinicProvider);
     final appointmentsAsync = ref.watch(clinicAppointmentsProvider);
 
@@ -100,22 +104,20 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(title: const Text('Agenda')),
-        body: Center(child: Text('Error: $e')),
+        appBar: AppBar(title: Text(l10n.agendaTitle)),
+        body: Center(child: Text(l10n.errorWithDetails('$e'))),
       ),
       data: (clinic) {
         if (clinic == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Agenda')),
-            body: const Center(
-              child: Text('No se encontró el perfil de clínica.'),
-            ),
+            appBar: AppBar(title: Text(l10n.agendaTitle)),
+            body: Center(child: Text(l10n.clinicProfileNotFound)),
           );
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Agenda'),
+            title: Text(l10n.agendaTitle),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(112),
               child: appointmentsAsync.when(
@@ -136,9 +138,9 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                           key: ValueKey(_dateFilter),
                           initialValue: _dateFilter,
                           borderRadius: BorderRadius.circular(12),
-                          decoration: const InputDecoration(
-                            labelText: 'Fecha',
-                            contentPadding: EdgeInsets.symmetric(
+                          decoration: InputDecoration(
+                            labelText: l10n.dateFilter,
+                            contentPadding: const EdgeInsets.symmetric(
                               horizontal: 20,
                               vertical: 18,
                             ),
@@ -147,7 +149,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                               .map(
                                 (f) => DropdownMenuItem(
                                   value: f,
-                                  child: Text(f.label),
+                                  child: Text(f.label(l10n)),
                                 ),
                               )
                               .toList(),
@@ -163,25 +165,25 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                           child: Row(
                             children: [
                               _AgendaTabChip(
-                                label: 'Pendientes ($pending)',
+                                label: l10n.tabPending(pending),
                                 index: 0,
                                 controller: _tabController,
                               ),
                               const SizedBox(width: 8),
                               _AgendaTabChip(
-                                label: 'Confirmadas ($confirmed)',
+                                label: l10n.tabConfirmedCount(confirmed),
                                 index: 1,
                                 controller: _tabController,
                               ),
                               const SizedBox(width: 8),
                               _AgendaTabChip(
-                                label: 'Realizadas ($done)',
+                                label: l10n.tabCompleted(done),
                                 index: 2,
                                 controller: _tabController,
                               ),
                               const SizedBox(width: 8),
                               _AgendaTabChip(
-                                label: 'Canceladas ($cancelled)',
+                                label: l10n.tabCancelled(cancelled),
                                 index: 3,
                                 controller: _tabController,
                               ),
@@ -212,28 +214,27 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
                 children: [
                   _AgendaList(
                     appointments: pending,
-                    emptyTitle: 'No hay citas pendientes',
-                    emptySubtitle:
-                        'Las nuevas reservas aparecerán aquí.',
+                    emptyTitle: l10n.noPendingAppointments,
+                    emptySubtitle: l10n.newBookingsAppearHere,
                     onRefresh: _onRefresh,
                     showConfirm: true,
                   ),
                   _AgendaList(
                     appointments: confirmed,
-                    emptyTitle: 'No hay citas confirmadas',
+                    emptyTitle: l10n.noConfirmedAppointments,
                     emptySubtitle: '',
                     onRefresh: _onRefresh,
                     showMarkDone: true,
                   ),
                   _AgendaList(
                     appointments: done,
-                    emptyTitle: 'No hay citas realizadas',
+                    emptyTitle: l10n.noCompletedAppointmentsClinic,
                     emptySubtitle: '',
                     onRefresh: _onRefresh,
                   ),
                   _AgendaList(
                     appointments: cancelled,
-                    emptyTitle: 'No hay citas canceladas',
+                    emptyTitle: l10n.noCancelledAppointmentsClinic,
                     emptySubtitle: '',
                     onRefresh: _onRefresh,
                     showDeleteButton: true,
@@ -242,7 +243,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => Center(child: Text(l10n.errorWithDetails('$e'))),
           ),
         );
       },
@@ -354,7 +355,10 @@ class _ClinicAgendaCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateFmt = DateFormat("EEE d MMM · HH:mm", 'es');
+    final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final dateFmt =
+        dateFormat(appointmentCardPattern(locale), locale);
     final ownerName =
         appointment.ownerFullName?.trim().isNotEmpty == true
             ? appointment.ownerFullName!
@@ -441,20 +445,18 @@ class _ClinicAgendaCard extends ConsumerWidget {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
-                          title: const Text('Confirmar cita'),
-                          content: const Text(
-                            '¿Confirmas esta cita? El propietario verá el estado actualizado.',
-                          ),
+                          title: Text(l10n.confirmAppointment),
+                          content: Text(l10n.confirmAppointmentBody),
                           actions: [
                             TextButton(
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(false),
-                              child: const Text('No'),
+                              child: Text(l10n.no),
                             ),
                             TextButton(
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(true),
-                              child: const Text('Sí, confirmar'),
+                              child: Text(l10n.yesConfirm),
                             ),
                           ],
                         ),
@@ -468,13 +470,14 @@ class _ClinicAgendaCard extends ConsumerWidget {
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
+                              SnackBar(
+                                  content: Text(l10n.errorWithDetails('$e'))),
                             );
                           }
                         }
                       }
                     },
-                    child: const Text('Confirmar'),
+                    child: Text(l10n.confirm),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -484,22 +487,20 @@ class _ClinicAgendaCard extends ConsumerWidget {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
-                          title: const Text('Denegar cita'),
-                          content: const Text(
-                            'La cita quedará cancelada y el propietario verá el cambio.',
-                          ),
+                          title: Text(l10n.denyAppointment),
+                          content: Text(l10n.denyAppointmentBody),
                           actions: [
                             TextButton(
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(false),
-                              child: const Text('No'),
+                              child: Text(l10n.no),
                             ),
                             TextButton(
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(true),
-                              child: const Text(
-                                'Sí, denegar',
-                                style: TextStyle(color: Colors.red),
+                              child: Text(
+                                l10n.yesDeny,
+                                style: const TextStyle(color: Colors.red),
                               ),
                             ),
                           ],
@@ -514,7 +515,8 @@ class _ClinicAgendaCard extends ConsumerWidget {
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
+                              SnackBar(
+                                  content: Text(l10n.errorWithDetails('$e'))),
                             );
                           }
                         }
@@ -524,7 +526,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
                     ),
-                    child: const Text('Denegar'),
+                    child: Text(l10n.deny),
                   ),
                 ),
               ],
@@ -537,20 +539,18 @@ class _ClinicAgendaCard extends ConsumerWidget {
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Marcar como realizada'),
-                    content: const Text(
-                      '¿Marcar esta cita como realizada?',
-                    ),
+                    title: Text(l10n.markAsDoneTitle),
+                    content: Text(l10n.markAsDoneBody),
                     actions: [
                       TextButton(
                         onPressed: () =>
                             Navigator.of(dialogContext).pop(false),
-                        child: const Text('No'),
+                        child: Text(l10n.no),
                       ),
                       TextButton(
                         onPressed: () =>
                             Navigator.of(dialogContext).pop(true),
-                        child: const Text('Sí, marcar'),
+                        child: Text(l10n.yesMark),
                       ),
                     ],
                   ),
@@ -564,13 +564,14 @@ class _ClinicAgendaCard extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
+                        SnackBar(
+                            content: Text(l10n.errorWithDetails('$e'))),
                       );
                     }
                   }
                 }
               },
-              child: const Text('Marcar como realizada'),
+              child: Text(l10n.markAsDone),
             ),
           ],
           if (showDeleteButton && appointment.isCancelled) ...[
@@ -580,22 +581,20 @@ class _ClinicAgendaCard extends ConsumerWidget {
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Eliminar cita'),
-                    content: const Text(
-                      'Se borrará esta cita del historial. No se puede deshacer.',
-                    ),
+                    title: Text(l10n.deleteAppointment),
+                    content: Text(l10n.deleteAppointmentClinicBody),
                     actions: [
                       TextButton(
                         onPressed: () =>
                             Navigator.of(dialogContext).pop(false),
-                        child: const Text('No'),
+                        child: Text(l10n.no),
                       ),
                       TextButton(
                         onPressed: () =>
                             Navigator.of(dialogContext).pop(true),
-                        child: const Text(
-                          'Sí, eliminar',
-                          style: TextStyle(color: Colors.red),
+                        child: Text(
+                          l10n.yesDelete,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -610,14 +609,14 @@ class _ClinicAgendaCard extends ConsumerWidget {
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('No se pudo eliminar: $e')),
+                        SnackBar(content: Text(l10n.deleteFailed('$e'))),
                       );
                     }
                   }
                 }
               },
               icon: const Icon(Icons.delete_outline_rounded, size: 18),
-              label: const Text('Eliminar'),
+              label: Text(l10n.delete),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
@@ -640,11 +639,12 @@ class _AgendaStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final config = switch (status) {
-      'confirmed' => (label: 'Confirmada', color: AppTheme.primary),
-      'cancelled' => (label: 'Cancelada', color: Colors.red),
-      'done' => (label: 'Realizada', color: Colors.grey),
-      _ => (label: 'Pendiente', color: Colors.orange),
+      'confirmed' => (label: l10n.statusConfirmed, color: AppTheme.primary),
+      'cancelled' => (label: l10n.statusCancelled, color: Colors.red),
+      'done' => (label: l10n.statusDone, color: Colors.grey),
+      _ => (label: l10n.statusPending, color: Colors.orange),
     };
 
     return Container(
