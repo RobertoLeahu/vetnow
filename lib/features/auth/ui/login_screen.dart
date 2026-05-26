@@ -49,16 +49,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const Icon(
                 Icons.pets_rounded,
-                size: 36,
+                size: 64,
                 color: AppTheme.primary,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Bienvenido a VetNow',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w400,
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  children: [
+                    TextSpan(text: 'Bienvenido a '),
+                    TextSpan(
+                      text: 'VetNow',
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),

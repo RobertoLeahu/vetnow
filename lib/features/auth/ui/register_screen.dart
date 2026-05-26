@@ -21,6 +21,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameCtrl = TextEditingController();
   final _clinicNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _loading = false;
   String? _error;
@@ -36,6 +37,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _nameCtrl.dispose();
     _clinicNameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
@@ -44,6 +46,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty ||
         (_isClinic && _clinicNameCtrl.text.trim().isEmpty) ||
+        (_isClinic && _phoneCtrl.text.trim().isEmpty) ||
         _emailCtrl.text.trim().isEmpty ||
         _passCtrl.text.trim().isEmpty) {
       setState(() => _error = l10n.fillAllFields);
@@ -68,6 +71,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             fullName: _nameCtrl.text.trim(),
             role: widget.role,
             clinicName: _isClinic ? _clinicNameCtrl.text.trim() : null,
+            clinicPhone: _isClinic ? _phoneCtrl.text.trim() : null,
             privacyAcceptedAt: now,
             termsAcceptedAt: now,
           );
@@ -147,6 +151,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(labelText: l10n.email),
               ),
+              if (_isClinic) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(labelText: l10n.phone),
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _passCtrl,
