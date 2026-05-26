@@ -1853,7 +1853,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationBannerEnterCity.
   ///
   /// In es, this message translates to:
-  /// **'Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios te encuentren cerca.'**
+  /// **'Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios puedan encontrarte.'**
   String get locationBannerEnterCity;
 
   /// No description provided for @basicInformation.

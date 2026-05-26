@@ -95,7 +95,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     _addressCtrl.text = clinic.address;
     _cityCtrl.text = clinic.city;
     _phoneCtrl.text = clinic.phone ?? '';
-    _emailCtrl.text = clinic.email ?? '';
+    _emailCtrl.text = _resolveClinicEmail(clinic);
     _descCtrl.text = clinic.description ?? '';
     _selectedSpecialtyIds =
         clinic.specialties.map((s) => s.id).toSet();
@@ -220,6 +220,13 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     }
   }
 
+  /// Email de la cuenta de registro; no editable en el formulario.
+  String _resolveClinicEmail(Clinic clinic) {
+    final stored = clinic.email?.trim();
+    if (stored != null && stored.isNotEmpty) return stored;
+    return ref.read(authRepositoryProvider).currentUser?.email?.trim() ?? '';
+  }
+
   TimeOfDay _parseTime(String t) {
     final parts = t.split(':');
     return TimeOfDay(
@@ -318,7 +325,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         address: newAddress,
         city: newCity,
         phone: _phoneCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
+        email: _resolveClinicEmail(clinic),
         description: _descCtrl.text.trim(),
         logoUrl: logoUrl,
         lat: lat,
@@ -607,10 +614,14 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: _emailCtrl,
+          readOnly: true,
+          enableInteractiveSelection: true,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             labelText: l10n.contactEmail,
             prefixIcon: const Icon(Icons.email_rounded),
+            filled: true,
+            fillColor: AppTheme.surface,
           ),
         ),
         const SizedBox(height: 12),

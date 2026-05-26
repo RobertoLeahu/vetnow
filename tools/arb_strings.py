@@ -612,7 +612,7 @@ strings = {
     ),
     "locationBannerEnterCity": (
         "Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios "
-        "te encuentren cerca.",
+        "puedan encontrarte.",
         "Enter the city (e.g. Valdemoro) and address so owners can find you nearby.",
     ),
     "basicInformation": ("Información básica", "Basic information"),

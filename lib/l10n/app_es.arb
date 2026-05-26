@@ -523,7 +523,7 @@
   "profileSavedNoLocation": "Perfil guardado, pero no se pudo obtener la ubicación. Revisa dirección y ciudad (ej. \"Valdemoro\") y vuelve a guardar.",
   "registeringLocation": "Registrando tu ubicación en el mapa…",
   "locationBannerNeedsSave": "Tu clínica aún no tiene coordenadas GPS. Completa dirección y ciudad, luego pulsa Guardar para aparecer en búsquedas cercanas.",
-  "locationBannerEnterCity": "Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios te encuentren cerca.",
+  "locationBannerEnterCity": "Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios puedan encontrarte.",
   "basicInformation": "Información básica",
   "clinicName": "Nombre de la clínica",
   "address": "Dirección",

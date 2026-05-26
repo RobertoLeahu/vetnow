@@ -45,6 +45,7 @@ class AuthRepository {
         'name': fullName,
         'address': '',
         'city': '',
+        'email': email,
       });
     }
   }

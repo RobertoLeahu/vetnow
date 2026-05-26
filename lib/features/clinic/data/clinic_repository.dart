@@ -292,12 +292,14 @@ class ClinicRepository {
   Future<void> createClinicForProfile({
     required String profileId,
     required String name,
+    String? email,
   }) async {
     await supabase.from('clinics').insert({
       'profile_id': profileId,
       'name': name,
       'address': '',
       'city': '',
+      if (email != null) 'email': email,
     });
   }
 

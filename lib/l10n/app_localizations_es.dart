@@ -1017,7 +1017,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get locationBannerEnterCity =>
-      'Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios te encuentren cerca.';
+      'Indica la ciudad (ej. Valdemoro) y la dirección para que los propietarios puedan encontrarte.';
 
   @override
   String get basicInformation => 'Información básica';
