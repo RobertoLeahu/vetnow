@@ -9,6 +9,8 @@ import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../shared/models/pet.dart';
+import '../../../shared/models/profile.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/clinic_panel_provider.dart';
 
 class ClinicHomeScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(myClinicProvider);
       ref.invalidate(clinicAppointmentsProvider);
     });
   }
@@ -37,6 +40,14 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
     final appointmentsLoading = allAsync.isLoading;
 
     final clinic = clinicAsync.valueOrNull;
+    final isClinicUser =
+        ref.watch(profileProvider).valueOrNull?.role == UserRole.clinic;
+    final showIncompleteProfileBanner = isClinicUser &&
+        clinicAsync.when(
+          data: (c) => c == null || !c.isProfileComplete,
+          loading: () => true,
+          error: (_, __) => true,
+        );
     final allAppointments = allAsync.valueOrNull ?? [];
     final pendingCount =
         allAppointments.where((a) => a.isPending).length;
@@ -54,7 +65,10 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
         onRefresh: () async {
           ref.invalidate(myClinicProvider);
           ref.invalidate(clinicAppointmentsProvider);
-          await ref.read(clinicAppointmentsProvider.future);
+          await Future.wait([
+            ref.read(myClinicProvider.future),
+            ref.read(clinicAppointmentsProvider.future),
+          ]);
         },
         child: CustomScrollView(
           slivers: [
@@ -79,8 +93,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   // ── Banner perfil incompleto ─────────────────────
-                  if (clinicAsync.hasValue &&
-                      (clinic == null || !clinic.isProfileComplete))
+                  if (showIncompleteProfileBanner)
                     _IncompleteProfileBanner(
                       onTap: () => context.go('/clinic-profile'),
                     ),

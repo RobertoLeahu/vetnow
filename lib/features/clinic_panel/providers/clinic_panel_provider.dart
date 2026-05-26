@@ -10,10 +10,10 @@ import '../../../shared/models/schedule.dart';
 import '../data/medical_notes_repository.dart';
 
 /// Clínica del usuario logueado (null si no existe fila en `clinics`).
-final myClinicProvider = FutureProvider<Clinic?>((ref) async {
-  final profile = ref.watch(profileProvider).valueOrNull;
+final myClinicProvider = FutureProvider.autoDispose<Clinic?>((ref) async {
+  final profile = await ref.watch(profileProvider.future);
   if (profile == null) return null;
-  return ref.watch(clinicRepositoryProvider).getMyClinic(profile.id);
+  return ref.read(clinicRepositoryProvider).getMyClinic(profile.id);
 });
 
 /// Si devuelve `false`, la navegación fuera de Mi clínica debe cancelarse.

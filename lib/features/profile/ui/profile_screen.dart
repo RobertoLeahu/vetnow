@@ -55,11 +55,6 @@ class ProfileScreen extends ConsumerWidget {
             label: l10n.myAppointments,
             onTap: () => context.go('/appointments'),
           ),
-          _ProfileMenuItem(
-            icon: Icons.notifications_rounded,
-            label: l10n.notifications,
-            onTap: () {},
-          ),
 
           const SizedBox(height: 32),
 

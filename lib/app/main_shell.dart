@@ -137,6 +137,7 @@ class MainShell extends ConsumerWidget {
 
     switch (targetIndex) {
       case 0:
+        ref.invalidate(myClinicProvider);
         ref.invalidate(clinicAppointmentsProvider);
         context.go('/clinic-home');
         break;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../providers/auth_provider.dart';
+import '../../../features/clinic_panel/providers/clinic_panel_provider.dart';
 import '../../../shared/models/profile.dart';
 import '../../../app/theme.dart';
 
@@ -57,6 +58,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       ref.invalidate(profileProvider);
       await ref.read(profileProvider.future);
+      if (widget.role == UserRole.clinic) {
+        ref.invalidate(myClinicProvider);
+      }
       if (mounted) context.go('/auth-resolve');
     } catch (e) {
       setState(() => _error = l10n.registerError(e.toString()));
