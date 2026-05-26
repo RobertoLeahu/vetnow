@@ -5,10 +5,17 @@ import '../../auth/providers/auth_provider.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
-  Future<void> _handleSignOut(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _deletingAccount = false;
+
+  Future<void> _handleSignOut(BuildContext context) async {
     final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
@@ -43,7 +50,7 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _handleDeleteAccount(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleDeleteAccount(BuildContext context) async {
     final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
@@ -67,8 +74,12 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (confirm != true) return;
 
+    setState(() => _deletingAccount = true);
+
     try {
       await ref.read(authRepositoryProvider).deleteCurrentAccount();
+      ref.invalidate(authStateProvider);
+      ref.invalidate(profileProvider);
       if (context.mounted) {
         context.go('/login');
       }
@@ -78,76 +89,92 @@ class SettingsScreen extends ConsumerWidget {
           SnackBar(content: Text(l10n.deleteAccountError(e.toString()))),
         );
       }
+    } finally {
+      if (mounted) setState(() => _deletingAccount = false);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.settingsTitle,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.only(top: 8),
-              children: [
-                _SettingsMenuItem(
-                  icon: Icons.person_rounded,
-                  label: l10n.account,
-                  onTap: () => context.push('/profile/settings/account'),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.description_outlined,
-                  label: l10n.termsAndConditions,
-                  onTap: () => context.push('/legal/terms'),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.privacy_tip_outlined,
-                  label: l10n.privacyAndPolicy,
-                  onTap: () => context.push('/legal/privacy'),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.tune_rounded,
-                  label: l10n.personalization,
-                  onTap: () =>
-                      context.push('/profile/settings/personalization'),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.logout_rounded,
-                  label: l10n.signOut,
-                  onTap: () => _handleSignOut(context, ref),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.delete_outline_rounded,
-                  label: l10n.deleteMyAccount,
-                  onTap: () => _handleDeleteAccount(context, ref),
-                ),
-              ],
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: Text(
+              l10n.settingsTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _deletingAccount ? null : () => Navigator.of(context).pop(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 18),
-            child: Text(
-              l10n.appVersionLabel,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.only(top: 8),
+                  children: [
+                    _SettingsMenuItem(
+                      icon: Icons.person_rounded,
+                      label: l10n.account,
+                      enabled: !_deletingAccount,
+                      onTap: () => context.push('/profile/settings/account'),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.description_outlined,
+                      label: l10n.termsAndConditions,
+                      enabled: !_deletingAccount,
+                      onTap: () => context.push('/legal/terms'),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.privacy_tip_outlined,
+                      label: l10n.privacyAndPolicy,
+                      enabled: !_deletingAccount,
+                      onTap: () => context.push('/legal/privacy'),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.tune_rounded,
+                      label: l10n.personalization,
+                      enabled: !_deletingAccount,
+                      onTap: () =>
+                          context.push('/profile/settings/personalization'),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.logout_rounded,
+                      label: l10n.signOut,
+                      enabled: !_deletingAccount,
+                      onTap: () => _handleSignOut(context),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.delete_outline_rounded,
+                      label: l10n.deleteMyAccount,
+                      enabled: !_deletingAccount,
+                      onTap: () => _handleDeleteAccount(context),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: Text(
+                  l10n.appVersionLabel,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (_deletingAccount)
+          const ModalBarrier(dismissible: false, color: Colors.black26),
+        if (_deletingAccount)
+          const Center(child: CircularProgressIndicator()),
+      ],
     );
   }
 }
@@ -157,12 +184,14 @@ class _SettingsMenuItem extends StatelessWidget {
   final String label;
   final String? trailingText;
   final VoidCallback? onTap;
+  final bool enabled;
 
   const _SettingsMenuItem({
     required this.icon,
     required this.label,
     this.trailingText,
     this.onTap,
+    this.enabled = true,
   });
 
   @override
@@ -171,6 +200,7 @@ class _SettingsMenuItem extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          enabled: enabled,
           leading: Icon(icon, color: AppTheme.textSecondary),
           title: Text(
             label,
@@ -198,7 +228,7 @@ class _SettingsMenuItem extends StatelessWidget {
               ),
             ],
           ),
-          onTap: onTap ?? () {},
+          onTap: enabled ? onTap : null,
         ),
         const Divider(height: 1, color: AppTheme.divider),
       ],

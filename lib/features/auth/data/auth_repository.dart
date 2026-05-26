@@ -178,16 +178,23 @@ class AuthRepository {
     await supabase.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-  /// Elimina todos los datos del usuario (RGPD: derecho de supresión) y cierra sesión.
+  /// Elimina todos los datos del usuario (RGPD), el usuario en Auth y cierra sesión.
   Future<void> deleteCurrentAccount() async {
-    final user = currentUser;
-    if (user == null) throw Exception('No hay usuario autenticado');
+    if (currentUser == null) throw Exception('No hay usuario autenticado');
 
-    await supabase.from('pets').delete().eq('owner_id', user.id);
-    await supabase.from('appointments').delete().eq('owner_id', user.id);
-    await supabase.from('clinic_favorites').delete().eq('owner_id', user.id);
-    await supabase.from('clinics').delete().eq('profile_id', user.id);
-    await supabase.from('profiles').delete().eq('id', user.id);
+    final response = await supabase.functions.invoke(
+      'delete-account',
+      method: HttpMethod.post,
+    );
+
+    if (response.status != 200) {
+      final data = response.data;
+      if (data is Map && data['error'] != null) {
+        throw Exception(data['error']);
+      }
+      throw Exception('Error al eliminar la cuenta (${response.status})');
+    }
+
     await signOut();
   }
 }
