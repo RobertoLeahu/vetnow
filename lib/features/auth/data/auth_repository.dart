@@ -48,6 +48,10 @@ class AuthRepository {
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
+        data: {
+          'role': role.name,
+          'full_name': fullName,
+        },
       );
       user = response.user;
     } on AuthException catch (e) {
@@ -72,20 +76,29 @@ class AuthRepository {
         .eq('id', user.id)
         .maybeSingle();
 
-    if (existingProfile != null) {
-      await supabase.auth.signOut();
-      throw const RegisterException(RegisterFailure.emailAlreadyExists);
-    }
-
-    await supabase.from('profiles').insert({
-      'id': user.id,
+    final profilePayload = {
       'role': role.name,
       'full_name': fullName,
       if (privacyAcceptedAt != null)
         'privacy_accepted_at': privacyAcceptedAt.toIso8601String(),
       if (termsAcceptedAt != null)
         'terms_accepted_at': termsAcceptedAt.toIso8601String(),
-    });
+    };
+
+    if (existingProfile != null) {
+      // Perfil ya registrado (reintento con email existente).
+      if (existingProfile['privacy_accepted_at'] != null) {
+        await supabase.auth.signOut();
+        throw const RegisterException(RegisterFailure.emailAlreadyExists);
+      }
+      // Fila creada por trigger de Supabase al signUp: completar con el rol elegido.
+      await supabase.from('profiles').update(profilePayload).eq('id', user.id);
+    } else {
+      await supabase.from('profiles').insert({
+        'id': user.id,
+        ...profilePayload,
+      });
+    }
 
     if (role == UserRole.clinic) {
       final existingClinic = await supabase

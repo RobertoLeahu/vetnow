@@ -59,7 +59,7 @@ class _RoleCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.go('/register', extra: role),
+        onTap: () => context.go('/register/${role.name}'),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(

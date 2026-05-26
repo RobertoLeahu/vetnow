@@ -41,6 +41,16 @@ bool _isClinicShellPath(String loc) {
       loc.startsWith('/clinic-profile');
 }
 
+bool _isAuthRoute(String loc) {
+  return loc == '/login' ||
+      loc == '/role-selector' ||
+      loc.startsWith('/register');
+}
+
+UserRole _roleFromRegisterPath(String? roleParam) {
+  return roleParam == 'clinic' ? UserRole.clinic : UserRole.owner;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   final profileAsync = ref.watch(profileProvider);
@@ -53,10 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           authState.asData?.value.session ?? supabase.auth.currentSession;
       final isLoggedIn = session != null;
 
-      final isAuthRoute =
-          loc == '/login' ||
-          loc == '/register' ||
-          loc == '/role-selector';
+      final isAuthRoute = _isAuthRoute(loc);
       final isLegalRoute =
           loc == '/legal/privacy' || loc == '/legal/terms';
       final isPublicRoute = isAuthRoute || isLegalRoute;
@@ -67,18 +74,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Sesión activa: esperar perfil antes de mostrar rutas del shell por rol
-      if (profileAsync.isLoading) {
+      final profile = profileAsync.valueOrNull;
+
+      // Sesión activa: esperar perfil antes de redirigir por rol (evita race en signUp)
+      if (profileAsync.isLoading || profile == null) {
         if (loc != '/auth-resolve' && !isPublicRoute) return '/auth-resolve';
+        if (isLoggedIn && isAuthRoute && loc != '/auth-resolve') {
+          return '/auth-resolve';
+        }
         return null;
       }
 
-      final role = profileAsync.valueOrNull?.role ?? UserRole.owner;
+      final role = profile.role;
 
       if (loc == '/auth-resolve') {
-        if (profileAsync.isLoading || profileAsync.valueOrNull == null) {
-          return null;
-        }
         return role == UserRole.clinic ? '/clinic-home' : '/search';
       }
 
@@ -103,9 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleSelectorScreen(),
       ),
       GoRoute(
-        path: '/register',
-        builder: (_, state) =>
-            RegisterScreen(role: state.extra as UserRole? ?? UserRole.owner),
+        path: '/register/:role',
+        builder: (_, state) => RegisterScreen(
+          role: _roleFromRegisterPath(state.pathParameters['role']),
+        ),
       ),
       GoRoute(
         path: '/legal/privacy',
