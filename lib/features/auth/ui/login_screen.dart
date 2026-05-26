@@ -77,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
-                  onPressed: () => context.go('/role-selector'),
+                  onPressed: () => context.push('/role-selector'),
                   child: Text(l10n.loginNoAccountRegister),
                 ),
               ),

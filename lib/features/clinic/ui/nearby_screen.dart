@@ -170,7 +170,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
             error: (_, __) => const SizedBox.shrink(),
           ),
 
-          // Map section
+          // Map section (recuadro independiente)
           _MapSection(
             expanded: _mapExpanded,
             userLat: widget.userLat,
@@ -178,36 +178,28 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
             mapCtrl: _mapCtrl,
             clinics: clinicsAsync.valueOrNull ?? [],
             selectedClinicId: _selectedClinicId,
-            radiusKm: filters.nearbyRadiusKm,
             onHeaderTap: _onMapHeaderTap,
             onMapBackgroundTap: _deselectClinic,
             onClinicTap: _onClinicTap,
           ),
 
-          // Divider
-          GestureDetector(
-            onTap: _deselectClinic,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              height: 1,
-              color: AppTheme.divider,
-            ),
-          ),
-
-          // Clinic list
+          // Listado de clínicas (sección separada)
           Expanded(
             child: GestureDetector(
               onTap: _deselectClinic,
               behavior: HitTestBehavior.deferToChild,
-              child: clinicsAsync.when(
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: clinicsAsync.when(
               data: (clinics) => clinics.isEmpty
                   ? LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
                               minHeight: constraints.maxHeight,
@@ -251,20 +243,24 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                       },
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                       itemCount: clinics.length + 1,
                       itemBuilder: (_, i) {
                         if (i == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(
-                              l10n.nearbyClinicsCount(clinics.length),
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                l10n.nearbyClinicsCount(clinics.length),
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                            ],
                           );
                         }
                         final clinic = clinics[i - 1];
@@ -283,6 +279,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
                   Center(child: Text(l10n.errorWithDetails('$e'))),
+                ),
               ),
             ),
           ),
@@ -351,7 +348,6 @@ class _MapSection extends StatelessWidget {
   final MapController mapCtrl;
   final List<Clinic> clinics;
   final String? selectedClinicId;
-  final double radiusKm;
   final VoidCallback onHeaderTap;
   final VoidCallback onMapBackgroundTap;
   final void Function(Clinic) onClinicTap;
@@ -363,146 +359,178 @@ class _MapSection extends StatelessWidget {
     required this.mapCtrl,
     required this.clinics,
     required this.selectedClinicId,
-    required this.radiusKm,
     required this.onHeaderTap,
     required this.onMapBackgroundTap,
     required this.onClinicTap,
   });
 
+  static final _mapCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.all(Radius.circular(16)),
+    border: Border.fromBorderSide(BorderSide(color: AppTheme.divider)),
+    boxShadow: [
+      BoxShadow(
+        color: Color(0x14000000),
+        blurRadius: 10,
+        offset: Offset(0, 3),
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final expandedHeight = (screenHeight * 0.36).clamp(220.0, 300.0);
+    final mapHeight = (screenHeight * 0.30).clamp(190.0, 250.0);
 
-    return ClipRect(
-      child: AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      height: expanded ? expandedHeight : 56,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Toggle button
-          InkWell(
-            onTap: onHeaderTap,
-            child: SizedBox(
-              height: 56,
-              width: double.infinity,
-              child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Icon(
-                    expanded
-                        ? Icons.map_rounded
-                        : Icons.map_outlined,
-                    color: AppTheme.primary,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      context.l10n.viewOnMap,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+          // Botón para desplegar / plegar (fuera del recuadro del mapa)
+          Material(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppTheme.divider),
+            ),
+            child: InkWell(
+              onTap: onHeaderTap,
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 52,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        expanded
+                            ? Icons.map_rounded
+                            : Icons.map_outlined,
+                        color: AppTheme.primary,
+                        size: 22,
                       ),
-                    ),
-                  ),
-                  if (clinics.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        '${clinics.length}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          context.l10n.viewOnMap,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                  const SizedBox(width: 8),
-                  AnimatedRotation(
-                    turns: expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 300),
-                    child: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppTheme.textSecondary,
-                    ),
+                      if (clinics.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Text(
+                            '${clinics.length}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      AnimatedRotation(
+                        turns: expanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
               ),
             ),
           ),
 
-          // Map
-          if (expanded)
-            Expanded(
-              child: ClipRect(
-                child: FlutterMap(
-                  mapController: mapCtrl,
-                  options: MapOptions(
-                    initialCenter: LatLng(userLat, userLng),
-                    initialZoom: 13.0,
-                    onTap: (_, __) => onMapBackgroundTap(),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.robertoleahu.vetnow',
-                    ),
-                    // User location marker
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: LatLng(userLat, userLng),
-                          width: 40,
-                          height: 40,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.blue, width: 2),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.my_location_rounded,
-                                size: 18,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
+          // Recuadro del mapa (separado del listado)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      height: mapHeight,
+                      decoration: _mapCardDecoration,
+                      clipBehavior: Clip.antiAlias,
+                      child: FlutterMap(
+                        mapController: mapCtrl,
+                        options: MapOptions(
+                          initialCenter: LatLng(userLat, userLng),
+                          initialZoom: 13.0,
+                          onTap: (_, __) => onMapBackgroundTap(),
                         ),
-                        ...clinics
-                            .where((c) => c.lat != null && c.lng != null)
-                            .map(
-                              (c) => Marker(
-                                point: LatLng(c.lat!, c.lng!),
-                                width: selectedClinicId == c.id ? 48 : 40,
-                                height: selectedClinicId == c.id ? 48 : 40,
-                                child: GestureDetector(
-                                  onTap: () => onClinicTap(c),
-                                  child: _ClinicMapPin(
-                                    selected: selectedClinicId == c.id,
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.robertoleahu.vetnow',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(userLat, userLng),
+                                width: 40,
+                                height: 40,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.blue,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.my_location_rounded,
+                                      size: 18,
+                                      color: Colors.blue,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                      ],
+                              ...clinics
+                                  .where((c) => c.lat != null && c.lng != null)
+                                  .map(
+                                    (c) => Marker(
+                                      point: LatLng(c.lat!, c.lng!),
+                                      width: selectedClinicId == c.id ? 48 : 40,
+                                      height: selectedClinicId == c.id ? 48 : 40,
+                                      child: GestureDetector(
+                                        onTap: () => onClinicTap(c),
+                                        child: _ClinicMapPin(
+                                          selected: selectedClinicId == c.id,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
-      ),
       ),
     );
   }

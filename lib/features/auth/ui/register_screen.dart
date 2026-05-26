@@ -19,6 +19,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameCtrl = TextEditingController();
+  final _clinicNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _loading = false;
@@ -28,9 +29,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool get _canSubmit => _privacyAccepted && _termsAccepted && !_loading;
 
+  bool get _isClinic => widget.role == UserRole.clinic;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _clinicNameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _register() async {
     final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty ||
+        (_isClinic && _clinicNameCtrl.text.trim().isEmpty) ||
         _emailCtrl.text.trim().isEmpty ||
         _passCtrl.text.trim().isEmpty) {
       setState(() => _error = l10n.fillAllFields);
@@ -54,6 +67,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passCtrl.text.trim(),
             fullName: _nameCtrl.text.trim(),
             role: widget.role,
+            clinicName: _isClinic ? _clinicNameCtrl.text.trim() : null,
             privacyAcceptedAt: now,
             termsAcceptedAt: now,
           );
@@ -81,8 +95,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.createAccount)),
+    return PopScope(
+      canPop: !_loading,
+      child: Scaffold(
+      appBar: AppBar(
+        leading: _loading
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.back,
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/role-selector');
+                  }
+                },
+              ),
+        title: Text(l10n.createAccount),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -103,6 +134,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 controller: _nameCtrl,
                 decoration: InputDecoration(labelText: l10n.fullName),
               ),
+              if (_isClinic) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _clinicNameCtrl,
+                  decoration: InputDecoration(labelText: l10n.clinicName),
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _emailCtrl,
@@ -151,6 +189,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
