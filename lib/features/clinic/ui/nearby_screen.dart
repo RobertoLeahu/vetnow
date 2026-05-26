@@ -201,38 +201,54 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
               behavior: HitTestBehavior.deferToChild,
               child: clinicsAsync.when(
               data: (clinics) => clinics.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.location_off_rounded,
-                                size: 64, color: AppTheme.textSecondary),
-                            const SizedBox(height: 16),
-                            Text(
-                              l10n.noClinicsWithinRadius(
-                                filters.nearbyRadiusKm.toStringAsFixed(0),
-                              ),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppTheme.textPrimary,
-                              ),
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              filters.specialtyId != null
-                                  ? l10n.nearbyTryOtherSpecialty
-                                  : l10n.nearbyNeedsGps,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 13),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_off_rounded,
+                                  size: 48,
+                                  color: AppTheme.textSecondary,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  l10n.noClinicsWithinRadius(
+                                    filters.nearbyRadiusKm.toStringAsFixed(0),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  filters.specialtyId != null
+                                      ? l10n.nearbyTryOtherSpecialty
+                                      : l10n.nearbyNeedsGps,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -355,17 +371,23 @@ class _MapSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final expandedHeight = (screenHeight * 0.36).clamp(220.0, 300.0);
+
+    return ClipRect(
+      child: AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      height: expanded ? 340 : 56,
+      height: expanded ? expandedHeight : 56,
       child: Column(
         children: [
           // Toggle button
           InkWell(
             onTap: onHeaderTap,
-            child: Container(
+            child: SizedBox(
               height: 56,
+              width: double.infinity,
+              child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
@@ -414,6 +436,7 @@ class _MapSection extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),
@@ -479,6 +502,7 @@ class _MapSection extends StatelessWidget {
               ),
             ),
         ],
+      ),
       ),
     );
   }
