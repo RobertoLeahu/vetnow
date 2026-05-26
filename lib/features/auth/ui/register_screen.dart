@@ -57,6 +57,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             privacyAcceptedAt: now,
             termsAcceptedAt: now,
           );
+      ref.invalidate(authStateProvider);
       ref.invalidate(profileProvider);
       await ref.read(profileProvider.future);
       if (widget.role == UserRole.clinic) {

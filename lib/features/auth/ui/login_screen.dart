@@ -24,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text.trim(),
       );
+      ref.invalidate(authStateProvider);
       ref.invalidate(profileProvider);
       await ref.read(profileProvider.future);
       if (mounted) context.go('/auth-resolve');

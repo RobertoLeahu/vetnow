@@ -148,10 +148,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final profileAsync = ref.watch(profileProvider);
-    final firstName = profileAsync.maybeWhen(
-      data: (profile) => profile?.fullName.split(' ').first ?? '',
-      orElse: () => '',
-    );
+    final profile = profileAsync.valueOrNull;
+    final fullName = profile?.fullName.trim() ?? '';
+    final firstName =
+        fullName.isEmpty ? '' : fullName.split(RegExp(r'\s+')).first;
     final specialtiesAsync = ref.watch(specialtiesProvider);
     final favoritesAsync = ref.watch(favoriteClinicsProvider);
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
