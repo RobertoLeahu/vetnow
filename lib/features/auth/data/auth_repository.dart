@@ -39,6 +39,8 @@ class AuthRepository {
     required String password,
     required String fullName,
     required UserRole role,
+    String? clinicName,
+    String? clinicPhone,
     DateTime? privacyAcceptedAt,
     DateTime? termsAcceptedAt,
   }) async {
@@ -101,6 +103,15 @@ class AuthRepository {
     }
 
     if (role == UserRole.clinic) {
+      final trimmedClinicName = clinicName?.trim() ?? '';
+      if (trimmedClinicName.isEmpty) {
+        throw ArgumentError('clinicName is required for clinic registration');
+      }
+      final trimmedPhone = clinicPhone?.trim() ?? '';
+      if (trimmedPhone.isEmpty) {
+        throw ArgumentError('clinicPhone is required for clinic registration');
+      }
+
       final existingClinic = await supabase
           .from('clinics')
           .select('id')
@@ -110,11 +121,18 @@ class AuthRepository {
       if (existingClinic == null) {
         await supabase.from('clinics').insert({
           'profile_id': user.id,
-          'name': fullName,
+          'name': trimmedClinicName,
           'address': '',
           'city': '',
           'email': email,
+          'phone': trimmedPhone,
         });
+      } else {
+        await supabase.from('clinics').update({
+          'name': trimmedClinicName,
+          'email': email,
+          'phone': trimmedPhone,
+        }).eq('profile_id', user.id);
       }
     }
   }

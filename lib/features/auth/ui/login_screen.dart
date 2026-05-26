@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../app/theme.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -46,11 +47,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.loginWelcome,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const Icon(
+                Icons.pets_rounded,
+                size: 64,
+                color: AppTheme.primary,
+              ),
+              const SizedBox(height: 12),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  children: [
+                    TextSpan(text: 'Bienvenido a '),
+                    TextSpan(
+                      text: 'VetNow',
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
               Text(l10n.loginSubtitle,
-                  style: const TextStyle(color: Colors.grey)),
+                  style: const TextStyle(color: AppTheme.textSecondary)),
               const SizedBox(height: 32),
               TextField(
                 controller: _emailCtrl,
@@ -77,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
-                  onPressed: () => context.go('/role-selector'),
+                  onPressed: () => context.push('/role-selector'),
                   child: Text(l10n.loginNoAccountRegister),
                 ),
               ),

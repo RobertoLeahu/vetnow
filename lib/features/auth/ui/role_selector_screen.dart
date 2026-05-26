@@ -10,7 +10,20 @@ class RoleSelectorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.roleSelectorTitle)),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: l10n.back,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/login');
+            }
+          },
+        ),
+        title: Text(l10n.roleSelectorTitle),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -21,14 +34,14 @@ class RoleSelectorScreen extends StatelessWidget {
             const SizedBox(height: 32),
             _RoleCard(
               icon: Icons.pets,
-              title: l10n.roleOwnerTitle,
+              title: 'Propietario',
               subtitle: l10n.roleOwnerSubtitle,
               role: UserRole.owner,
             ),
             const SizedBox(height: 16),
             _RoleCard(
               icon: Icons.local_hospital,
-              title: l10n.roleClinicTitle,
+              title: 'Clinica',
               subtitle: l10n.roleClinicSubtitle,
               role: UserRole.clinic,
             ),
@@ -59,7 +72,7 @@ class _RoleCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.go('/register/${role.name}'),
+        onTap: () => context.push('/register/${role.name}'),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
