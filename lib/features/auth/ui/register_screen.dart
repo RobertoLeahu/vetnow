@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../data/auth_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../../features/clinic_panel/providers/clinic_panel_provider.dart';
 import '../../../shared/models/profile.dart';
@@ -62,6 +63,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ref.invalidate(myClinicProvider);
       }
       if (mounted) context.go('/auth-resolve');
+    } on RegisterException catch (e) {
+      final message = switch (e.failure) {
+        RegisterFailure.emailAlreadyExists => l10n.registerEmailAlreadyExists,
+        RegisterFailure.emailExistsWrongPassword =>
+          l10n.registerEmailExistsWrongPassword,
+      };
+      setState(() => _error = message);
     } catch (e) {
       setState(() => _error = l10n.registerError(e.toString()));
     } finally {

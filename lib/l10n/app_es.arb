@@ -21,6 +21,8 @@
       }
     }
   },
+  "registerEmailAlreadyExists": "Este email ya está registrado. Inicia sesión o usa otro email.",
+  "registerEmailExistsWrongPassword": "Este email ya existe pero la contraseña no coincide. Usa la contraseña correcta o recupera el acceso desde Supabase.",
   "privacyPolicyLink": "Política de Privacidad",
   "termsAndConditionsLink": "Términos y Condiciones",
   "consentPrefix": "He leído y acepto la ",

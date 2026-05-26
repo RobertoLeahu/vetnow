@@ -54,6 +54,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get registerEmailAlreadyExists =>
+      'Este email ya está registrado. Inicia sesión o usa otro email.';
+
+  @override
+  String get registerEmailExistsWrongPassword =>
+      'Este email ya existe pero la contraseña no coincide. Usa la contraseña correcta o recupera el acceso desde Supabase.';
+
+  @override
   String get privacyPolicyLink => 'Política de Privacidad';
 
   @override

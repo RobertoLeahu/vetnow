@@ -3,6 +3,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/profile.dart';
 
+/// Errores de registro con mensajes localizables en la UI.
+enum RegisterFailure {
+  emailAlreadyExists,
+  emailExistsWrongPassword,
+}
+
+class RegisterException implements Exception {
+  final RegisterFailure failure;
+  const RegisterException(this.failure);
+
+  @override
+  String toString() => 'RegisterException($failure)';
+}
+
 class AuthRepository {
   // Sesión actual
   Session? get currentSession => supabase.auth.currentSession;
@@ -11,7 +25,15 @@ class AuthRepository {
   // Stream de cambios de sesión
   Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
 
-  /// Registro: crea usuario en Auth y luego el perfil en la tabla profiles
+  bool _isUserAlreadyRegistered(AuthException e) {
+    if (e.code == 'user_already_exists') return true;
+    final msg = e.message.toLowerCase();
+    return msg.contains('already registered') || msg.contains('user already');
+  }
+
+  /// Registro: crea usuario en Auth y luego el perfil en la tabla profiles.
+  /// Si el usuario existe en Auth pero no tiene perfil (p. ej. borrado manual en BD),
+  /// inicia sesión y completa el perfil.
   Future<void> signUp({
     required String email,
     required String password,
@@ -20,13 +42,40 @@ class AuthRepository {
     DateTime? privacyAcceptedAt,
     DateTime? termsAcceptedAt,
   }) async {
-    final response = await supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
+    User? user;
 
-    final user = response.user;
+    try {
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+      user = response.user;
+    } on AuthException catch (e) {
+      if (!_isUserAlreadyRegistered(e)) rethrow;
+
+      try {
+        await supabase.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+        user = supabase.auth.currentUser;
+      } on AuthException {
+        throw const RegisterException(RegisterFailure.emailExistsWrongPassword);
+      }
+    }
+
     if (user == null) throw Exception('Error al crear el usuario');
+
+    final existingProfile = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (existingProfile != null) {
+      await supabase.auth.signOut();
+      throw const RegisterException(RegisterFailure.emailAlreadyExists);
+    }
 
     await supabase.from('profiles').insert({
       'id': user.id,
@@ -38,15 +87,22 @@ class AuthRepository {
         'terms_accepted_at': termsAcceptedAt.toIso8601String(),
     });
 
-    // Para clínicas, crear fila mínima en la tabla clinics
     if (role == UserRole.clinic) {
-      await supabase.from('clinics').insert({
-        'profile_id': user.id,
-        'name': fullName,
-        'address': '',
-        'city': '',
-        'email': email,
-      });
+      final existingClinic = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('profile_id', user.id)
+          .maybeSingle();
+
+      if (existingClinic == null) {
+        await supabase.from('clinics').insert({
+          'profile_id': user.id,
+          'name': fullName,
+          'address': '',
+          'city': '',
+          'email': email,
+        });
+      }
     }
   }
 
@@ -99,6 +155,7 @@ class AuthRepository {
     await supabase.from('pets').delete().eq('owner_id', user.id);
     await supabase.from('appointments').delete().eq('owner_id', user.id);
     await supabase.from('clinic_favorites').delete().eq('owner_id', user.id);
+    await supabase.from('clinics').delete().eq('profile_id', user.id);
     await supabase.from('profiles').delete().eq('id', user.id);
     await signOut();
   }

@@ -182,6 +182,18 @@ abstract class AppLocalizations {
   /// **'Error al registrarse: {error}'**
   String registerError(String error);
 
+  /// No description provided for @registerEmailAlreadyExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Este email ya está registrado. Inicia sesión o usa otro email.'**
+  String get registerEmailAlreadyExists;
+
+  /// No description provided for @registerEmailExistsWrongPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Este email ya existe pero la contraseña no coincide. Usa la contraseña correcta o recupera el acceso desde Supabase.'**
+  String get registerEmailExistsWrongPassword;
+
   /// No description provided for @privacyPolicyLink.
   ///
   /// In es, this message translates to:
