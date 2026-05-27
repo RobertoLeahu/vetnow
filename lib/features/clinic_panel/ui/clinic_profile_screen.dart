@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme.dart';
@@ -15,15 +14,15 @@ import '../../auth/providers/auth_provider.dart';
 import '../../clinic/providers/clinic_provider.dart';
 import '../providers/clinic_panel_provider.dart';
 
-class ClinicProfileScreen extends ConsumerStatefulWidget {
-  const ClinicProfileScreen({super.key});
+class ClinicProfileEditScreen extends ConsumerStatefulWidget {
+  const ClinicProfileEditScreen({super.key});
 
   @override
-  ConsumerState<ClinicProfileScreen> createState() =>
+  ConsumerState<ClinicProfileEditScreen> createState() =>
       _ClinicProfileScreenState();
 }
 
-class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
+class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameCtrl;
@@ -476,8 +475,6 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
                     _buildScheduleSection(),
                     const SizedBox(height: 32),
                     _buildSaveButton(clinic),
-                    const SizedBox(height: 16),
-                    _buildLogoutButton(),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -840,25 +837,6 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return OutlinedButton.icon(
-      onPressed: () async {
-        if (!await _handleExitRequest()) return;
-        await ref.read(authRepositoryProvider).signOut();
-        if (mounted) context.go('/login');
-      },
-      icon: const Icon(Icons.logout_rounded, size: 16),
-      label: Text(context.l10n.signOut),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.red,
-        side: const BorderSide(color: Colors.red),
-        minimumSize: const Size(double.infinity, 48),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-        ),
-      ),
-    );
-  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────

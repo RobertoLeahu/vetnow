@@ -22,6 +22,8 @@ import '../features/clinic_panel/ui/clinic_home_screen.dart';
 import '../features/clinic_panel/ui/clinic_agenda_screen.dart';
 import '../features/clinic_panel/ui/clinic_patients_screen.dart';
 import '../features/clinic_panel/ui/clinic_profile_screen.dart';
+import '../features/clinic_panel/ui/clinic_profile_menu_screen.dart';
+import '../features/clinic_panel/ui/clinic_settings_screen.dart';
 import '../core/supabase/supabase_client.dart';
 import '../shared/models/profile.dart';
 import '../shared/models/specialty.dart';
@@ -233,7 +235,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/clinic-profile',
-            builder: (_, __) => const ClinicProfileScreen(),
+            builder: (_, __) => const ClinicProfileMenuScreen(),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (_, __) => const ClinicProfileEditScreen(),
+              ),
+              GoRoute(
+                path: 'settings',
+                builder: (_, __) => const ClinicSettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'account',
+                    builder: (_, __) => const AccountScreen(),
+                  ),
+                  GoRoute(
+                    path: 'personalization',
+                    builder: (_, __) => const PersonalizationScreen(),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../clinic/providers/clinic_provider.dart';
+import '../../clinic_panel/providers/clinic_panel_provider.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../shared/models/profile.dart';
 
 ({String prefix, String number}) _splitPhone(String? raw) {
   if (raw == null || raw.trim().isEmpty) {
@@ -19,10 +22,7 @@ import '../../../l10n/l10n_ext.dart';
       );
     }
     final cut = trimmed.length >= 4 ? 3 : trimmed.length;
-    return (
-      prefix: trimmed.substring(0, cut),
-      number: trimmed.substring(cut),
-    );
+    return (prefix: trimmed.substring(0, cut), number: trimmed.substring(cut));
   }
   return (prefix: '+34', number: trimmed);
 }
@@ -64,7 +64,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     super.dispose();
   }
 
-  void _seedFromProfile(String? phoneFromDb) {
+  void _seedFromPhone(String? phoneFromDb) {
     if (_seeded) return;
     final split = _splitPhone(phoneFromDb);
     _prefixCtrl.text = split.prefix;
@@ -76,30 +76,37 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   Future<void> _savePhone() async {
     final user = ref.read(authRepositoryProvider).currentUser;
     if (user == null) return;
+    final role = ref.read(profileProvider).valueOrNull?.role;
 
-    final newSerialized =
-        _composePhone(_prefixCtrl.text, _numberCtrl.text);
+    final newSerialized = _composePhone(_prefixCtrl.text, _numberCtrl.text);
     if (newSerialized == _initialPhoneSerialized) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.noChangesToSave)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.noChangesToSave)));
       }
       return;
     }
 
     setState(() => _saving = true);
     try {
-      await ref.read(authRepositoryProvider).updatePhone(
-            userId: user.id,
-            phone: newSerialized,
-          );
+      if (role == UserRole.clinic) {
+        await ref.read(clinicRepositoryProvider).updateClinicPhoneByProfile(
+              profileId: user.id,
+              phone: newSerialized,
+            );
+      } else {
+        await ref
+            .read(authRepositoryProvider)
+            .updatePhone(userId: user.id, phone: newSerialized);
+      }
       ref.invalidate(profileProvider);
+      ref.invalidate(myClinicProvider);
       _initialPhoneSerialized = newSerialized;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.dataSaved)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.dataSaved)));
       }
     } catch (e) {
       if (mounted) {
@@ -138,16 +145,36 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final email = ref.watch(authRepositoryProvider).currentUser?.email ?? '';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.account),
-      ),
+      appBar: AppBar(title: Text(l10n.account)),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l10n.errorWithDetails(e.toString()))),
+        error: (e, _) =>
+            Center(child: Text(l10n.errorWithDetails(e.toString()))),
         data: (profile) {
-          _seedFromProfile(profile?.phone);
+          if (profile == null) {
+            return Center(child: Text(l10n.errorWithDetails('Perfil no encontrado')));
+          }
+          if (profile.role == UserRole.clinic) {
+            final clinicPhoneAsync = ref.watch(myClinicProvider);
+            return clinicPhoneAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) =>
+                  Center(child: Text(l10n.errorWithDetails(e.toString()))),
+              data: (clinic) {
+                _seedFromPhone(clinic?.phone);
+                return _buildContent(context, l10n, email);
+              },
+            );
+          }
+          _seedFromPhone(profile.phone);
+          return _buildContent(context, l10n, email);
+        },
+      ),
+    );
+  }
 
-          return ListView(
+  Widget _buildContent(BuildContext context, dynamic l10n, String email) {
+    return ListView(
             padding: const EdgeInsets.all(20),
             children: [
               Text(
@@ -160,9 +187,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ),
               const SizedBox(height: 16),
               InputDecorator(
-                decoration: InputDecoration(
-                  labelText: l10n.emailAddress,
-                ),
+                decoration: InputDecoration(labelText: l10n.emailAddress),
                 child: Text(
                   email.isEmpty ? '—' : email,
                   style: const TextStyle(
@@ -180,9 +205,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     child: TextField(
                       controller: _prefixCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: l10n.phonePrefix,
-                      ),
+                      decoration: InputDecoration(labelText: l10n.phonePrefix),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -190,9 +213,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     child: TextField(
                       controller: _numberCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: l10n.phoneNumber,
-                      ),
+                      decoration: InputDecoration(labelText: l10n.phoneNumber),
                     ),
                   ),
                 ],
@@ -222,9 +243,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ),
             ],
           );
-        },
-      ),
-    );
   }
 }
 
@@ -273,9 +291,9 @@ class _ChangePasswordSheetContentState
     try {
       await ref.read(authRepositoryProvider).updatePassword(n);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.passwordUpdated)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.passwordUpdated)));
       widget.onSuccess();
     } catch (e) {
       setState(() => _error = context.l10n.errorWithDetails(e.toString()));
@@ -322,7 +340,10 @@ class _ChangePasswordSheetContentState
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
           ],
           const SizedBox(height: 20),
           ElevatedButton(

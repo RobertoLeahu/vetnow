@@ -215,6 +215,17 @@ class ClinicRepository {
     await supabase.from('clinics').upsert(data);
   }
 
+  /// Actualiza solo el teléfono de la clínica del perfil indicado.
+  Future<void> updateClinicPhoneByProfile({
+    required String profileId,
+    String? phone,
+  }) async {
+    await supabase
+        .from('clinics')
+        .update({'phone': phone})
+        .eq('profile_id', profileId);
+  }
+
   /// Reemplazar especialidades de una clínica
   Future<void> updateSpecialties(
     String clinicId,
