@@ -134,11 +134,11 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
       body: Column(
         children: [
           specialtiesAsync.when(
-            data: (specialties) => Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+            data: (specialties) => SizedBox(
+              height: 52,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                 children: [
                   _NearbySpecialtyChip(
                     label: l10n.allSpecialties,
@@ -146,12 +146,16 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                     selected: filters.specialtyId == null,
                     onTap: () => _setSpecialtyFilter(null),
                   ),
+                  const SizedBox(width: 8),
                   ...specialties.map(
-                    (s) => _NearbySpecialtyChip(
-                      label: s.name,
-                      icon: _nearbySpecialtyIcon(s.name),
-                      selected: filters.specialtyId == s.id,
-                      onTap: () => _setSpecialtyFilter(s.id),
+                    (s) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _NearbySpecialtyChip(
+                        label: s.name,
+                        icon: _nearbySpecialtyIcon(s.name),
+                        selected: filters.specialtyId == s.id,
+                        onTap: () => _setSpecialtyFilter(s.id),
+                      ),
                     ),
                   ),
                 ],
