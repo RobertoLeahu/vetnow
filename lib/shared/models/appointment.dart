@@ -8,6 +8,7 @@ class Appointment extends Equatable {
   final String clinicId;
   final String clinicName;
   final String clinicAddress;
+  final String clinicPhone;
   final String petId;
   final String petName;
   final PetSpecies petSpecies;
@@ -23,6 +24,7 @@ class Appointment extends Equatable {
     required this.clinicId,
     required this.clinicName,
     required this.clinicAddress,
+    required this.clinicPhone,
     required this.petId,
     required this.petName,
     this.petSpecies = PetSpecies.other,
@@ -66,6 +68,7 @@ class Appointment extends Equatable {
       clinicId: map['clinic_id'] as String,
       clinicName: readNestedString('clinics', 'name') ?? '—',
       clinicAddress: clinicAddress,
+      clinicPhone: readNestedString('clinics', 'phone') ?? '—',
       petId: map['pet_id'] as String,
       petName: readNestedString('pets', 'name') ?? '—',
       petSpecies: petSpecies,

@@ -331,6 +331,27 @@ class _AppointmentCard extends ConsumerWidget {
           Row(
             children: [
               const Icon(
+                Icons.phone_rounded,
+                size: 13,
+                color: AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  appointment.clinicPhone,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
                 Icons.calendar_today_rounded,
                 size: 13,
                 color: AppTheme.textSecondary,
