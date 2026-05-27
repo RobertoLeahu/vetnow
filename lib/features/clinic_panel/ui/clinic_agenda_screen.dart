@@ -115,7 +115,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
           );
         }
 
-        return Scaffold(
+    return Scaffold(
           appBar: AppBar(
             title: Text(l10n.agendaTitle),
             bottom: PreferredSize(
