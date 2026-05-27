@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import 'clinic_list_card.dart';
 
@@ -151,7 +152,7 @@ class _ClinicTextSearchScreenState extends ConsumerState<ClinicTextSearchScreen>
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) =>
-                        Center(child: Text(l10n.errorWithDetails('$e'))),
+                        Center(child: Text(appErrorMessage(context, e))),
                   ),
           ),
         ],

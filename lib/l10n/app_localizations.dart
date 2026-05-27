@@ -686,6 +686,66 @@ abstract class AppLocalizations {
   /// **'No se pudo obtener tu ubicación: {error}'**
   String locationFetchError(String error);
 
+  /// No description provided for @errorLocationTimeout.
+  ///
+  /// In es, this message translates to:
+  /// **'No hemos podido obtener tu ubicación a tiempo. Inténtalo de nuevo.'**
+  String get errorLocationTimeout;
+
+  /// No description provided for @errorLocationUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No hemos podido acceder a tu ubicación ahora mismo. Revisa los ajustes del dispositivo e inténtalo otra vez.'**
+  String get errorLocationUnavailable;
+
+  /// No description provided for @errorLocationPermissionDenied.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitamos permiso de ubicación para mostrarte clínicas cercanas.'**
+  String get errorLocationPermissionDenied;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In es, this message translates to:
+  /// **'Parece que no hay conexión. Revisa tu red e inténtalo de nuevo.'**
+  String get errorNetwork;
+
+  /// No description provided for @errorTimeout.
+  ///
+  /// In es, this message translates to:
+  /// **'La operación tardó demasiado. Inténtalo de nuevo.'**
+  String get errorTimeout;
+
+  /// No description provided for @errorSessionExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu sesión ha caducado. Inicia sesión de nuevo.'**
+  String get errorSessionExpired;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In es, this message translates to:
+  /// **'Ha ocurrido un problema en el servidor. Vuelve a intentarlo en unos minutos.'**
+  String get errorServer;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No hemos encontrado la información solicitada.'**
+  String get errorNotFound;
+
+  /// No description provided for @errorValidation.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa los datos introducidos e inténtalo de nuevo.'**
+  String get errorValidation;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In es, this message translates to:
+  /// **'Ha ocurrido un error inesperado. Inténtalo de nuevo.'**
+  String get errorGeneric;
+
   /// No description provided for @searchClinicsTitle.
   ///
   /// In es, this message translates to:

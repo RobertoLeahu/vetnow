@@ -1,0 +1,15 @@
+enum AppErrorCode {
+  locationTimeout,
+  locationUnavailable,
+  locationPermissionDenied,
+  network,
+  timeout,
+  authEmailAlreadyExists,
+  authWrongPassword,
+  authInvalidCredentials,
+  authSessionExpired,
+  server,
+  notFound,
+  validation,
+  unknown,
+}

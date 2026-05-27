@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/appointment_duration.dart' show kAllowedAppointmentDurationsMinutes, kDefaultAppointmentDurationMinutes;
 import '../../../shared/models/clinic.dart';
@@ -371,9 +372,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
       return true;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.saveError('$e'))),
-        );
+        showAppError(context, e);
       }
       return false;
     } finally {
@@ -393,7 +392,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text(l10n.errorWithDetails('$e'))),
+        body: Center(child: Text(appErrorMessage(context, e))),
       ),
       data: (clinic) {
         if (clinic == null) {
@@ -413,7 +412,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
           ),
           error: (e, _) => Scaffold(
             appBar: AppBar(title: Text(l10n.myClinicTitle)),
-            body: Center(child: Text(l10n.schedulesLoadError('$e'))),
+            body: Center(child: Text(appErrorMessage(context, e))),
           ),
           data: (schedules) {
             _initFromClinic(clinic, schedules);

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 import '../providers/clinic_provider.dart';
@@ -282,7 +283,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text(l10n.errorWithDetails('$e'))),
+                  Center(child: Text(appErrorMessage(context, e))),
                 ),
               ),
             ),

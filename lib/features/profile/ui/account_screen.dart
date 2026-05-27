@@ -5,8 +5,10 @@ import '../../auth/providers/auth_provider.dart';
 import '../../clinic/providers/clinic_provider.dart';
 import '../../clinic_panel/providers/clinic_panel_provider.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/profile.dart';
+import '../../../shared/widgets/app_error_banner.dart';
 
 ({String prefix, String number}) _splitPhone(String? raw) {
   if (raw == null || raw.trim().isEmpty) {
@@ -110,9 +112,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.saveError(e.toString()))),
-        );
+        showAppError(context, e);
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -148,18 +148,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       appBar: AppBar(title: Text(l10n.account)),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            Center(child: Text(l10n.errorWithDetails(e.toString()))),
+        error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
         data: (profile) {
           if (profile == null) {
-            return Center(child: Text(l10n.errorWithDetails('Perfil no encontrado')));
+            return Center(child: Text(l10n.errorNotFound));
           }
           if (profile.role == UserRole.clinic) {
             final clinicPhoneAsync = ref.watch(myClinicProvider);
             return clinicPhoneAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text(l10n.errorWithDetails(e.toString()))),
+              error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
               data: (clinic) {
                 _seedFromPhone(clinic?.phone);
                 return _buildContent(context, l10n, email);
@@ -296,7 +294,7 @@ class _ChangePasswordSheetContentState
       ).showSnackBar(SnackBar(content: Text(context.l10n.passwordUpdated)));
       widget.onSuccess();
     } catch (e) {
-      setState(() => _error = context.l10n.errorWithDetails(e.toString()));
+      setState(() => _error = appErrorMessage(context, e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -340,10 +338,7 @@ class _ChangePasswordSheetContentState
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
-            ),
+            AppErrorBanner(message: _error!),
           ],
           const SizedBox(height: 20),
           ElevatedButton(

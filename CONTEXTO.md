@@ -99,7 +99,9 @@ lib/
 │           ├── clinic_home_screen.dart
 │           ├── clinic_agenda_screen.dart
 │           ├── clinic_patients_screen.dart
-│           └── clinic_profile_screen.dart
+│           ├── clinic_profile_menu_screen.dart  # Hub "Mi clínica"
+│           ├── clinic_profile_screen.dart       # Formulario de edición (ClinicProfileEditScreen)
+│           └── clinic_settings_screen.dart      # Ajustes de cuenta para rol clinic
 └── shared/
     ├── appointment_duration.dart  # Constantes y etiquetas de duración
     ├── models/
@@ -164,7 +166,7 @@ medical_notes     -- appointment_id FK, clinic_id FK, content, created_at, updat
 ```
 /login              → LoginScreen         (sin shell)
 /role-selector      → RoleSelectorScreen  (sin shell)
-/register           → RegisterScreen      (sin shell, recibe UserRole por extra)
+/register/:role     → RegisterScreen      (sin shell, rol por path param: owner|clinic)
 /legal/privacy      → LegalPrivacyRoute   (público, sin login)
 /legal/terms        → LegalTermsRoute     (público, sin login)
 /auth-resolve       → Spinner             (sin shell, mientras profileProvider carga)
@@ -186,7 +188,11 @@ ShellRoute → MainShell (bottom nav dinámico por rol)
   /clinic-patients                     → ClinicPatientsScreen
   /clinic-patients/:ownerId            → OwnerPetsScreen (extra: ownerName)
   /clinic-patients/:ownerId/:petId     → PetVisitsScreen (extra: petName)
-  /clinic-profile                      → ClinicProfileScreen
+  /clinic-profile                      → ClinicProfileMenuScreen
+  /clinic-profile/edit                 → ClinicProfileEditScreen
+  /clinic-profile/settings             → ClinicSettingsScreen
+  /clinic-profile/settings/account     → AccountScreen
+  /clinic-profile/settings/personalization → PersonalizationScreen
 ```
 
 **Redirección por rol en login:**
@@ -256,7 +262,16 @@ Rutas legales accesibles sin sesión.
 - Al salir de **Mi clínica** con cambios sin guardar, `clinicProfileExitHandlerProvider`
   intercepta el tap en otras tabs del NavBar.
 - ClinicHomeScreen, ClinicAgendaScreen, ClinicPatientsScreen + expedientes médicos
-  (varias notas por visita), ClinicProfileScreen (ver detalle abajo).
+  (varias notas por visita) y flujo completo de Mi Clínica.
+
+#### Flujo Mi Clínica (refactor)
+- `ClinicProfileMenuScreen` pasa a ser la entrada de `/clinic-profile` con accesos
+  a Agenda, Pacientes, Editar clínica y Ajustes.
+- `ClinicProfileEditScreen` (archivo `clinic_profile_screen.dart`) queda dedicado
+  al formulario de edición de datos de clínica.
+- `ClinicSettingsScreen` centraliza ajustes del rol clínica: cuenta, legal,
+  personalización, cerrar sesión y eliminar cuenta.
+- Esto unifica la experiencia del rol clínica con el patrón de ajustes del owner.
 
 ### ✅ Ajustes de cuenta y personalización (Fase 6 — completa)
 - SettingsScreen, AccountScreen (teléfono, contraseña, borrar cuenta).
@@ -336,10 +351,27 @@ Rutas legales accesibles sin sesión.
 - `context.push()` / `context.go()` según apilar o reemplazar tab.
 - `extra` entre rutas: `UserRole`, `Specialty`, `int` (tab agenda), `String` (nombres),
   `({double lat, double lng})` (nearby). No sobrevive hot restart.
+- Registro por ruta parametrizada: `/register/:role` (owner|clinic) en lugar de
+  pasar rol por `extra`.
+
+### Eliminación de citas canceladas
+- Se mantiene **borrado físico** de citas canceladas (`DELETE`) para owner y clinic
+  bajo políticas RLS específicas.
+- El intento de soft delete por actor (`deleted_by_owner_at` / `deleted_by_clinic_at`)
+  fue revertido; no forma parte del estado actual.
 
 ### Dialogs y contexto
 - Usar `dialogContext` del builder en AlertDialog y bottom sheets.
 - Cerrar dialog antes de navegar con GoRouter.
+
+### Sistema de errores en UI
+- No mostrar errores técnicos (`e.toString()`, `'$e'`) en textos visibles para usuario.
+- Mapear excepciones con `mapError` (`lib/core/errors/error_mapper.dart`) y traducir
+  con `appErrorMessage(...)` según locale.
+- Para feedback visual:
+  - Inline en formularios/sheets: `AppErrorBanner`.
+  - Acciones asíncronas: `showAppError(...)` (SnackBar flotante).
+- Mantener detalles técnicos solo en logs de debug mediante `logAppError`.
 
 ### Invalidación de providers
 - Citas propietario: `myAppointmentsProvider`

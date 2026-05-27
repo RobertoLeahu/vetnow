@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
 
@@ -43,9 +44,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.signOutError(e.toString()))),
-        );
+        showAppError(context, e);
       }
     }
   }
@@ -85,9 +84,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.deleteAccountError(e.toString()))),
-        );
+        showAppError(context, e);
       }
     } finally {
       if (mounted) setState(() => _deletingAccount = false);

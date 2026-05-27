@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/appointment_provider.dart';
 import '../../../core/datetime/app_date_format.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/appointment_duration.dart';
@@ -68,13 +69,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       if (mounted) _showSuccess();
     } catch (e) {
       if (mounted) {
-        final l10n = context.l10n;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.bookingError(e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showAppError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -161,11 +156,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
+            error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
+        error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
       ),
     );
   }
@@ -646,7 +641,7 @@ class _StepTimeState extends ConsumerState<_StepTime> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
+      error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
     );
   }
 }
@@ -710,7 +705,7 @@ class _StepPet extends ConsumerWidget {
         ],
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
+      error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
     );
   }
 }

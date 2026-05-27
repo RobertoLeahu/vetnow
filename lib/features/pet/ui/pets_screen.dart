@@ -7,9 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/pet_provider.dart';
 import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../shared/widgets/app_error_banner.dart';
 
 class PetsScreen extends ConsumerStatefulWidget {
   const PetsScreen({super.key});
@@ -68,7 +70,7 @@ class _PetsScreenState extends ConsumerState<PetsScreen> {
                 ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(context.l10n.errorWithDetails('$e'))),
+        error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
       ),
     );
   }
@@ -639,7 +641,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
       widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      setState(() => _error = l10n.saveError(e.toString()));
+      setState(() => _error = appErrorMessage(context, e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -752,10 +754,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-              ),
+              AppErrorBanner(message: _error!),
             ],
             const SizedBox(height: 20),
             ElevatedButton(
@@ -863,7 +862,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
       widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      setState(() => _error = l10n.saveError(e.toString()));
+      setState(() => _error = appErrorMessage(context, e));
     } finally {
       if (mounted) {
         setState(() {
@@ -993,10 +992,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-              ),
+              AppErrorBanner(message: _error!),
             ],
             const SizedBox(height: 20),
             ElevatedButton(

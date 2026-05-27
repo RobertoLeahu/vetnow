@@ -6,6 +6,7 @@ import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/datetime/app_date_format.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -108,9 +109,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.locationFetchError('$e'))),
-      );
+      showAppError(context, e);
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -337,7 +336,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: _FavoritesSectionBox(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text(l10n.errorWithDetails('$e'))),
+                      child: Center(child: Text(appErrorMessage(context, e))),
                     ),
                   ),
                 ),
@@ -406,7 +405,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: _FavoritesSectionBox(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text(l10n.errorWithDetails('$e'))),
+                      child: Center(child: Text(appErrorMessage(context, e))),
                     ),
                   ),
                 ),

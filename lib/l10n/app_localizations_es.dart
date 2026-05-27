@@ -331,6 +331,45 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get errorLocationTimeout =>
+      'No hemos podido obtener tu ubicación a tiempo. Inténtalo de nuevo.';
+
+  @override
+  String get errorLocationUnavailable =>
+      'No hemos podido acceder a tu ubicación ahora mismo. Revisa los ajustes del dispositivo e inténtalo otra vez.';
+
+  @override
+  String get errorLocationPermissionDenied =>
+      'Necesitamos permiso de ubicación para mostrarte clínicas cercanas.';
+
+  @override
+  String get errorNetwork =>
+      'Parece que no hay conexión. Revisa tu red e inténtalo de nuevo.';
+
+  @override
+  String get errorTimeout =>
+      'La operación tardó demasiado. Inténtalo de nuevo.';
+
+  @override
+  String get errorSessionExpired =>
+      'Tu sesión ha caducado. Inicia sesión de nuevo.';
+
+  @override
+  String get errorServer =>
+      'Ha ocurrido un problema en el servidor. Vuelve a intentarlo en unos minutos.';
+
+  @override
+  String get errorNotFound => 'No hemos encontrado la información solicitada.';
+
+  @override
+  String get errorValidation =>
+      'Revisa los datos introducidos e inténtalo de nuevo.';
+
+  @override
+  String get errorGeneric =>
+      'Ha ocurrido un error inesperado. Inténtalo de nuevo.';
+
+  @override
   String get searchClinicsTitle => 'Buscar clínicas';
 
   @override

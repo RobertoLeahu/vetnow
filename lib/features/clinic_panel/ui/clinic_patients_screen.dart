@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/datetime/app_date_format.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -639,7 +640,6 @@ class _VisitCard extends ConsumerWidget {
     WidgetRef ref, {
     MedicalNote? editingNote,
   }) {
-    final l10n = context.l10n;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -665,9 +665,7 @@ class _VisitCard extends ConsumerWidget {
             ref.invalidate(petVisitsProvider(petId));
           } catch (e) {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.saveError('$e'))),
-              );
+              showAppError(context, e);
             }
           }
         },
@@ -708,9 +706,7 @@ class _VisitCard extends ConsumerWidget {
       ref.invalidate(petVisitsProvider(petId));
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.deleteFailed('$e'))),
-        );
+        showAppError(context, e);
       }
     }
   }

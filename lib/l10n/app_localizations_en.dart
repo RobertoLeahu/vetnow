@@ -330,6 +330,42 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get errorLocationTimeout =>
+      'We could not get your location in time. Please try again.';
+
+  @override
+  String get errorLocationUnavailable =>
+      'We could not access your location right now. Check your device settings and try again.';
+
+  @override
+  String get errorLocationPermissionDenied =>
+      'Location permission is required to show nearby clinics.';
+
+  @override
+  String get errorNetwork =>
+      'It looks like you\'re offline. Check your connection and try again.';
+
+  @override
+  String get errorTimeout => 'This action took too long. Please try again.';
+
+  @override
+  String get errorSessionExpired =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get errorServer =>
+      'There was a server problem. Please try again in a few minutes.';
+
+  @override
+  String get errorNotFound => 'We could not find the requested information.';
+
+  @override
+  String get errorValidation => 'Please review the data and try again.';
+
+  @override
+  String get errorGeneric => 'Something went wrong. Please try again.';
+
+  @override
   String get searchClinicsTitle => 'Search clinics';
 
   @override
