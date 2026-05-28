@@ -57,6 +57,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
                     petsAsync.when(
                       data: (pets) => DropdownButtonFormField<String?>(
                         initialValue: selectedPetId,
+                        borderRadius: BorderRadius.circular(12),
                         decoration: InputDecoration(
                           labelText: l10n.petFilterLabel,
                           contentPadding: const EdgeInsets.symmetric(
