@@ -15,6 +15,7 @@ class Appointment extends Equatable {
   final String? petPhotoUrl;
   final String specialtyName;
   final DateTime scheduledAt;
+  final DateTime? completedAt;
   final String status;
   final String? ownerFullName;
   final String? ownerId;
@@ -31,6 +32,7 @@ class Appointment extends Equatable {
     this.petPhotoUrl,
     required this.specialtyName,
     required this.scheduledAt,
+    this.completedAt,
     required this.status,
     this.ownerFullName,
     this.ownerId,
@@ -75,6 +77,9 @@ class Appointment extends Equatable {
       petPhotoUrl: readNestedString('pets', 'photo_url'),
       specialtyName: readNestedString('specialties', 'name') ?? '—',
       scheduledAt: parseScheduledAtColumn(map['scheduled_at']),
+      completedAt: map['completed_at'] != null
+          ? parseScheduledAtColumn(map['completed_at'])
+          : null,
       status: map['status'] as String,
       ownerFullName: ownerName,
       ownerId: map['owner_id'] as String?,

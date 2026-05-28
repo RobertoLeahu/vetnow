@@ -91,6 +91,10 @@ bool _isInCurrentWeek(DateTime scheduledAt) {
   return !d.isBefore(monday) && !d.isAfter(sunday);
 }
 
+/// Fecha local en que se completó la cita (o programada si no hay `completed_at`).
+DateTime _completedLocalDate(Appointment a) =>
+    _dateOnlyLocal(a.completedAt ?? a.scheduledAt);
+
 /// Métricas de citas para el resumen del dashboard (hoy + semana actual).
 class ClinicAppointmentStats {
   final int todayScheduled;
@@ -146,11 +150,13 @@ ClinicAppointmentStats computeClinicAppointmentStats(List<Appointment> all) {
 
     if (a.isPending) pendingConfirmTotal++;
 
+    if (a.isDone && _completedLocalDate(a) == today) {
+      todayDone++;
+    }
+
     if (isToday) {
       if (a.isCancelled) {
         todayCancelled++;
-      } else if (a.isDone) {
-        todayDone++;
       } else if (a.isConfirmed) {
         todayConfirmed++;
         todayScheduled++;

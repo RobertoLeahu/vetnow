@@ -137,7 +137,10 @@ class AppointmentRepository {
   Future<void> markAppointmentDone(String appointmentId) async {
     await supabase
         .from('appointments')
-        .update({'status': 'done'})
+        .update({
+          'status': 'done',
+          'completed_at': DateTime.now().toUtc().toIso8601String(),
+        })
         .eq('id', appointmentId)
         .eq('status', 'confirmed');
   }
