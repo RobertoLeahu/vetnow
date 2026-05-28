@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/theme_provider.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -53,8 +52,6 @@ class PersonalizationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
     final locale = ref.watch(localeProvider);
     final languageLabel = locale.languageCode == 'en'
         ? l10n.languageEnglish
@@ -70,28 +67,6 @@ class PersonalizationScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.only(top: 8),
         children: [
-          SwitchListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-            secondary: const Icon(Icons.dark_mode_rounded),
-            title: Text(
-              l10n.darkMode,
-              style: const TextStyle(fontSize: 16),
-            ),
-            subtitle: Text(
-              isDark ? l10n.enabled : l10n.disabled,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-            value: isDark,
-            activeColor: AppTheme.primary,
-            onChanged: (value) {
-              ref.read(themeModeProvider.notifier).state =
-                  value ? ThemeMode.dark : ThemeMode.light;
-            },
-          ),
-          const Divider(height: 1, color: AppTheme.divider),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 20),
             leading: const Icon(Icons.language_rounded),
