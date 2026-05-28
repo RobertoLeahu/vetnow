@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/specialty.dart';
 
@@ -169,7 +170,7 @@ class ClinicDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l10n.errorWithDetails('$e'))),
+        error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
       ),
     );
   }

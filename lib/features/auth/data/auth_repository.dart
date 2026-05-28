@@ -26,7 +26,9 @@ class AuthRepository {
   Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
 
   bool _isUserAlreadyRegistered(AuthException e) {
-    if (e.code == 'user_already_exists') return true;
+    if (e.code == 'user_already_exists' || e.code == 'user_already_exist') {
+      return true;
+    }
     final msg = e.message.toLowerCase();
     return msg.contains('already registered') || msg.contains('user already');
   }

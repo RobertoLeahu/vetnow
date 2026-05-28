@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/datetime/app_date_format.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -105,7 +106,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(title: Text(l10n.agendaTitle)),
-        body: Center(child: Text(l10n.errorWithDetails('$e'))),
+        body: Center(child: Text(appErrorMessage(context, e))),
       ),
       data: (clinic) {
         if (clinic == null) {
@@ -243,7 +244,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text(l10n.errorWithDetails('$e'))),
+            error: (e, _) => Center(child: Text(appErrorMessage(context, e))),
           ),
         );
       },
@@ -469,10 +470,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
                           ref.invalidate(clinicAppointmentsProvider);
                         } catch (e) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(l10n.errorWithDetails('$e'))),
-                            );
+                            showAppError(context, e);
                           }
                         }
                       }
@@ -514,10 +512,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
                           ref.invalidate(clinicAppointmentsProvider);
                         } catch (e) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(l10n.errorWithDetails('$e'))),
-                            );
+                            showAppError(context, e);
                           }
                         }
                       }
@@ -563,10 +558,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
                     ref.invalidate(clinicAppointmentsProvider);
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(l10n.errorWithDetails('$e'))),
-                      );
+                      showAppError(context, e);
                     }
                   }
                 }
@@ -608,9 +600,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
                     ref.invalidate(clinicAppointmentsProvider);
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.deleteFailed('$e'))),
-                      );
+                      showAppError(context, e);
                     }
                   }
                 }

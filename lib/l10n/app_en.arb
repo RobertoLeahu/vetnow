@@ -154,6 +154,16 @@
       }
     }
   },
+  "errorLocationTimeout": "We could not get your location in time. Please try again.",
+  "errorLocationUnavailable": "We could not access your location right now. Check your device settings and try again.",
+  "errorLocationPermissionDenied": "Location permission is required to show nearby clinics.",
+  "errorNetwork": "It looks like you're offline. Check your connection and try again.",
+  "errorTimeout": "This action took too long. Please try again.",
+  "errorSessionExpired": "Your session has expired. Please sign in again.",
+  "errorServer": "There was a server problem. Please try again in a few minutes.",
+  "errorNotFound": "We could not find the requested information.",
+  "errorValidation": "Please review the data and try again.",
+  "errorGeneric": "Something went wrong. Please try again.",
   "searchClinicsTitle": "Search clinics",
   "searchHintShort": "Name, city, or address",
   "searchTypeToSeeResults": "Type to see matching clinics",

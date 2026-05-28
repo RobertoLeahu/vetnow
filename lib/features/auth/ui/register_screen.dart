@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../shared/widgets/app_error_banner.dart';
 import '../data/auth_repository.dart';
 import '../providers/auth_provider.dart';
 import '../../../features/clinic_panel/providers/clinic_panel_provider.dart';
@@ -90,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       };
       setState(() => _error = message);
     } catch (e) {
-      setState(() => _error = l10n.registerError(e.toString()));
+      setState(() => _error = appErrorMessage(context, e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -185,7 +187,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                AppErrorBanner(message: _error!),
               ],
               const SizedBox(height: 24),
               SizedBox(

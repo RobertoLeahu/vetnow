@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/errors/app_error_presenter.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 import '../providers/clinic_provider.dart';
@@ -134,11 +135,11 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
       body: Column(
         children: [
           specialtiesAsync.when(
-            data: (specialties) => Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+            data: (specialties) => SizedBox(
+              height: 52,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                 children: [
                   _NearbySpecialtyChip(
                     label: l10n.allSpecialties,
@@ -146,12 +147,16 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                     selected: filters.specialtyId == null,
                     onTap: () => _setSpecialtyFilter(null),
                   ),
+                  const SizedBox(width: 8),
                   ...specialties.map(
-                    (s) => _NearbySpecialtyChip(
-                      label: s.name,
-                      icon: _nearbySpecialtyIcon(s.name),
-                      selected: filters.specialtyId == s.id,
-                      onTap: () => _setSpecialtyFilter(s.id),
+                    (s) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _NearbySpecialtyChip(
+                        label: s.name,
+                        icon: _nearbySpecialtyIcon(s.name),
+                        selected: filters.specialtyId == s.id,
+                        onTap: () => _setSpecialtyFilter(s.id),
+                      ),
                     ),
                   ),
                 ],
@@ -278,7 +283,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text(l10n.errorWithDetails('$e'))),
+                  Center(child: Text(appErrorMessage(context, e))),
                 ),
               ),
             ),

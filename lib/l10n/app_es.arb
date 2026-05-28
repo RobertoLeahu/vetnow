@@ -154,6 +154,16 @@
       }
     }
   },
+  "errorLocationTimeout": "No hemos podido obtener tu ubicación a tiempo. Inténtalo de nuevo.",
+  "errorLocationUnavailable": "No hemos podido acceder a tu ubicación ahora mismo. Revisa los ajustes del dispositivo e inténtalo otra vez.",
+  "errorLocationPermissionDenied": "Necesitamos permiso de ubicación para mostrarte clínicas cercanas.",
+  "errorNetwork": "Parece que no hay conexión. Revisa tu red e inténtalo de nuevo.",
+  "errorTimeout": "La operación tardó demasiado. Inténtalo de nuevo.",
+  "errorSessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo.",
+  "errorServer": "Ha ocurrido un problema en el servidor. Vuelve a intentarlo en unos minutos.",
+  "errorNotFound": "No hemos encontrado la información solicitada.",
+  "errorValidation": "Revisa los datos introducidos e inténtalo de nuevo.",
+  "errorGeneric": "Ha ocurrido un error inesperado. Inténtalo de nuevo.",
   "searchClinicsTitle": "Buscar clínicas",
   "searchHintShort": "Nombre, ciudad o dirección",
   "searchTypeToSeeResults": "Escribe para ver clínicas que coincidan",
