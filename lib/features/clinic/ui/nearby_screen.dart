@@ -22,7 +22,7 @@ IconData _nearbySpecialtyIcon(String name) {
   if (n.contains('medicina')) return Icons.medical_services_rounded;
   if (n.contains('dermat')) return Icons.healing_rounded;
   if (n.contains('cardio')) return Icons.favorite_rounded;
-  if (n.contains('traumat')) return Icons.set_meal_rounded;
+  if (n.contains('traumat')) return Icons.emergency_rounded;
   if (n.contains('oftalm')) return Icons.visibility_rounded;
   if (n.contains('exotic') || n.contains('exot')) return Icons.pets_rounded;
   if (n.contains('urgenc') || n.contains('24')) {
