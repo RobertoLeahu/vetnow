@@ -760,7 +760,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
                 child: _SummaryStatTile(
                   value: '${stats.weekConfirmed}',
                   label: l10n.statConfirmed,
-                  icon: Icons.event_available_rounded,
+                  icon: Icons.verified_rounded,
                   color: AppTheme.primaryDark,
                 ),
               ),
@@ -769,7 +769,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
                 child: _SummaryStatTile(
                   value: '${stats.weekPending}',
                   label: l10n.toConfirm,
-                  icon: Icons.pending_actions_rounded,
+                  icon: Icons.hourglass_top_rounded,
                   color: Colors.orange.shade700,
                 ),
               ),
