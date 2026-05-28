@@ -184,6 +184,9 @@
   "selectSpecialty": "Select specialty",
   "nearbyClinicsTitle": "Nearby clinics",
   "viewOnMap": "View on map",
+  "clinicMapTitle": "Location",
+  "clinicMapUserUnavailable": "Could not get your location. Showing the clinic only.",
+  "locatingUser": "Getting your location…",
   "noClinicsWithinRadius": "No clinics within {km} km",
   "@noClinicsWithinRadius": {
     "placeholders": {

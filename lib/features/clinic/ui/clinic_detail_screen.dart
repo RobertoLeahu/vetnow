@@ -118,6 +118,55 @@ class ClinicDetailScreen extends ConsumerWidget {
                         ),
                       ],
 
+                      if (clinic.lat != null && clinic.lng != null) ...[
+                        const SizedBox(height: 20),
+                        Material(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            onTap: () => context.push(
+                              '/search/clinic/${clinic.id}/map',
+                              extra: (
+                                clinicLat: clinic.lat!,
+                                clinicLng: clinic.lng!,
+                                clinicName: clinic.name,
+                              ),
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.map_outlined,
+                                    color: AppTheme.primary,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.viewOnMap,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
                       // Botón reserva
                       const SizedBox(height: 32),
                       ElevatedButton.icon(

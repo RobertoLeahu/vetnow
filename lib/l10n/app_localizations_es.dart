@@ -414,6 +414,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewOnMap => 'Ver en el mapa';
 
   @override
+  String get clinicMapTitle => 'Ubicación';
+
+  @override
+  String get clinicMapUserUnavailable =>
+      'No se pudo obtener tu ubicación. Se muestra solo la clínica.';
+
+  @override
+  String get locatingUser => 'Obteniendo tu ubicación…';
+
+  @override
   String noClinicsWithinRadius(String km) {
     return 'No hay clínicas en $km km';
   }
