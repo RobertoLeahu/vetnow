@@ -148,6 +148,7 @@ class MainShell extends ConsumerWidget {
         context.go('/clinic-patients');
         break;
       case 3:
+        ref.invalidate(myClinicProvider);
         context.go('/clinic-profile');
         break;
     }

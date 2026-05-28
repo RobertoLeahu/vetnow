@@ -82,6 +82,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await ref.read(profileProvider.future);
       if (widget.role == UserRole.clinic) {
         ref.invalidate(myClinicProvider);
+        final clinic = await ref.read(myClinicProvider.future);
+        if (clinic == null) {
+          if (mounted) {
+            setState(() => _error = l10n.clinicProfileNotFound);
+          }
+          return;
+        }
       }
       if (mounted) context.go('/auth-resolve');
     } on RegisterException catch (e) {

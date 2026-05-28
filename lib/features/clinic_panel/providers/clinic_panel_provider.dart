@@ -10,7 +10,8 @@ import '../../../shared/models/schedule.dart';
 import '../data/medical_notes_repository.dart';
 
 /// Clínica del usuario logueado (null si no existe fila en `clinics`).
-final myClinicProvider = FutureProvider.autoDispose<Clinic?>((ref) async {
+/// Sin autoDispose: estado de sesión de clínica; evita perder la carga al navegar.
+final myClinicProvider = FutureProvider<Clinic?>((ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (profile == null) return null;
   return ref.read(clinicRepositoryProvider).getMyClinic(profile.id);

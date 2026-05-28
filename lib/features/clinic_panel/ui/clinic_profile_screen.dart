@@ -45,6 +45,10 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
   String? _initializedForClinicId;
   _ClinicProfileBaseline? _baseline;
   Clinic? _loadedClinic;
+  int _clinicNullAutoRetries = 0;
+  bool _clinicNullRetryInFlight = false;
+  bool _clinicNullRetryScheduled = false;
+  static const _maxClinicNullAutoRetries = 2;
 
   @override
   void initState() {
@@ -280,6 +284,61 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
     }
   }
 
+  Future<void> _reloadMyClinic() async {
+    if (_clinicNullRetryInFlight) return;
+    setState(() => _clinicNullRetryInFlight = true);
+    try {
+      ref.invalidate(myClinicProvider);
+      await ref.read(myClinicProvider.future);
+    } finally {
+      if (mounted) setState(() => _clinicNullRetryInFlight = false);
+    }
+  }
+
+  void _scheduleClinicNullAutoRetry() {
+    if (_clinicNullRetryInFlight ||
+        _clinicNullRetryScheduled ||
+        _clinicNullAutoRetries >= _maxClinicNullAutoRetries) {
+      return;
+    }
+    _clinicNullRetryScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _clinicNullRetryScheduled = false;
+      if (!mounted) return;
+      _clinicNullAutoRetries++;
+      await _reloadMyClinic();
+    });
+  }
+
+  Widget _buildClinicNotFoundBody(BuildContext context) {
+    final l10n = context.l10n;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              l10n.clinicProfileNotFound,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _clinicNullRetryInFlight ? null : _reloadMyClinic,
+              child: _clinicNullRetryInFlight
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l10n.retry),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<bool> _save(Clinic clinic) async {
     if (!_formKey.currentState!.validate()) return false;
 
@@ -396,9 +455,15 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
       ),
       data: (clinic) {
         if (clinic == null) {
+          if (_clinicNullAutoRetries < _maxClinicNullAutoRetries) {
+            _scheduleClinicNullAutoRetry();
+          }
           return Scaffold(
             appBar: AppBar(title: Text(l10n.myClinicTitle)),
-            body: Center(child: Text(l10n.clinicProfileNotFound)),
+            body: _clinicNullRetryInFlight ||
+                    _clinicNullAutoRetries < _maxClinicNullAutoRetries
+                ? const Center(child: CircularProgressIndicator())
+                : _buildClinicNotFoundBody(context),
           );
         }
 

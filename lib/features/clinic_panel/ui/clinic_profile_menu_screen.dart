@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../providers/clinic_panel_provider.dart';
 
 class ClinicProfileMenuScreen extends ConsumerWidget {
   const ClinicProfileMenuScreen({super.key});
@@ -37,6 +38,8 @@ class ClinicProfileMenuScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    // Precarga la clínica antes de abrir configuración.
+    ref.watch(myClinicProvider);
 
     return Scaffold(
       appBar: AppBar(
