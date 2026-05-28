@@ -65,6 +65,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           authState.asData?.value.session ?? supabase.auth.currentSession;
       final isLoggedIn = session != null;
 
+      // Las rutas de registro gestionan su propia navegación (éxito/error).
+      // El router no debe interferir para evitar races con el signIn interno
+      // que hace signUp al detectar un email duplicado.
+      if (loc.startsWith('/register')) return null;
+
       final isAuthRoute = _isAuthRoute(loc);
       final isLegalRoute =
           loc == '/legal/privacy' || loc == '/legal/terms';
@@ -78,12 +83,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final profile = profileAsync.valueOrNull;
 
-      // Sesión activa: esperar perfil antes de redirigir por rol (evita race en signUp)
+      // Sesión activa: esperar perfil antes de redirigir por rol
       if (profileAsync.isLoading || profile == null) {
         if (loc != '/auth-resolve' && !isPublicRoute) return '/auth-resolve';
-        if (isLoggedIn && isAuthRoute && loc != '/auth-resolve') {
-          return '/auth-resolve';
-        }
         return null;
       }
 

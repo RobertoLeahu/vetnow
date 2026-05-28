@@ -76,9 +76,17 @@ class AuthRepository {
 
     final existingProfile = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, role, privacy_accepted_at, terms_accepted_at')
         .eq('id', user.id)
         .maybeSingle();
+
+    final isAlreadyRegistered = existingProfile != null &&
+        existingProfile['privacy_accepted_at'] != null;
+
+    if (isAlreadyRegistered) {
+      await supabase.auth.signOut();
+      throw const RegisterException(RegisterFailure.emailAlreadyExists);
+    }
 
     final profilePayload = {
       'role': role.name,
@@ -90,11 +98,6 @@ class AuthRepository {
     };
 
     if (existingProfile != null) {
-      // Perfil ya registrado (reintento con email existente).
-      if (existingProfile['privacy_accepted_at'] != null) {
-        await supabase.auth.signOut();
-        throw const RegisterException(RegisterFailure.emailAlreadyExists);
-      }
       // Fila creada por trigger de Supabase al signUp: completar con el rol elegido.
       await supabase.from('profiles').update(profilePayload).eq('id', user.id);
     } else {
