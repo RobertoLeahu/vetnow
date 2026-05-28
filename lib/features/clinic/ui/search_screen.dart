@@ -366,11 +366,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   final now = DateTime.now();
                   final upcoming = all
                       .where((a) => a.isUpcoming && a.scheduledAt.isAfter(now))
-                      .take(3)
-                      .toList();
+                      .toList()
+                    ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+                  final displayed = upcoming.take(3).toList();
 
                   Widget content;
-                  if (upcoming.isEmpty) {
+                  if (displayed.isEmpty) {
                     content = _EmptyState(
                       icon: Icons.calendar_today_rounded,
                       title: l10n.noScheduledAppointmentsTitle,
@@ -379,10 +380,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   } else {
                     content = Column(
                       children: [
-                        for (var i = 0; i < upcoming.length; i++) ...[
+                        for (var i = 0; i < displayed.length; i++) ...[
                           if (i > 0) const SizedBox(height: 10),
                           _UpcomingAppointmentCard(
-                            appointment: upcoming[i],
+                            appointment: displayed[i],
+                          ),
+                        ],
+                        if (upcoming.length > 3) ...[
+                          const SizedBox(height: 12),
+                          Center(
+                            child: TextButton(
+                              onPressed: () => context.go('/appointments'),
+                              child: Text(
+                                l10n.showMore,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ],

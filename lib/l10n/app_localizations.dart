@@ -1412,6 +1412,12 @@ abstract class AppLocalizations {
   /// **'Ver agenda completa'**
   String get viewFullAgenda;
 
+  /// No description provided for @showMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar más'**
+  String get showMore;
+
   /// No description provided for @appointmentsOverview.
   ///
   /// In es, this message translates to:

@@ -766,6 +766,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewFullAgenda => 'Ver agenda completa';
 
   @override
+  String get showMore => 'Mostrar más';
+
+  @override
   String get appointmentsOverview => 'Vista general de tus citas';
 
   @override
