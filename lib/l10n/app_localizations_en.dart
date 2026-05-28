@@ -709,6 +709,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speciesOther => 'Other';
 
   @override
+  String get specialtyGeneralMedicine => 'General medicine';
+
+  @override
+  String get specialtyDermatology => 'Dermatology';
+
+  @override
+  String get specialtyCardiology => 'Cardiology';
+
+  @override
+  String get specialtyTraumatology => 'Traumatology';
+
+  @override
+  String get specialtyOphthalmology => 'Ophthalmology';
+
+  @override
+  String get specialtyExotics => 'Exotic animals';
+
+  @override
+  String get specialtyEmergency => 'Emergency';
+
+  @override
   String get myClinicFallback => 'My clinic';
 
   @override

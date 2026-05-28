@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'app_localizations.dart';
 import '../shared/models/pet.dart';
+import '../shared/models/specialty.dart';
 
 extension L10nContext on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this)!;
@@ -17,6 +18,32 @@ extension PetSpeciesL10n on PetSpecies {
         PetSpecies.ferret => l10n.speciesFerret,
         PetSpecies.other => l10n.speciesOther,
       };
+}
+
+String _normalizedSpecialtyName(String name) => name
+    .toLowerCase()
+    .replaceAll(RegExp(r'[áàä]'), 'a')
+    .replaceAll(RegExp(r'[éèë]'), 'e')
+    .replaceAll(RegExp(r'[íìï]'), 'i')
+    .replaceAll(RegExp(r'[óòö]'), 'o')
+    .replaceAll(RegExp(r'[úùü]'), 'u');
+
+/// Catálogo fijo en BD (nombres en español); etiqueta según idioma de la app.
+String specialtyLocalizedLabel(AppLocalizations l10n, String name) {
+  final n = _normalizedSpecialtyName(name);
+  if (n.contains('medicina')) return l10n.specialtyGeneralMedicine;
+  if (n.contains('dermat')) return l10n.specialtyDermatology;
+  if (n.contains('cardio')) return l10n.specialtyCardiology;
+  if (n.contains('traumat')) return l10n.specialtyTraumatology;
+  if (n.contains('oftalm')) return l10n.specialtyOphthalmology;
+  if (n.contains('exotic') || n.contains('exot')) return l10n.specialtyExotics;
+  if (n.contains('urgenc') || n.contains('24')) return l10n.specialtyEmergency;
+  return name;
+}
+
+extension SpecialtyL10n on Specialty {
+  String localizedLabel(AppLocalizations l10n) =>
+      specialtyLocalizedLabel(l10n, name);
 }
 
 String formatAppointmentDurationLabel(int minutes, AppLocalizations l10n) {

@@ -1322,6 +1322,48 @@ abstract class AppLocalizations {
   /// **'Otro'**
   String get speciesOther;
 
+  /// No description provided for @specialtyGeneralMedicine.
+  ///
+  /// In es, this message translates to:
+  /// **'Medicina general'**
+  String get specialtyGeneralMedicine;
+
+  /// No description provided for @specialtyDermatology.
+  ///
+  /// In es, this message translates to:
+  /// **'Dermatología'**
+  String get specialtyDermatology;
+
+  /// No description provided for @specialtyCardiology.
+  ///
+  /// In es, this message translates to:
+  /// **'Cardiología'**
+  String get specialtyCardiology;
+
+  /// No description provided for @specialtyTraumatology.
+  ///
+  /// In es, this message translates to:
+  /// **'Traumatología'**
+  String get specialtyTraumatology;
+
+  /// No description provided for @specialtyOphthalmology.
+  ///
+  /// In es, this message translates to:
+  /// **'Oftalmología'**
+  String get specialtyOphthalmology;
+
+  /// No description provided for @specialtyExotics.
+  ///
+  /// In es, this message translates to:
+  /// **'Animales exóticos'**
+  String get specialtyExotics;
+
+  /// No description provided for @specialtyEmergency.
+  ///
+  /// In es, this message translates to:
+  /// **'Urgencias'**
+  String get specialtyEmergency;
+
   /// No description provided for @myClinicFallback.
   ///
   /// In es, this message translates to:

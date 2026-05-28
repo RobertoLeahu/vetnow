@@ -152,7 +152,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                     (s) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: _NearbySpecialtyChip(
-                        label: s.name,
+                        label: s.localizedLabel(l10n),
                         icon: _nearbySpecialtyIcon(s.name),
                         selected: filters.specialtyId == s.id,
                         onTap: () => _setSpecialtyFilter(s.id),

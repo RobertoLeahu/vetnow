@@ -251,7 +251,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         ...specialties.map(
                           (s) => _SpecialtyChip(
-                            label: s.name,
+                            label: s.localizedLabel(l10n),
                             icon: _specialtyIcon(s.name),
                             selected: filters.specialtyId == s.id,
                             onTap: () {
