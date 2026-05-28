@@ -302,11 +302,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       subtitle: l10n.noFavoriteClinicsSubtitle,
                     );
                   } else {
+                    final displayed = allFavs.take(3).toList();
                     content = Column(
                       children: [
-                        for (var i = 0; i < allFavs.length; i++) ...[
+                        for (var i = 0; i < displayed.length; i++) ...[
                           if (i > 0) const SizedBox(height: 10),
-                          ClinicListCard(clinic: allFavs[i]),
+                          ClinicListCard(clinic: displayed[i]),
+                        ],
+                        if (allFavs.length > 3) ...[
+                          const SizedBox(height: 12),
+                          Center(
+                            child: TextButton(
+                              onPressed: () =>
+                                  context.push('/search/favorites'),
+                              child: Text(
+                                l10n.showMore,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ],
                     );

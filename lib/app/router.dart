@@ -11,6 +11,8 @@ import '../features/clinic/ui/clinic_text_search_screen.dart';
 import '../features/clinic/ui/nearby_screen.dart';
 import '../features/clinic/ui/clinic_detail_screen.dart';
 import '../features/clinic/ui/clinic_map_screen.dart';
+import '../features/clinic/ui/favorite_clinics_screen.dart';
+import '../l10n/app_localizations.dart';
 import '../features/appointment/ui/appointments_screen.dart';
 import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
@@ -147,6 +149,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const SearchScreen(),
             routes: [
               GoRoute(
+                path: 'favorites',
+                builder: (context, __) => FavoriteClinicsScreen(
+                  title: AppLocalizations.of(context)!.favoriteClinics,
+                ),
+              ),
+              GoRoute(
                 path: 'query',
                 builder: (_, __) => const ClinicTextSearchScreen(),
               ),
@@ -200,6 +208,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/profile',
             builder: (_, __) => const ProfileScreen(),
             routes: [
+              GoRoute(
+                path: 'favorites',
+                builder: (context, __) => FavoriteClinicsScreen(
+                  title: AppLocalizations.of(context)!.saved,
+                ),
+              ),
               GoRoute(
                 path: 'settings',
                 builder: (_, __) => const SettingsScreen(),

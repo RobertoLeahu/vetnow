@@ -71,7 +71,12 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 12),
 
           favoritesAsync.when(
-            data: (favorites) => _SavedClinicsSection(clinics: favorites),
+            data: (favorites) => _SavedClinicsSection(
+              clinics: favorites.take(3).toList(),
+              onShowMore: favorites.length > 3
+                  ? () => context.push('/profile/favorites')
+                  : null,
+            ),
             loading: () => Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -117,8 +122,12 @@ class ProfileScreen extends ConsumerWidget {
 
 class _SavedClinicsSection extends StatelessWidget {
   final List<Clinic> clinics;
+  final VoidCallback? onShowMore;
 
-  const _SavedClinicsSection({required this.clinics});
+  const _SavedClinicsSection({
+    required this.clinics,
+    this.onShowMore,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +183,25 @@ class _SavedClinicsSection extends StatelessWidget {
           for (var i = 0; i < clinics.length; i++) ...[
             if (i > 0) const Divider(height: 1, color: AppTheme.divider),
             _SavedClinicTile(clinic: clinics[i]),
+          ],
+          if (onShowMore != null) ...[
+            const Divider(height: 1, color: AppTheme.divider),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Center(
+                child: TextButton(
+                  onPressed: onShowMore,
+                  child: Text(
+                    l10n.showMore,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ],
       ),
