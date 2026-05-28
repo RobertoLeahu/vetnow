@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/location/user_location_service.dart';
 import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
@@ -60,52 +61,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Future<void> _openNearby() async {
     setState(() => _locating = true);
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (!mounted) return;
-        final l10n = context.l10n;
-        await _showLocationDeniedDialog(
-          title: l10n.locationDisabledTitle,
-          message: l10n.locationDisabledMessage,
-          openSettings: () => Geolocator.openLocationSettings(),
-        );
-        return;
-      }
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        if (!mounted) return;
-        final l10n = context.l10n;
-        await _showLocationDeniedDialog(
-          title: l10n.locationPermissionTitle,
-          message: l10n.locationPermissionMessage,
-          openSettings: () => Geolocator.openAppSettings(),
-        );
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 15),
-      );
+      final result = await resolveUserLocation();
 
       if (!mounted) return;
+
+      if (!result.isSuccess) {
+        final l10n = context.l10n;
+        switch (result.failure) {
+          case UserLocationFailure.serviceDisabled:
+            await _showLocationDeniedDialog(
+              title: l10n.locationDisabledTitle,
+              message: l10n.locationDisabledMessage,
+              openSettings: Geolocator.openLocationSettings,
+            );
+          case UserLocationFailure.permissionDenied:
+            await _showLocationDeniedDialog(
+              title: l10n.locationPermissionTitle,
+              message: l10n.locationPermissionMessage,
+              openSettings: Geolocator.openAppSettings,
+            );
+          case UserLocationFailure.unavailable:
+          case null:
+            showAppError(context, l10n.errorLocationUnavailable);
+        }
+        return;
+      }
+
       ref.read(searchFiltersProvider.notifier).update(
             (s) => s.copyWith(
               isNearbyMode: true,
-              userLat: position.latitude,
-              userLng: position.longitude,
+              userLat: result.lat,
+              userLng: result.lng,
             ),
           );
       ref.invalidate(clinicSearchProvider);
       context.push(
         '/search/nearby',
-        extra: (lat: position.latitude, lng: position.longitude),
+        extra: (lat: result.lat!, lng: result.lng!),
       );
     } catch (e) {
       if (!mounted) return;

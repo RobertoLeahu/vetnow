@@ -10,6 +10,7 @@ import '../features/clinic/ui/search_screen.dart';
 import '../features/clinic/ui/clinic_text_search_screen.dart';
 import '../features/clinic/ui/nearby_screen.dart';
 import '../features/clinic/ui/clinic_detail_screen.dart';
+import '../features/clinic/ui/clinic_map_screen.dart';
 import '../features/appointment/ui/appointments_screen.dart';
 import '../features/appointment/ui/booking_screen.dart';
 import '../features/pet/ui/pets_screen.dart';
@@ -164,6 +165,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) =>
                     ClinicDetailScreen(clinicId: state.pathParameters['id']!),
                 routes: [
+                  GoRoute(
+                    path: 'map',
+                    builder: (_, state) {
+                      final extra = state.extra as ({
+                        double clinicLat,
+                        double clinicLng,
+                        String clinicName,
+                      });
+                      return ClinicMapScreen(
+                        clinicName: extra.clinicName,
+                        clinicLat: extra.clinicLat,
+                        clinicLng: extra.clinicLng,
+                      );
+                    },
+                  ),
                   GoRoute(
                     path: 'book',
                     builder: (_, state) => BookingScreen(

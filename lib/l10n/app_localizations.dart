@@ -824,6 +824,24 @@ abstract class AppLocalizations {
   /// **'Ver en el mapa'**
   String get viewOnMap;
 
+  /// No description provided for @clinicMapTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación'**
+  String get clinicMapTitle;
+
+  /// No description provided for @clinicMapUserUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo obtener tu ubicación. Se muestra solo la clínica.'**
+  String get clinicMapUserUnavailable;
+
+  /// No description provided for @locatingUser.
+  ///
+  /// In es, this message translates to:
+  /// **'Obteniendo tu ubicación…'**
+  String get locatingUser;
+
   /// No description provided for @noClinicsWithinRadius.
   ///
   /// In es, this message translates to:
