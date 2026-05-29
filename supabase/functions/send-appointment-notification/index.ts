@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       ? `Tu cita en ${apt.clinics?.name} ha sido confirmada`
       : `Tu cita en ${apt.clinics?.name} ha sido cancelada`;
 
-    const accentColor = isConfirmed ? "#00897B" : "#E53935";
+    const accentColor = isConfirmed ? "#1976D2" : "#E53935";
     const iconEmoji = isConfirmed ? "✅" : "❌";
     const headingText = isConfirmed ? "Cita confirmada" : "Cita cancelada";
     const bodyText = isConfirmed

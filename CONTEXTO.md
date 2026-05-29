@@ -60,6 +60,9 @@ lib/
 │   ├── datetime/
 │   │   ├── timestamptz.dart
 │   │   └── app_date_format.dart   # Patrones DateFormat según locale
+│   ├── errors/                    # Errores amigables (mapError, AppErrorCode, l10n)
+│   ├── location/
+│   │   └── user_location_service.dart  # GPS con caché lastKnown (15 min)
 │   └── strings/search_text.dart   # Búsqueda sin tildes (normalizeForSearch)
 ├── features/
 │   ├── auth/
@@ -74,6 +77,8 @@ lib/
 │   │       ├── clinic_text_search_screen.dart
 │   │       ├── nearby_screen.dart           # Mapa + lista por proximidad
 │   │       ├── clinic_detail_screen.dart
+│   │       ├── clinic_map_screen.dart       # Mapa clínica + ubicación usuario
+│   │       ├── favorite_clinics_screen.dart # Lista completa de favoritos
 │   │       └── clinic_list_card.dart
 │   ├── appointment/
 │   │   ├── data/appointment_repository.dart
@@ -112,6 +117,9 @@ lib/
     │   ├── pet.dart
     │   ├── appointment.dart
     │   └── medical_note.dart
+    ├── widgets/
+    │   ├── app_error_banner.dart    # Error inline en formularios
+    │   └── app_error_snackbar.dart  # showAppError para acciones async
     └── legal/
         ├── legal_texts.dart
         └── legal_texts_en.dart
@@ -135,7 +143,7 @@ clinic_favorites  -- owner_id + clinic_id (PK compuesta). Favoritos del propieta
 schedules         -- Horarios semanales (day_of_week, open_time, close_time).
 pets              -- owner_id FK, name, species, breed, birth_date, photo_url.
 appointments      -- clinic_id, pet_id, owner_id, specialty_id, scheduled_at,
-                  -- status, reminder_sent, duration_minutes, notes.
+                  -- status, reminder_sent, duration_minutes, completed_at, notes.
 medical_notes     -- appointment_id FK, clinic_id FK, content, created_at, updated_at.
                   -- Varias notas por cita (sin UNIQUE en appointment_id).
 ```
@@ -145,8 +153,10 @@ medical_notes     -- appointment_id FK, clinic_id FK, content, created_at, updat
   `(scheduled_at, duration_minutes)` de citas con status `pending` o `confirmed`.
   Permite detectar solapamientos cuando la duración de la cita es > 30 min.
 - `complete_past_appointments()` — SECURITY DEFINER. Marca como `done` las citas
-  `confirmed` cuyo fin (`scheduled_at` + duración de la cita o de la clínica) ya pasó.
+  `confirmed` cuyo fin (`scheduled_at` + duración) ya pasó y rellena `completed_at = now()`.
   Se invoca desde Flutter al cargar citas del propietario.
+- Trigger `on_auth_user_created` → `handle_new_user()`: crea fila en `profiles` desde
+  `raw_user_meta_data` (`role`, `full_name`) al registrarse en Auth.
 
 **Storage buckets:**
 - `clinic-logos` — logo por clínica (`{clinicId}/logo.{ext}`)
@@ -173,13 +183,16 @@ medical_notes     -- appointment_id FK, clinic_id FK, content, created_at, updat
 
 ShellRoute → MainShell (bottom nav dinámico por rol)
   /search                              → SearchScreen (hub)
+  /search/favorites                    → FavoriteClinicsScreen (título: favoriteClinics)
   /search/query                        → ClinicTextSearchScreen
   /search/nearby                       → NearbyScreen (extra: lat, lng)
   /search/clinic/:id                   → ClinicDetailScreen
+  /search/clinic/:id/map               → ClinicMapScreen (extra: clinicLat, clinicLng, clinicName)
   /search/clinic/:id/book              → BookingScreen (extra: Specialty)
   /appointments                        → AppointmentsScreen
   /pets                                → PetsScreen
   /profile                             → ProfileScreen
+  /profile/favorites                   → FavoriteClinicsScreen (título: saved)
   /profile/settings                    → SettingsScreen
   /profile/settings/account            → AccountScreen
   /profile/settings/personalization    → PersonalizationScreen
@@ -202,6 +215,8 @@ ShellRoute → MainShell (bottom nav dinámico por rol)
 **Protección cruzada de rutas:** un rol no puede acceder a rutas del otro.
 Mientras `profileProvider` carga → `/auth-resolve`.
 Rutas legales accesibles sin sesión.
+Las rutas `/register/*` quedan fuera del redirect del router (gestionan su propia
+navegación tras signUp, evita races con signIn en email duplicado).
 
 ---
 
@@ -217,7 +232,11 @@ Rutas legales accesibles sin sesión.
 - Enlaces a `/legal/privacy` y `/legal/terms` desde el formulario de registro.
 - `RegisterException` con mensajes localizados para email ya registrado o contraseña
   incorrecta en cuenta existente.
-- Al registrarse como clínica se crea automáticamente una fila mínima en `clinics`.
+- `signUp` envía `user_metadata` (`role`, `full_name`); trigger `handle_new_user` crea
+  perfil en BD; si ya existe fila del trigger, se hace `UPDATE` con el rol elegido.
+- Cuenta ya registrada se detecta por `privacy_accepted_at != null` (no solo existencia de fila).
+- Registro **clínica** exige nombre de clínica y teléfono; crea fila en `clinics` con esos datos.
+- Errores de registro vía `mapError` + `AppErrorBanner` (sin `e.toString()` en UI).
 
 ### ✅ Búsqueda de clínicas (Fase 1 — completa, ampliada en Fase 7)
 - **SearchScreen** actúa como hub de inicio: saludo personalizado, barra que abre
@@ -229,8 +248,14 @@ Rutas legales accesibles sin sesión.
 - **NearbyScreen** (`/search/nearby`): obtiene GPS con `geolocator`, muestra mapa
   (`flutter_map`) y lista ordenada por distancia (Haversine, radio por defecto 10 km).
   Filtro por especialidad con chips.
-- ClinicDetailScreen con SliverAppBar, info, especialidades, botón reservar y
-  **toggle de favorito** (corazón).
+- ClinicDetailScreen con SliverAppBar, info, especialidades, botón reservar,
+  **toggle de favorito** (corazón) y enlace a mapa (`/search/clinic/:id/map`) si hay lat/lng.
+- **FavoriteClinicsScreen**: lista completa en `/search/favorites` y `/profile/favorites`
+  (mismo widget, títulos distintos: "Clínicas favoritas" / "Guardados").
+- SearchScreen y ProfileScreen muestran preview de hasta 3 favoritos con "Ver más".
+- **ClinicMapScreen**: mapa centrado en la clínica con marcador del usuario si hay GPS.
+- **UserLocationService** (`resolveUserLocation`): usa `lastKnownPosition` (≤15 min) antes
+  que GPS en vivo; usado en SearchScreen ("Cerca de mí") y ClinicMapScreen.
 - Resolución del bug de RLS en joins anidados (specialties pública).
 
 ### ✅ Flujo de reserva de citas — propietario (Fase 2 — completa)
@@ -264,6 +289,13 @@ Rutas legales accesibles sin sesión.
 - ClinicHomeScreen, ClinicAgendaScreen, ClinicPatientsScreen + expedientes médicos
   (varias notas por visita) y flujo completo de Mi Clínica.
 
+#### ClinicHomeScreen (dashboard ampliado)
+- Resumen del día: citas pendientes/confirmadas, carrusel de pacientes confirmados.
+- Tarjeta de citas pendientes de confirmación con enlace a agenda.
+- **Resumen de actividad** (`clinicAppointmentStatsProvider`): métricas de hoy y de la
+  semana en curso; citas realizadas hoy por `completed_at` (fallback `scheduled_at`).
+- Accesos rápidos a Agenda y Pacientes; pull-to-refresh.
+
 #### Flujo Mi Clínica (refactor)
 - `ClinicProfileMenuScreen` pasa a ser la entrada de `/clinic-profile` con accesos
   a Agenda, Pacientes, Editar clínica y Ajustes.
@@ -293,14 +325,27 @@ Rutas legales accesibles sin sesión.
 - Lista de favoritos en SearchScreen; corazón en ClinicDetailScreen.
 - Columnas `lat` / `lng` en `clinics` + índice espacial básico.
 - Geocodificación al guardar perfil de clínica (Nominatim, España); reintento
-  automático al cambiar dirección/ciudad en ClinicProfileScreen.
+  automático al cambiar dirección/ciudad en ClinicProfileEditScreen.
 - `Clinic.distanceKm` calculado en cliente para resultados cercanos.
 
 ### ✅ Duración de cita configurable (Fase 8 — completa)
 - `clinics.appointment_duration_minutes` (30, 45, 60, 90, 120).
 - `appointments.duration_minutes` al reservar.
-- Selector en ClinicProfileScreen; slots y solapamientos respetan la duración.
+- Selector en ClinicProfileEditScreen; slots y solapamientos respetan la duración.
 - RPC `complete_past_appointments` usa la duración real de cada cita.
+
+### ✅ Errores amigables en UI (Fase 9 — completa)
+- Módulo `lib/core/errors/`: `AppError`, `AppErrorCode`, `mapError`, `appErrorMessage`.
+- `mapError` traduce `AuthException`, `PostgrestException`, `SocketException`,
+  `RegisterException`, timeouts de ubicación, etc.
+- `AppErrorBanner` para formularios; `showAppError` / `logAppError` en `app_error_presenter.dart`.
+- Widgets en `shared/widgets/`. Regla: no mostrar mensajes técnicos al usuario.
+
+### ✅ Citas realizadas y UX ampliada (Fase 9 — completa)
+- Columna `appointments.completed_at`: se rellena al marcar realizada desde agenda
+  (`markAppointmentDone`) o al auto-completar vía RPC.
+- Modelo `Appointment` incluye `completedAt`, `clinicPhone`, foto/especie de mascota en joins.
+- `computeClinicAppointmentStats` agrega contadores semanales y `uniquePatientsToday`.
 
 ---
 
@@ -333,6 +378,12 @@ Rutas legales accesibles sin sesión.
 ### Favoritos
 - Solo el propietario autenticado puede añadir/quitar favoritos de su lista.
 - Invalidar `favoriteClinicIdsProvider` y `favoriteClinicsProvider` tras toggle.
+- Listas dedicadas: `/search/favorites` (desde buscar) y `/profile/favorites` (desde perfil).
+
+### Citas realizadas (`completed_at`)
+- Al marcar manualmente desde agenda clínica: `status = done` + `completed_at = now()`.
+- Auto-completado RPC: solo citas `confirmed` cuyo slot ya terminó; también setea `completed_at`.
+- Estadísticas del dashboard usan `completed_at` para contar realizadas del día.
 
 ### Joins y RLS — punto crítico
 - Tablas en joins anidados públicos deben tener SELECT USING(true) donde aplique.
@@ -349,8 +400,10 @@ Rutas legales accesibles sin sesión.
 
 ### Navegación con go_router
 - `context.push()` / `context.go()` según apilar o reemplazar tab.
-- `extra` entre rutas: `UserRole`, `Specialty`, `int` (tab agenda), `String` (nombres),
-  `({double lat, double lng})` (nearby). No sobrevive hot restart.
+- `extra` entre rutas: `Specialty`, `int` (tab agenda), `String` (nombres),
+  `({double lat, double lng})` (nearby),
+  `({double clinicLat, double clinicLng, String clinicName})` (mapa clínica).
+  No sobrevive hot restart.
 - Registro por ruta parametrizada: `/register/:role` (owner|clinic) en lugar de
   pasar rol por `extra`.
 
@@ -366,12 +419,15 @@ Rutas legales accesibles sin sesión.
 
 ### Sistema de errores en UI
 - No mostrar errores técnicos (`e.toString()`, `'$e'`) en textos visibles para usuario.
-- Mapear excepciones con `mapError` (`lib/core/errors/error_mapper.dart`) y traducir
-  con `appErrorMessage(...)` según locale.
-- Para feedback visual:
-  - Inline en formularios/sheets: `AppErrorBanner`.
-  - Acciones asíncronas: `showAppError(...)` (SnackBar flotante).
-- Mantener detalles técnicos solo en logs de debug mediante `logAppError`.
+- Flujo: `catch` → `mapError(e)` → `appErrorMessage(context, error)` (traducción es/en).
+- Inline en formularios/sheets: `AppErrorBanner`; acciones async: `showAppError(context, e)`.
+- Detalles técnicos solo en logs con `logAppError(context, e, tag: '...')`.
+- Códigos en `AppErrorCode`: red, timeout, auth, ubicación, permisos, etc.
+
+### Ubicación del usuario
+- `resolveUserLocation()` en `user_location_service.dart`: servicio deshabilitado,
+  permiso denegado, timeout o éxito (con flag `fromCache` si viene de lastKnown).
+- SearchScreen y ClinicMapScreen muestran diálogos localizados según el fallo.
 
 ### Invalidación de providers
 - Citas propietario: `myAppointmentsProvider`
