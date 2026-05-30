@@ -16,9 +16,7 @@ class MainShell extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider);
 
     if (profileAsync.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final profile = profileAsync.valueOrNull;
@@ -137,9 +135,11 @@ class MainShell extends ConsumerWidget {
 
     switch (targetIndex) {
       case 0:
-        ref.invalidate(myClinicProvider);
-        ref.invalidate(clinicAppointmentsProvider);
         context.go('/clinic-home');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.invalidate(myClinicProvider);
+          ref.invalidate(clinicAppointmentsProvider);
+        });
         break;
       case 1:
         context.go('/clinic-agenda');
@@ -148,8 +148,10 @@ class MainShell extends ConsumerWidget {
         context.go('/clinic-patients');
         break;
       case 3:
-        ref.invalidate(myClinicProvider);
         context.go('/clinic-profile');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.invalidate(myClinicProvider);
+        });
         break;
     }
   }

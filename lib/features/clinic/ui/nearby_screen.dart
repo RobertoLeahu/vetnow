@@ -369,7 +369,7 @@ class _MapSection extends StatelessWidget {
     required this.onClinicTap,
   });
 
-  static final _mapCardDecoration = BoxDecoration(
+  static const _mapCardDecoration = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.all(Radius.circular(16)),
     border: Border.fromBorderSide(BorderSide(color: AppTheme.divider)),

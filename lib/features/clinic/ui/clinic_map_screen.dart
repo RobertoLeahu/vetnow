@@ -32,7 +32,7 @@ class _ClinicMapScreenState extends State<ClinicMapScreen> {
   double? _userLat;
   double? _userLng;
 
-  static final _mapCardDecoration = BoxDecoration(
+  static const _mapCardDecoration = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.all(Radius.circular(16)),
     border: Border.fromBorderSide(BorderSide(color: AppTheme.divider)),

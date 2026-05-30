@@ -34,15 +34,15 @@ final mySchedulesProvider = FutureProvider<List<Schedule>>((ref) async {
 /// Citas recibidas por la clínica del usuario logueado (agenda).
 final clinicAppointmentsProvider =
     FutureProvider.autoDispose<List<Appointment>>((ref) async {
-  final clinic = await ref.watch(myClinicProvider.future);
-  if (clinic == null) return [];
-  final raw = await ref
-      .watch(appointmentRepositoryProvider)
-      .fetchClinicAppointments(clinic.id);
-  final list = raw.map((e) => Appointment.fromMap(e)).toList()
-    ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
-  return list;
-});
+      final clinic = await ref.watch(myClinicProvider.future);
+      if (clinic == null) return [];
+      final raw = await ref
+          .watch(appointmentRepositoryProvider)
+          .fetchClinicAppointments(clinic.id);
+      final list = raw.map((e) => Appointment.fromMap(e)).toList()
+        ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+      return list;
+    });
 
 List<Appointment> filterTodayClinicAppointments(List<Appointment> all) {
   final now = DateTime.now();
@@ -55,7 +55,9 @@ List<Appointment> filterTodayClinicAppointments(List<Appointment> all) {
   }).toList();
 }
 
-List<Appointment> filterTodayConfirmedClinicAppointments(List<Appointment> all) {
+List<Appointment> filterTodayConfirmedClinicAppointments(
+  List<Appointment> all,
+) {
   final now = DateTime.now();
   return all.where((a) {
     final local = a.scheduledAt.toLocal();
@@ -73,8 +75,9 @@ final todayClinicAppointmentsProvider = Provider<List<Appointment>>((ref) {
 });
 
 /// Citas confirmadas de hoy para el carrusel de pacientes.
-final todayConfirmedClinicAppointmentsProvider =
-    Provider<List<Appointment>>((ref) {
+final todayConfirmedClinicAppointmentsProvider = Provider<List<Appointment>>((
+  ref,
+) {
   final all = ref.watch(clinicAppointmentsProvider).valueOrNull ?? [];
   return filterTodayConfirmedClinicAppointments(all);
 });
@@ -211,8 +214,7 @@ final medicalNotesRepositoryProvider = Provider<MedicalNotesRepository>(
 );
 
 /// Propietarios únicos con al menos una cita en la clínica logueada.
-final clinicPatientsProvider =
-    FutureProvider<List<ClinicPatient>>((ref) async {
+final clinicPatientsProvider = FutureProvider<List<ClinicPatient>>((ref) async {
   final clinic = await ref.watch(myClinicProvider.future);
   if (clinic == null) return [];
   return ref
@@ -222,24 +224,22 @@ final clinicPatientsProvider =
 
 /// Mascotas de [ownerId] que han visitado la clínica logueada.
 /// autoDispose: datos frescos cada vez que se abre la pantalla.
-final ownerPetsForClinicProvider =
-    FutureProvider.autoDispose.family<List<Pet>, String>((ref, ownerId) async {
-  final clinic = await ref.watch(myClinicProvider.future);
-  if (clinic == null) return [];
-  return ref
-      .watch(medicalNotesRepositoryProvider)
-      .fetchOwnerPetsForClinic(clinic.id, ownerId);
-});
+final ownerPetsForClinicProvider = FutureProvider.autoDispose
+    .family<List<Pet>, String>((ref, ownerId) async {
+      final clinic = await ref.watch(myClinicProvider.future);
+      if (clinic == null) return [];
+      return ref
+          .watch(medicalNotesRepositoryProvider)
+          .fetchOwnerPetsForClinic(clinic.id, ownerId);
+    });
 
 /// Citas de [petId] en la clínica logueada (excepto canceladas), con notas clínicas.
 /// autoDispose: datos frescos cada vez que se abre la pantalla.
-final petVisitsProvider =
-    FutureProvider.autoDispose.family<List<PetVisit>, String>(
-        (ref, petId) async {
-  final clinic = await ref.watch(myClinicProvider.future);
-  if (clinic == null) return [];
-  return ref
-      .watch(medicalNotesRepositoryProvider)
-      .fetchPetVisits(clinic.id, petId);
-});
-
+final petVisitsProvider = FutureProvider.autoDispose
+    .family<List<PetVisit>, String>((ref, petId) async {
+      final clinic = await ref.watch(myClinicProvider.future);
+      if (clinic == null) return [];
+      return ref
+          .watch(medicalNotesRepositoryProvider)
+          .fetchPetVisits(clinic.id, petId);
+    });

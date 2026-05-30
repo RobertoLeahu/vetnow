@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart' show Fake;
-import 'package:postgrest/postgrest.dart';
-import 'package:supabase/supabase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Estado compartido entre los builders encadenados de Postgrest.
 class PostgrestChainState {

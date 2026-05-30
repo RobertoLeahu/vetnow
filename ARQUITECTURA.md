@@ -1,4 +1,4 @@
-# VetNow — Documento de Contexto Técnico
+# VetNow — Arquitectura
 
 > Stack: Flutter + Supabase.
 
