@@ -12,20 +12,15 @@ import '../../../shared/models/appointment.dart';
 import '../providers/clinic_panel_provider.dart';
 
 /// Filtro rápido de la agenda por rango de fechas (hora local).
-enum AgendaDateFilter {
-  today,
-  tomorrow,
-  thisWeek,
-  all,
-}
+enum AgendaDateFilter { today, tomorrow, thisWeek, all }
 
 extension AgendaDateFilterX on AgendaDateFilter {
   String label(AppLocalizations l10n) => switch (this) {
-        AgendaDateFilter.today => l10n.today,
-        AgendaDateFilter.tomorrow => l10n.tomorrow,
-        AgendaDateFilter.thisWeek => l10n.thisWeek,
-        AgendaDateFilter.all => l10n.allAppointments,
-      };
+    AgendaDateFilter.today => l10n.today,
+    AgendaDateFilter.tomorrow => l10n.tomorrow,
+    AgendaDateFilter.thisWeek => l10n.thisWeek,
+    AgendaDateFilter.all => l10n.allAppointments,
+  };
 }
 
 class ClinicAgendaScreen extends ConsumerStatefulWidget {
@@ -101,9 +96,8 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
     final appointmentsAsync = ref.watch(clinicAppointmentsProvider);
 
     return clinicAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
         appBar: AppBar(title: Text(l10n.agendaTitle)),
         body: Center(child: Text(appErrorMessage(context, e))),
@@ -116,7 +110,7 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
           );
         }
 
-    return Scaffold(
+        return Scaffold(
           appBar: AppBar(
             title: Text(l10n.agendaTitle),
             bottom: PreferredSize(
@@ -124,13 +118,10 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
               child: appointmentsAsync.when(
                 data: (all) {
                   final filtered = _applyDateFilter(all);
-                  final pending =
-                      filtered.where((a) => a.isPending).length;
-                  final confirmed =
-                      filtered.where((a) => a.isConfirmed).length;
+                  final pending = filtered.where((a) => a.isPending).length;
+                  final confirmed = filtered.where((a) => a.isConfirmed).length;
                   final done = filtered.where((a) => a.isDone).length;
-                  final cancelled =
-                      filtered.where((a) => a.isCancelled).length;
+                  final cancelled = filtered.where((a) => a.isCancelled).length;
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: Column(
@@ -204,11 +195,9 @@ class _ClinicAgendaScreenState extends ConsumerState<ClinicAgendaScreen>
             data: (all) {
               final filtered = _applyDateFilter(all);
               final pending = filtered.where((a) => a.isPending).toList();
-              final confirmed =
-                  filtered.where((a) => a.isConfirmed).toList();
+              final confirmed = filtered.where((a) => a.isConfirmed).toList();
               final done = filtered.where((a) => a.isDone).toList();
-              final cancelled =
-                  filtered.where((a) => a.isCancelled).toList();
+              final cancelled = filtered.where((a) => a.isCancelled).toList();
 
               return TabBarView(
                 controller: _tabController,
@@ -358,12 +347,10 @@ class _ClinicAgendaCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final locale = ref.watch(localeProvider);
-    final dateFmt =
-        dateFormat(appointmentCardPattern(locale), locale);
-    final ownerName =
-        appointment.ownerFullName?.trim().isNotEmpty == true
-            ? appointment.ownerFullName!
-            : '—';
+    final dateFmt = dateFormat(appointmentCardPattern(locale), locale);
+    final ownerName = appointment.ownerFullName?.trim().isNotEmpty == true
+        ? appointment.ownerFullName!
+        : '—';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -538,13 +525,11 @@ class _ClinicAgendaCard extends ConsumerWidget {
                     content: Text(l10n.markAsDoneBody),
                     actions: [
                       TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(false),
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
                         child: Text(l10n.no),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(true),
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
                         child: Text(l10n.yesMark),
                       ),
                     ],
@@ -577,13 +562,11 @@ class _ClinicAgendaCard extends ConsumerWidget {
                     content: Text(l10n.deleteAppointmentClinicBody),
                     actions: [
                       TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(false),
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
                         child: Text(l10n.no),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            Navigator.of(dialogContext).pop(true),
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
                         child: Text(
                           l10n.yesDelete,
                           style: const TextStyle(color: Colors.red),

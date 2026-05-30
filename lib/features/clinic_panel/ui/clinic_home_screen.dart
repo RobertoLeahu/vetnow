@@ -35,28 +35,31 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
     final clinicAsync = ref.watch(myClinicProvider);
     final allAsync = ref.watch(clinicAppointmentsProvider);
     final todayAppointments = ref.watch(todayClinicAppointmentsProvider);
-    final todayConfirmedAppointments =
-        ref.watch(todayConfirmedClinicAppointmentsProvider);
+    final todayConfirmedAppointments = ref.watch(
+      todayConfirmedClinicAppointmentsProvider,
+    );
     final appointmentsLoading = allAsync.isLoading;
 
     final clinic = clinicAsync.valueOrNull;
     final isClinicUser =
         ref.watch(profileProvider).valueOrNull?.role == UserRole.clinic;
-    final showIncompleteProfileBanner = isClinicUser &&
+    final showIncompleteProfileBanner =
+        isClinicUser &&
         clinicAsync.when(
           data: (c) => c == null || !c.isProfileComplete,
           loading: () => true,
           error: (_, __) => true,
         );
     final allAppointments = allAsync.valueOrNull ?? [];
-    final pendingCount =
-        allAppointments.where((a) => a.isPending).length;
+    final pendingCount = allAppointments.where((a) => a.isPending).length;
     final stats = ref.watch(clinicAppointmentStatsProvider);
 
     final l10n = context.l10n;
     final locale = ref.watch(localeProvider);
-    final today = dateFormat(todayHeaderPattern(locale), locale)
-        .format(DateTime.now());
+    final today = dateFormat(
+      todayHeaderPattern(locale),
+      locale,
+    ).format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -106,8 +109,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   _TodayAppointmentsCard(
                     isLoading: appointmentsLoading,
                     appointments: todayAppointments,
-                    onTapAgenda: () =>
-                        context.go('/clinic-agenda', extra: 1),
+                    onTapAgenda: () => context.go('/clinic-agenda', extra: 1),
                   ),
 
                   const SizedBox(height: 20),
@@ -164,10 +166,7 @@ class _ClinicHeader extends StatelessWidget {
   final String? clinicName;
   final String dateLabel;
 
-  const _ClinicHeader({
-    required this.clinicName,
-    required this.dateLabel,
-  });
+  const _ClinicHeader({required this.clinicName, required this.dateLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -257,8 +256,7 @@ class _IncompleteProfileBanner extends StatelessWidget {
             onPressed: onTap,
             style: TextButton.styleFrom(
               foregroundColor: Colors.amber.shade900,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -317,7 +315,9 @@ class _TodayAppointmentsCard extends StatelessWidget {
               height: 60,
               child: Center(
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               ),
             )
           : Column(
@@ -341,7 +341,9 @@ class _TodayAppointmentsCard extends StatelessWidget {
                       child: Text(
                         l10n.confirmedAppointmentsToday,
                         style: const TextStyle(
-                            fontSize: 15, color: Colors.white70),
+                          fontSize: 15,
+                          color: Colors.white70,
+                        ),
                       ),
                     ),
                   ],
@@ -350,8 +352,7 @@ class _TodayAppointmentsCard extends StatelessWidget {
                 if (appointments.isEmpty)
                   Text(
                     l10n.noAppointmentsTodayEnjoy,
-                    style: const TextStyle(
-                        fontSize: 13, color: Colors.white70),
+                    style: const TextStyle(fontSize: 13, color: Colors.white70),
                   )
                 else ...[
                   const Divider(color: Colors.white24, height: 1),
@@ -367,19 +368,23 @@ class _TodayAppointmentsCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...appointments.take(3).map(
-                    (a) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _NextAppointmentRow(appointment: a),
-                    ),
-                  ),
+                  ...appointments
+                      .take(3)
+                      .map(
+                        (a) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _NextAppointmentRow(appointment: a),
+                        ),
+                      ),
                 ],
                 const SizedBox(height: 14),
                 GestureDetector(
                   onTap: onTapAgenda,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(50),
@@ -390,11 +395,16 @@ class _TodayAppointmentsCard extends StatelessWidget {
                         Text(
                           l10n.viewFullAgenda,
                           style: const TextStyle(
-                              fontSize: 13, color: Colors.white),
+                            fontSize: 13,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.arrow_forward_rounded,
-                            size: 15, color: Colors.white),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 15,
+                          color: Colors.white,
+                        ),
                       ],
                     ),
                   ),
@@ -419,9 +429,10 @@ class _NextAppointmentRow extends StatelessWidget {
         Text(
           time,
           style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(width: 8),
         const Icon(Icons.pets_rounded, size: 14, color: Colors.white70),
@@ -476,8 +487,11 @@ class _PendingConfirmCard extends StatelessWidget {
                 color: Colors.orange.shade100,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.notifications_active_rounded,
-                  color: Colors.orange.shade700, size: 20),
+              child: Icon(
+                Icons.notifications_active_rounded,
+                color: Colors.orange.shade700,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -496,13 +510,14 @@ class _PendingConfirmCard extends StatelessWidget {
                   Text(
                     l10n.acceptOrRejectFromAgenda,
                     style: TextStyle(
-                        fontSize: 12, color: Colors.orange.shade700),
+                      fontSize: 12,
+                      color: Colors.orange.shade700,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded,
-                color: Colors.orange.shade400),
+            Icon(Icons.chevron_right_rounded, color: Colors.orange.shade400),
           ],
         ),
       ),
@@ -588,7 +603,9 @@ class _QuickAccessCard extends StatelessWidget {
             Text(
               subtitle,
               style: const TextStyle(
-                  fontSize: 12, color: AppTheme.textSecondary),
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+              ),
             ),
           ],
         ),
@@ -620,9 +637,7 @@ class _AppointmentsSummaryCard extends StatelessWidget {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
 
@@ -661,18 +676,18 @@ class _AppointmentsSummaryCard extends StatelessWidget {
                         color: AppTheme.primary,
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded,
-                        size: 18, color: AppTheme.primary),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppTheme.primary,
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          _SummaryPeriodLabel(
-            icon: Icons.today_rounded,
-            label: l10n.today,
-          ),
+          _SummaryPeriodLabel(icon: Icons.today_rounded, label: l10n.today),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -1006,8 +1021,7 @@ class _TodayPatientChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final time =
-        DateFormat('HH:mm').format(appointment.scheduledAt.toLocal());
+    final time = DateFormat('HH:mm').format(appointment.scheduledAt.toLocal());
     final ownerId = appointment.ownerId;
     final petId = appointment.petId;
     final canNavigate = ownerId != null && ownerId.isNotEmpty;
@@ -1015,9 +1029,9 @@ class _TodayPatientChip extends StatelessWidget {
     return GestureDetector(
       onTap: canNavigate
           ? () => context.push(
-                '/clinic-patients/$ownerId/$petId',
-                extra: appointment.petName,
-              )
+              '/clinic-patients/$ownerId/$petId',
+              extra: appointment.petName,
+            )
           : null,
       child: Container(
         width: 130,
@@ -1031,8 +1045,7 @@ class _TodayPatientChip extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(50),
@@ -1052,11 +1065,13 @@ class _TodayPatientChip extends StatelessWidget {
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                  backgroundImage: appointment.petPhotoUrl != null &&
+                  backgroundImage:
+                      appointment.petPhotoUrl != null &&
                           appointment.petPhotoUrl!.isNotEmpty
                       ? NetworkImage(appointment.petPhotoUrl!) as ImageProvider
                       : null,
-                  child: appointment.petPhotoUrl == null ||
+                  child:
+                      appointment.petPhotoUrl == null ||
                           appointment.petPhotoUrl!.isEmpty
                       ? Text(
                           _speciesEmoji(appointment.petSpecies),
@@ -1100,15 +1115,15 @@ class _TodayPatientChip extends StatelessWidget {
   }
 
   String _speciesEmoji(PetSpecies species) => switch (species) {
-        PetSpecies.dog => '🐶',
-        PetSpecies.cat => '🐱',
-        PetSpecies.rabbit => '🐰',
-        PetSpecies.hamster => '🐹',
-        PetSpecies.bird => '🦜',
-        PetSpecies.reptile => '🦎',
-        PetSpecies.ferret => '🦦',
-        PetSpecies.other => '🐾',
-      };
+    PetSpecies.dog => '🐶',
+    PetSpecies.cat => '🐱',
+    PetSpecies.rabbit => '🐰',
+    PetSpecies.hamster => '🐹',
+    PetSpecies.bird => '🦜',
+    PetSpecies.reptile => '🦎',
+    PetSpecies.ferret => '🦦',
+    PetSpecies.other => '🐾',
+  };
 }
 
 class _SkeletonPatientChip extends StatelessWidget {

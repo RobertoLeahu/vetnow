@@ -179,14 +179,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 class _SettingsMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? trailingText;
   final VoidCallback? onTap;
   final bool enabled;
 
   const _SettingsMenuItem({
     required this.icon,
     required this.label,
-    this.trailingText,
     this.onTap,
     this.enabled = true,
   });
@@ -206,24 +204,9 @@ class _SettingsMenuItem extends StatelessWidget {
               color: AppTheme.textPrimary,
             ),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (trailingText != null) ...[
-                Text(
-                  trailingText!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppTheme.textSecondary,
-              ),
-            ],
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: AppTheme.textSecondary,
           ),
           onTap: enabled ? onTap : null,
         ),

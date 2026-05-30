@@ -45,6 +45,9 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
   String? _initializedForClinicId;
   _ClinicProfileBaseline? _baseline;
   Clinic? _loadedClinic;
+  List<Specialty> _specialtiesCatalog = [];
+  bool _loading = true;
+  Object? _loadError;
   int _clinicNullAutoRetries = 0;
   bool _clinicNullRetryInFlight = false;
   bool _clinicNullRetryScheduled = false;
@@ -69,16 +72,13 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
       if (!mounted) return;
       ref.read(clinicProfileExitHandlerProvider.notifier).state =
           _handleExitRequest;
+      _loadInitialData();
     });
   }
 
   @override
   void dispose() {
-    final exitHandlerNotifier =
-        ref.read(clinicProfileExitHandlerProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      exitHandlerNotifier.state = null;
-    });
+    ref.read(clinicProfileExitHandlerProvider.notifier).state = null;
     _nameCtrl.dispose();
     _addressCtrl.dispose();
     _cityCtrl.dispose();
@@ -245,6 +245,70 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
   String _timeLabel(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+  void _deferInvalidateMyClinicForOtherScreens() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(myClinicProvider);
+    });
+  }
+
+  Future<void> _loadInitialData({bool isRetry = false}) async {
+    if (!isRetry && _clinicNullRetryInFlight) return;
+
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+        if (isRetry) _clinicNullRetryInFlight = true;
+      });
+    }
+
+    try {
+      final clinic = await ref.read(myClinicProvider.future);
+      if (!mounted) return;
+
+      if (clinic == null) {
+        if (_clinicNullAutoRetries < _maxClinicNullAutoRetries &&
+            !_clinicNullRetryScheduled) {
+          _scheduleClinicNullAutoRetry();
+        }
+        setState(() {
+          _loading = _clinicNullAutoRetries < _maxClinicNullAutoRetries;
+          _loadedClinic = null;
+          if (isRetry) _clinicNullRetryInFlight = false;
+        });
+        return;
+      }
+
+      final schedules = await ref.read(mySchedulesProvider.future);
+      final specialties = await ref.read(specialtiesProvider.future);
+      if (!mounted) return;
+
+      _initFromClinic(clinic, schedules);
+
+      setState(() {
+        _loading = false;
+        _loadError = null;
+        _specialtiesCatalog = specialties;
+        if (isRetry) _clinicNullRetryInFlight = false;
+      });
+
+      if (!_geocodeAutoScheduled) {
+        _geocodeAutoScheduled = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _loadedClinic == null) return;
+          _ensureGeocodedIfNeeded(_loadedClinic!);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e;
+        if (isRetry) _clinicNullRetryInFlight = false;
+      });
+    }
+  }
+
   /// Registra lat/lng automáticamente si la clínica aún no tiene coordenadas
   /// (p. ej. registrada antes de activar la búsqueda geográfica).
   Future<void> _ensureGeocodedIfNeeded(Clinic clinic) async {
@@ -264,9 +328,12 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
       await repo.upsertClinic(
         clinic.copyWith(lat: coords.lat, lng: coords.lng).toMap(),
       );
-      ref.invalidate(myClinicProvider);
 
       if (mounted) {
+        setState(() {
+          _loadedClinic = clinic.copyWith(lat: coords.lat, lng: coords.lng);
+        });
+        _deferInvalidateMyClinicForOtherScreens();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.locationRegisteredSnack)),
         );
@@ -286,13 +353,12 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
 
   Future<void> _reloadMyClinic() async {
     if (_clinicNullRetryInFlight) return;
-    setState(() => _clinicNullRetryInFlight = true);
-    try {
-      ref.invalidate(myClinicProvider);
-      await ref.read(myClinicProvider.future);
-    } finally {
-      if (mounted) setState(() => _clinicNullRetryInFlight = false);
-    }
+    ref.invalidate(myClinicProvider);
+    ref.invalidate(mySchedulesProvider);
+    _initialized = false;
+    _initializedForClinicId = null;
+    _geocodeAutoScheduled = false;
+    await _loadInitialData(isRetry: true);
   }
 
   void _scheduleClinicNullAutoRetry() {
@@ -306,7 +372,8 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
       _clinicNullRetryScheduled = false;
       if (!mounted) return;
       _clinicNullAutoRetries++;
-      await _reloadMyClinic();
+      ref.invalidate(myClinicProvider);
+      await _loadInitialData(isRetry: true);
     });
   }
 
@@ -379,6 +446,9 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
         }
       }
 
+      final selectedSpecialties = _specialtiesCatalog
+          .where((s) => _selectedSpecialtyIds.contains(s.id))
+          .toList();
       final updated = clinic.copyWith(
         name: _nameCtrl.text.trim(),
         address: newAddress,
@@ -390,6 +460,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
         lat: lat,
         lng: lng,
         appointmentDurationMinutes: _appointmentDurationMinutes,
+        specialties: selectedSpecialties,
       );
 
       await repo.upsertClinic(updated.toMap());
@@ -411,11 +482,11 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
 
       await repo.upsertSchedules(clinic.id, activeSchedules);
 
-      ref.invalidate(myClinicProvider);
-      ref.invalidate(mySchedulesProvider);
       invalidateClinicBookingData(ref, clinic.id);
+      _deferInvalidateMyClinicForOtherScreens();
 
       if (mounted) {
+        setState(() => _loadedClinic = updated);
         _captureBaseline();
         final l10n = context.l10n;
         final msg = geocodeSucceeded
@@ -442,112 +513,80 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final clinicAsync = ref.watch(myClinicProvider);
-    final schedulesAsync = ref.watch(mySchedulesProvider);
-    final specialtiesAsync = ref.watch(specialtiesProvider);
 
-    return clinicAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => Scaffold(
-        body: Center(child: Text(appErrorMessage(context, e))),
-      ),
-      data: (clinic) {
-        if (clinic == null) {
-          if (_clinicNullAutoRetries < _maxClinicNullAutoRetries) {
-            _scheduleClinicNullAutoRetry();
-          }
-          return Scaffold(
-            appBar: AppBar(title: Text(l10n.myClinicTitle)),
-            body: _clinicNullRetryInFlight ||
-                    _clinicNullAutoRetries < _maxClinicNullAutoRetries
-                ? const Center(child: CircularProgressIndicator())
-                : _buildClinicNotFoundBody(context),
-          );
-        }
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.myClinicTitle)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        // [myClinicProvider] suele resolverse antes que [mySchedulesProvider].
-        // Si inicializamos con schedules vacíos, _initialized queda true y los
-        // horarios guardados nunca se cargan. Esperar a tener datos de horarios.
-        return schedulesAsync.when(
-          loading: () => Scaffold(
-            appBar: AppBar(title: Text(l10n.myClinicTitle)),
-            body: const Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) => Scaffold(
-            appBar: AppBar(title: Text(l10n.myClinicTitle)),
-            body: Center(child: Text(appErrorMessage(context, e))),
-          ),
-          data: (schedules) {
-            _initFromClinic(clinic, schedules);
+    if (_loadError != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.myClinicTitle)),
+        body: Center(child: Text(appErrorMessage(context, _loadError!))),
+      );
+    }
 
-            if (!_geocodeAutoScheduled) {
-              _geocodeAutoScheduled = true;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                _ensureGeocodedIfNeeded(clinic);
-              });
-            }
+    final clinic = _loadedClinic;
+    if (clinic == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.myClinicTitle)),
+        body: _buildClinicNotFoundBody(context),
+      );
+    }
 
-            return PopScope(
-              canPop: !_hasUnsavedChanges(),
-              onPopInvokedWithResult: (didPop, _) async {
-                if (didPop) return;
-                final canLeave = await _handleExitRequest();
-                if (!mounted || !canLeave) return;
-                Navigator.of(context).pop();
-              },
-              child: Scaffold(
-              appBar: AppBar(
-                title: Text(l10n.myClinicTitle),
-                actions: [
-                  _saving
-                      ? const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : IconButton(
-                          onPressed: () => _save(clinic),
-                          icon: const Icon(Icons.check_rounded),
-                          tooltip: l10n.saveTooltip,
-                        ),
-                ],
-              ),
-              body: Form(
-                key: _formKey,
-                child: ListView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  children: [
-                    if (clinic.lat == null || clinic.lng == null)
-                      _buildLocationBanner(clinic),
-                    _buildLogoSection(clinic),
-                    const SizedBox(height: 24),
-                    _buildInfoSection(),
-                    const SizedBox(height: 24),
-                    _buildSpecialtiesSection(
-                      specialtiesAsync.valueOrNull ?? [],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildAppointmentDurationSection(),
-                    const SizedBox(height: 24),
-                    _buildScheduleSection(),
-                    const SizedBox(height: 32),
-                    _buildSaveButton(clinic),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ),
-            );
-          },
-        );
+    return PopScope(
+      canPop: !_hasUnsavedChanges(),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final canLeave = await _handleExitRequest();
+        if (!context.mounted || !canLeave) return;
+        Navigator.of(context).pop();
       },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.myClinicTitle),
+          actions: [
+            _saving
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    onPressed: () => _save(clinic),
+                    icon: const Icon(Icons.check_rounded),
+                    tooltip: l10n.saveTooltip,
+                  ),
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            children: [
+              if (clinic.lat == null || clinic.lng == null)
+                _buildLocationBanner(clinic),
+              _buildLogoSection(clinic),
+              const SizedBox(height: 24),
+              _buildInfoSection(),
+              const SizedBox(height: 24),
+              _buildSpecialtiesSection(_specialtiesCatalog),
+              const SizedBox(height: 24),
+              _buildAppointmentDurationSection(),
+              const SizedBox(height: 24),
+              _buildScheduleSection(),
+              const SizedBox(height: 32),
+              _buildSaveButton(clinic),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
