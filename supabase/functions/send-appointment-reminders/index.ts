@@ -79,7 +79,7 @@ Deno.serve(async () => {
             subject: `Recordatorio: cita mañana en ${apt.clinics?.name}`,
             html: `
               <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-                <h2 style="color: #00897B;">Recordatorio de cita 🐾</h2>
+                <h2 style="color: #1976D2;">Recordatorio de cita 🐾</h2>
                 <p>Hola <strong>${apt.profiles?.full_name}</strong>,</p>
                 <p>Te recordamos que mañana tienes una cita veterinaria:</p>
 

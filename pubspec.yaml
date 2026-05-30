@@ -67,6 +67,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  mocktail: ^1.0.4
+
   build_runner: ^2.4.9
   riverpod_generator: ^2.4.0
 

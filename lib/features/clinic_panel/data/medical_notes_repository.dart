@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/medical_note.dart';
@@ -43,9 +45,13 @@ class PetVisit {
 }
 
 class MedicalNotesRepository {
+  MedicalNotesRepository({SupabaseClient? client}) : _client = client ?? supabase;
+
+  final SupabaseClient _client;
+
   /// Unique owners who have had at least one appointment at this clinic.
   Future<List<ClinicPatient>> fetchClinicPatients(String clinicId) async {
-    final data = await supabase
+    final data = await _client
         .from('appointments')
         .select('owner_id, scheduled_at, profiles(full_name)')
         .eq('clinic_id', clinicId);
@@ -88,7 +94,7 @@ class MedicalNotesRepository {
     String clinicId,
     String ownerId,
   ) async {
-    final data = await supabase
+    final data = await _client
         .from('appointments')
         .select('pet_id, pets(id, owner_id, name, species, breed, birth_date, photo_url)')
         .eq('clinic_id', clinicId)
@@ -118,7 +124,7 @@ class MedicalNotesRepository {
     String clinicId,
     String petId,
   ) async {
-    final data = await supabase
+    final data = await _client
         .from('appointments')
         .select('''
           id,
@@ -165,7 +171,7 @@ class MedicalNotesRepository {
   }
 
   Future<void> _assertAppointmentAllowsNotes(String appointmentId) async {
-    final row = await supabase
+    final row = await _client
         .from('appointments')
         .select('status')
         .eq('id', appointmentId)
@@ -185,7 +191,7 @@ class MedicalNotesRepository {
     required String content,
   }) async {
     await _assertAppointmentAllowsNotes(appointmentId);
-    await supabase.from('medical_notes').insert({
+    await _client.from('medical_notes').insert({
       'appointment_id': appointmentId,
       'clinic_id': clinicId,
       'content': content,
@@ -197,13 +203,13 @@ class MedicalNotesRepository {
     required String noteId,
     required String content,
   }) async {
-    final row = await supabase
+    final row = await _client
         .from('medical_notes')
         .select('appointment_id')
         .eq('id', noteId)
         .single();
     await _assertAppointmentAllowsNotes(row['appointment_id'] as String);
-    await supabase.from('medical_notes').update({
+    await _client.from('medical_notes').update({
       'content': content,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', noteId);
@@ -211,12 +217,12 @@ class MedicalNotesRepository {
 
   /// Elimina una nota clínica (solo la clínica dueña vía RLS).
   Future<void> deleteNote(String noteId) async {
-    final row = await supabase
+    final row = await _client
         .from('medical_notes')
         .select('appointment_id')
         .eq('id', noteId)
         .single();
     await _assertAppointmentAllowsNotes(row['appointment_id'] as String);
-    await supabase.from('medical_notes').delete().eq('id', noteId);
+    await _client.from('medical_notes').delete().eq('id', noteId);
   }
 }

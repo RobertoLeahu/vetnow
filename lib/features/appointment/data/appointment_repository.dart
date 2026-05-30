@@ -8,10 +8,14 @@ import '../../../shared/models/pet.dart';
 import '../utils/slot_generator.dart';
 
 class AppointmentRepository {
+  AppointmentRepository({SupabaseClient? client}) : _client = client ?? supabase;
+
+  final SupabaseClient _client;
+
   /// Marca como realizadas las citas confirmadas cuyo slot ya terminó (RPC).
   Future<void> _autoCompletePastAppointments() async {
     try {
-      await supabase.rpc('complete_past_appointments');
+      await _client.rpc('complete_past_appointments');
     } catch (e, st) {
       debugPrint('[VetNow] complete_past_appointments: $e\n$st');
     }
@@ -19,7 +23,7 @@ class AppointmentRepository {
 
   /// Obtener mascotas del propietario actual
   Future<List<Pet>> fetchMyPets(String ownerId) async {
-    final data = await supabase
+    final data = await _client
         .from('pets')
         .select()
         .eq('owner_id', ownerId)
@@ -29,7 +33,7 @@ class AppointmentRepository {
 
   /// Añadir mascota (devuelve el id insertado).
   Future<String> addPet(Pet pet) async {
-    final row = await supabase.from('pets').insert(pet.toMap()).select('id').single();
+    final row = await _client.from('pets').insert(pet.toMap()).select('id').single();
     return row['id'] as String;
   }
 
@@ -44,7 +48,7 @@ class AppointmentRepository {
     final from = DateTime(date.year, date.month, date.day).toUtc();
     final to = from.add(const Duration(days: 1));
 
-    final data = await supabase.rpc('get_booked_slots', params: {
+    final data = await _client.rpc('get_booked_slots', params: {
       'p_clinic_id': clinicId,
       'p_from': from.toIso8601String(),
       'p_to': to.toIso8601String(),
@@ -71,7 +75,7 @@ class AppointmentRepository {
     required int durationMinutes,
     String? notes,
   }) async {
-    await supabase.from('appointments').insert({
+    await _client.from('appointments').insert({
       'clinic_id': clinicId,
       'pet_id': petId,
       'owner_id': ownerId,
@@ -86,7 +90,7 @@ class AppointmentRepository {
   /// Obtener citas del propietario
   Future<List<Map<String, dynamic>>> fetchMyAppointments(String ownerId) async {
     await _autoCompletePastAppointments();
-    final data = await supabase
+    final data = await _client
         .from('appointments')
         .select('''
           *,
@@ -104,7 +108,7 @@ class AppointmentRepository {
     String clinicId,
   ) async {
     await _autoCompletePastAppointments();
-    final data = await supabase
+    final data = await _client
         .from('appointments')
         .select('''
           *,
@@ -121,7 +125,7 @@ class AppointmentRepository {
   /// Confirmar cita (pendiente → confirmada). RLS: solo la clínica dueña.
   /// Tras actualizar el estado, envía email de confirmación al propietario.
   Future<void> confirmAppointment(String appointmentId) async {
-    await supabase
+    await _client
         .from('appointments')
         .update({'status': 'confirmed'})
         .eq('id', appointmentId)
@@ -135,7 +139,7 @@ class AppointmentRepository {
 
   /// Marcar cita como realizada (confirmada → realizada). RLS: solo la clínica dueña.
   Future<void> markAppointmentDone(String appointmentId) async {
-    await supabase
+    await _client
         .from('appointments')
         .update({
           'status': 'done',
@@ -148,7 +152,7 @@ class AppointmentRepository {
   /// La clínica deniega una cita pendiente (pasa a cancelada).
   /// Tras actualizar el estado, envía email de denegación al propietario.
   Future<void> rejectAppointmentByClinic(String appointmentId) async {
-    await supabase
+    await _client
         .from('appointments')
         .update({'status': 'cancelled'})
         .eq('id', appointmentId)
@@ -165,7 +169,7 @@ class AppointmentRepository {
     required String appointmentId,
     required String type,
   }) async {
-    final session = supabase.auth.currentSession;
+    final session = _client.auth.currentSession;
     if (session == null) {
       debugPrint(
         '[VetNow] send-appointment-notification: sin sesión, email no enviado',
@@ -174,7 +178,7 @@ class AppointmentRepository {
     }
 
     try {
-      final response = await supabase.functions.invoke(
+      final response = await _client.functions.invoke(
         'send-appointment-notification',
         method: HttpMethod.post,
         headers: {'Authorization': 'Bearer ${session.accessToken}'},
@@ -203,7 +207,7 @@ class AppointmentRepository {
 
   /// Cancelar cita
   Future<void> cancelAppointment(String appointmentId) async {
-    await supabase
+    await _client
         .from('appointments')
         .update({'status': 'cancelled'})
         .eq('id', appointmentId);
@@ -211,6 +215,6 @@ class AppointmentRepository {
 
   /// Eliminar cita (solo debe usarse para citas canceladas; RLS en Supabase).
   Future<void> deleteAppointment(String appointmentId) async {
-    await supabase.from('appointments').delete().eq('id', appointmentId);
+    await _client.from('appointments').delete().eq('id', appointmentId);
   }
 }
