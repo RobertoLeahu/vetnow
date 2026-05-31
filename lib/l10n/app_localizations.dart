@@ -2231,8 +2231,32 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingClinicDashboardDesc.
   ///
   /// In es, this message translates to:
-  /// **'Consulta las citas de hoy y un resumen de la actividad de tu clínica.'**
+  /// **'Consulta las citas confirmadas y pendientes de hoy de un vistazo.'**
   String get onboardingClinicDashboardDesc;
+
+  /// No description provided for @onboardingClinicTodayPatientsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pacientes de hoy'**
+  String get onboardingClinicTodayPatientsTitle;
+
+  /// No description provided for @onboardingClinicTodayPatientsDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Mascotas con cita confirmada hoy. Desliza para ver todas las que visitarán tu clínica.'**
+  String get onboardingClinicTodayPatientsDesc;
+
+  /// No description provided for @onboardingClinicActivitySummaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen de actividad'**
+  String get onboardingClinicActivitySummaryTitle;
+
+  /// No description provided for @onboardingClinicActivitySummaryDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Métricas de hoy y de la semana: citas realizadas, confirmadas y pacientes atendidos.'**
+  String get onboardingClinicActivitySummaryDesc;
 
   /// No description provided for @onboardingClinicQuickAccessTitle.
   ///

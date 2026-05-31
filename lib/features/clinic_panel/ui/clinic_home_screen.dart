@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -27,15 +30,18 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
   bool _tourStarted = false;
   final ScrollController _scrollController = ScrollController();
   late final OnboardingShowcaseStart _onShowcaseStart;
+  late final OnboardingShowcaseComplete _onShowcaseComplete;
 
   @override
   void initState() {
     super.initState();
     _onShowcaseStart = _handleShowcaseStart;
+    _onShowcaseComplete = _handleShowcaseComplete;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(myClinicProvider);
       ref.invalidate(clinicAppointmentsProvider);
       addOnboardingStartListener(_onShowcaseStart);
+      addOnboardingCompleteListener(_onShowcaseComplete);
       _maybeStartTour();
     });
   }
@@ -43,24 +49,87 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
   @override
   void dispose() {
     removeOnboardingStartListener(_onShowcaseStart);
+    removeOnboardingCompleteListener(_onShowcaseComplete);
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _handleShowcaseStart(int? index, GlobalKey key) {
-    if (index != 1 || !_scrollController.hasClients) return;
+  void _handleShowcaseComplete(int? index, GlobalKey key) {
+    if (index == null) return;
 
-    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-
-    final quickAccessContext =
-        ref.read(clinicOnboardingKeysProvider).quickAccess.currentContext;
-    if (quickAccessContext != null && quickAccessContext.mounted) {
-      Scrollable.ensureVisible(
-        quickAccessContext,
-        duration: Duration.zero,
-        alignment: 0.3,
-      );
+    final keys = ref.read(clinicOnboardingKeysProvider);
+    final GlobalKey? nextKey = switch (index) {
+      0 => keys.todayPatients,
+      1 => keys.activitySummary,
+      2 => keys.quickAccess,
+      _ => null,
+    };
+    if (nextKey != null) {
+      unawaited(_animateToShowcaseTarget(nextKey));
     }
+  }
+
+  void _handleShowcaseStart(int? index, GlobalKey key) {
+    if (index == null || index == 0) return;
+
+    _jumpToShowcaseTarget(key);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _jumpToShowcaseTarget(key);
+      setState(() {});
+    });
+  }
+
+  double _scrollAlignmentFor(GlobalKey key) {
+    final keys = ref.read(clinicOnboardingKeysProvider);
+    if (key == keys.activitySummary || key == keys.quickAccess) {
+      return 0.05;
+    }
+    if (key == keys.todayPatients) {
+      return 0.2;
+    }
+    return 0.3;
+  }
+
+  void _jumpToShowcaseTarget(GlobalKey key) {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final clamped = _targetScrollOffset(key);
+    if (clamped == null) return;
+
+    if ((_scrollController.offset - clamped).abs() > 1) {
+      _scrollController.jumpTo(clamped);
+    }
+  }
+
+  Future<void> _animateToShowcaseTarget(GlobalKey key) async {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final clamped = _targetScrollOffset(key);
+    if (clamped == null) return;
+
+    if ((_scrollController.offset - clamped).abs() <= 1) return;
+
+    await _scrollController.animateTo(
+      clamped,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  double? _targetScrollOffset(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null || !ctx.mounted) return null;
+
+    final renderObject = ctx.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) return null;
+
+    final viewport = RenderAbstractViewport.of(renderObject);
+    final alignment = _scrollAlignmentFor(key);
+    final targetOffset =
+        viewport.getOffsetToReveal(renderObject, alignment).offset;
+    return targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent);
   }
 
   Future<void> _maybeStartTour() async {
@@ -87,7 +156,13 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
 
     _tourStarted = true;
     final keys = ref.read(clinicOnboardingKeysProvider);
-    startClinicOnboarding([keys.dashboard, keys.quickAccess, keys.bottomNav]);
+    startClinicOnboarding([
+      keys.dashboard,
+      keys.todayPatients,
+      keys.activitySummary,
+      keys.quickAccess,
+      keys.bottomNav,
+    ]);
   }
 
   @override
@@ -140,12 +215,13 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
             // ── App bar con saludo ───────────────────────────────────
             SliverAppBar(
               pinned: true,
-              expandedHeight: 100,
+              expandedHeight: 112,
               backgroundColor: AppTheme.background,
               surfaceTintColor: Colors.transparent,
               flexibleSpace: FlexibleSpaceBar(
                 centerTitle: true,
                 titlePadding: EdgeInsets.zero,
+                collapseMode: CollapseMode.parallax,
                 background: _ClinicHeader(
                   clinicName: clinic?.name,
                   dateLabel: today,
@@ -188,9 +264,18 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   // ── Pacientes de hoy ─────────────────────────────
                   _SectionLabel(label: l10n.todayPatients),
                   const SizedBox(height: 10),
-                  _TodayPatientsCarousel(
-                    isLoading: appointmentsLoading,
-                    appointments: todayConfirmedAppointments,
+                  buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.todayPatients,
+                    title: l10n.onboardingClinicTodayPatientsTitle,
+                    description: l10n.onboardingClinicTodayPatientsDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.2,
+                    child: _TodayPatientsCarousel(
+                      isLoading: appointmentsLoading,
+                      appointments: todayConfirmedAppointments,
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -207,27 +292,47 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   ],
 
                   // ── Resumen de citas ─────────────────────────────
-                  _SectionLabel(label: l10n.activitySummary),
-                  const SizedBox(height: 10),
-                  _AppointmentsSummaryCard(
-                    isLoading: appointmentsLoading,
-                    stats: stats,
-                    onTapAgenda: () => context.go('/clinic-agenda'),
+                  buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.activitySummary,
+                    title: l10n.onboardingClinicActivitySummaryTitle,
+                    description: l10n.onboardingClinicActivitySummaryDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.05,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionLabel(label: l10n.activitySummary),
+                        const SizedBox(height: 10),
+                        _AppointmentsSummaryCard(
+                          isLoading: appointmentsLoading,
+                          stats: stats,
+                          onTapAgenda: () => context.go('/clinic-agenda'),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),
 
                   // ── Accesos rápidos ──────────────────────────────
-                  _SectionLabel(label: l10n.quickAccess),
-                  const SizedBox(height: 10),
                   buildOnboardingShowcase(
                     showcaseKey: onboardingKeys.quickAccess,
                     title: l10n.onboardingClinicQuickAccessTitle,
                     description: l10n.onboardingClinicQuickAccessDesc,
                     l10n: l10n,
                     context: context,
-                    enableAutoScroll: false,
-                    child: _QuickAccessGrid(),
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.02,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionLabel(label: l10n.quickAccess),
+                        const SizedBox(height: 10),
+                        _QuickAccessGrid(),
+                      ],
+                    ),
                   ),
                 ]),
               ),
@@ -250,39 +355,37 @@ class _ClinicHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                clinicName ?? l10n.myClinicFallback,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              clinicName ?? l10n.myClinicFallback,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+                height: 1.2,
               ),
-              const SizedBox(height: 6),
-              Text(
-                dateLabel,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dateLabel,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
               ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

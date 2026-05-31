@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 const onboardingScope = 'vetnow_onboarding';
 
 typedef OnboardingShowcaseStart = void Function(int? index, GlobalKey key);
+typedef OnboardingShowcaseComplete = void Function(int? index, GlobalKey key);
 
 Showcase buildOnboardingShowcase({
   required GlobalKey showcaseKey,
@@ -17,6 +18,7 @@ Showcase buildOnboardingShowcase({
   bool isLastStep = false,
   TooltipPosition? tooltipPosition,
   bool? enableAutoScroll,
+  double? scrollAlignment,
 }) {
   final theme = Theme.of(context);
   final primary = theme.colorScheme.primary;
@@ -27,6 +29,7 @@ Showcase buildOnboardingShowcase({
     description: description,
     tooltipPosition: tooltipPosition,
     enableAutoScroll: enableAutoScroll,
+    scrollAlignment: scrollAlignment ?? 0.5,
     tooltipBackgroundColor: primary,
     textColor: Colors.white,
     titleTextStyle: const TextStyle(
@@ -76,6 +79,7 @@ void registerOnboardingShowcaseView({
     scope: onboardingScope,
     enableAutoScroll: true,
     skipIfTargetNotPresent: true,
+    scrollDuration: const Duration(milliseconds: 400),
     overlayOpacity: 0.85,
     onStart: onStart,
     onFinish: onComplete,
@@ -109,6 +113,14 @@ void addOnboardingStartListener(OnboardingShowcaseStart listener) {
 
 void removeOnboardingStartListener(OnboardingShowcaseStart listener) {
   ShowcaseView.getNamed(onboardingScope).removeOnStartCallback(listener);
+}
+
+void addOnboardingCompleteListener(OnboardingShowcaseComplete listener) {
+  ShowcaseView.getNamed(onboardingScope).addOnCompleteCallback(listener);
+}
+
+void removeOnboardingCompleteListener(OnboardingShowcaseComplete listener) {
+  ShowcaseView.getNamed(onboardingScope).removeOnCompleteCallback(listener);
 }
 
 void unregisterOnboardingShowcaseView() {

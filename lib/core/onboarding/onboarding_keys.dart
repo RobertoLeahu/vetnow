@@ -9,6 +9,8 @@ class OwnerOnboardingKeys {
 
 class ClinicOnboardingKeys {
   final dashboard = GlobalKey();
+  final todayPatients = GlobalKey();
+  final activitySummary = GlobalKey();
   final quickAccess = GlobalKey();
   final bottomNav = GlobalKey();
 }

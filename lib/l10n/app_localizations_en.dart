@@ -1224,7 +1224,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingClinicDashboardDesc =>
-      'See today\'s appointments and a snapshot of your clinic activity.';
+      'See today\'s confirmed and pending appointments at a glance.';
+
+  @override
+  String get onboardingClinicTodayPatientsTitle => 'Today\'s patients';
+
+  @override
+  String get onboardingClinicTodayPatientsDesc =>
+      'Pets with a confirmed appointment today. Swipe to see all visitors coming to your clinic.';
+
+  @override
+  String get onboardingClinicActivitySummaryTitle => 'Activity summary';
+
+  @override
+  String get onboardingClinicActivitySummaryDesc =>
+      'Today and weekly metrics: completed, confirmed appointments and patients seen.';
 
   @override
   String get onboardingClinicQuickAccessTitle => 'Quick access';

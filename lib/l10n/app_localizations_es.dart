@@ -1229,7 +1229,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingClinicDashboardDesc =>
-      'Consulta las citas de hoy y un resumen de la actividad de tu clínica.';
+      'Consulta las citas confirmadas y pendientes de hoy de un vistazo.';
+
+  @override
+  String get onboardingClinicTodayPatientsTitle => 'Pacientes de hoy';
+
+  @override
+  String get onboardingClinicTodayPatientsDesc =>
+      'Mascotas con cita confirmada hoy. Desliza para ver todas las que visitarán tu clínica.';
+
+  @override
+  String get onboardingClinicActivitySummaryTitle => 'Resumen de actividad';
+
+  @override
+  String get onboardingClinicActivitySummaryDesc =>
+      'Métricas de hoy y de la semana: citas realizadas, confirmadas y pacientes atendidos.';
 
   @override
   String get onboardingClinicQuickAccessTitle => 'Accesos rápidos';
