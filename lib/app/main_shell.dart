@@ -1,18 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:showcaseview/showcaseview.dart';
 import '../l10n/l10n_ext.dart';
 import '../app/theme.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/clinic_panel/providers/clinic_panel_provider.dart';
 import '../shared/models/profile.dart';
+import '../core/onboarding/onboarding_keys.dart';
+import '../core/onboarding/onboarding_provider.dart';
+import '../core/onboarding/onboarding_showcase.dart';
 
-class MainShell extends ConsumerWidget {
+class MainShell extends ConsumerStatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  bool _showcaseRegistered = false;
+
+  @override
+  void dispose() {
+    unregisterOnboardingShowcaseView();
+    super.dispose();
+  }
+
+  void _ensureShowcaseRegistered(UserRole role) {
+    if (_showcaseRegistered) return;
+    _showcaseRegistered = true;
+
+    final l10n = context.l10n;
+    final lastKey = role == UserRole.clinic
+        ? ref.read(clinicOnboardingKeysProvider).bottomNav
+        : ref.read(ownerOnboardingKeysProvider).bottomNav;
+
+    registerOnboardingShowcaseView(
+      onComplete: () => completeOnboarding(ref, role),
+      skipLabel: l10n.onboardingSkip,
+      lastStepKey: lastKey,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileProvider);
 
     if (profileAsync.isLoading) {
@@ -21,14 +54,42 @@ class MainShell extends ConsumerWidget {
 
     final profile = profileAsync.valueOrNull;
     final isClinic = profile?.role == UserRole.clinic;
+    final role = isClinic ? UserRole.clinic : UserRole.owner;
+
+    _ensureShowcaseRegistered(role);
+
+    final bottomNavKey = isClinic
+        ? ref.read(clinicOnboardingKeysProvider).bottomNav
+        : ref.read(ownerOnboardingKeysProvider).bottomNav;
+    final l10n = context.l10n;
+
+    final navBar = isClinic
+        ? _clinicNavBar(context, ref)
+        : _ownerNavBar(context);
+
+    final navTitle = isClinic
+        ? l10n.onboardingClinicNavTitle
+        : l10n.onboardingOwnerNavTitle;
+    final navDesc = isClinic
+        ? l10n.onboardingClinicNavDesc
+        : l10n.onboardingOwnerNavDesc;
 
     return Scaffold(
-      body: child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.divider)),
+      body: widget.child,
+      bottomNavigationBar: buildOnboardingShowcase(
+        showcaseKey: bottomNavKey,
+        title: navTitle,
+        description: navDesc,
+        l10n: l10n,
+        context: context,
+        isLastStep: true,
+        tooltipPosition: TooltipPosition.top,
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppTheme.divider)),
+          ),
+          child: navBar,
         ),
-        child: isClinic ? _clinicNavBar(context, ref) : _ownerNavBar(context),
       ),
     );
   }

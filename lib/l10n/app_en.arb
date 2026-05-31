@@ -599,5 +599,21 @@
     }
   },
   "privacyPolicyTitle": "Privacy policy",
-  "termsOfServiceTitle": "Terms and conditions"
+  "termsOfServiceTitle": "Terms and conditions",
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingGotIt": "Got it",
+  "onboardingOwnerSearchTitle": "Find clinics",
+  "onboardingOwnerSearchDesc": "Search by name, city, or address to find veterinarians near you.",
+  "onboardingOwnerNearbyTitle": "Near me",
+  "onboardingOwnerNearbyDesc": "Use your location to see clinics on a map and list, sorted by distance.",
+  "onboardingOwnerNavTitle": "Navigation",
+  "onboardingOwnerNavDesc": "From here you can open appointments, pets, and profile. Register your pets before booking.",
+  "onboardingClinicDashboardTitle": "Today's overview",
+  "onboardingClinicDashboardDesc": "See today's appointments and a snapshot of your clinic activity.",
+  "onboardingClinicQuickAccessTitle": "Quick access",
+  "onboardingClinicQuickAccessDesc": "Open the agenda to confirm appointments or patients to view medical records.",
+  "onboardingClinicNavTitle": "Navigation",
+  "onboardingClinicNavDesc": "Use the bottom bar to open the agenda, patients, and complete your clinic's public profile.",
+  "settingsShowAppGuide": "Show app guide"
 }

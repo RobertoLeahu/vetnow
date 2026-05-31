@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/datetime/app_date_format.dart';
+import '../../../core/onboarding/onboarding_keys.dart';
+import '../../../core/onboarding/onboarding_provider.dart';
+import '../../../core/onboarding/onboarding_showcase.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
@@ -21,13 +24,70 @@ class ClinicHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
+  bool _tourStarted = false;
+  final ScrollController _scrollController = ScrollController();
+  late final OnboardingShowcaseStart _onShowcaseStart;
+
   @override
   void initState() {
     super.initState();
+    _onShowcaseStart = _handleShowcaseStart;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(myClinicProvider);
       ref.invalidate(clinicAppointmentsProvider);
+      addOnboardingStartListener(_onShowcaseStart);
+      _maybeStartTour();
     });
+  }
+
+  @override
+  void dispose() {
+    removeOnboardingStartListener(_onShowcaseStart);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleShowcaseStart(int? index, GlobalKey key) {
+    if (index != 1 || !_scrollController.hasClients) return;
+
+    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+
+    final quickAccessContext =
+        ref.read(clinicOnboardingKeysProvider).quickAccess.currentContext;
+    if (quickAccessContext != null && quickAccessContext.mounted) {
+      Scrollable.ensureVisible(
+        quickAccessContext,
+        duration: Duration.zero,
+        alignment: 0.3,
+      );
+    }
+  }
+
+  Future<void> _maybeStartTour() async {
+    if (_tourStarted || !mounted) return;
+
+    if (GoRouterState.of(context).matchedLocation != '/clinic-home') return;
+
+    final role = ref.read(profileProvider).valueOrNull?.role;
+    if (role != UserRole.clinic) return;
+
+    final show = await shouldShowOnboarding(ref, UserRole.clinic);
+    if (!show || !mounted) return;
+
+    if (ref.read(clinicAppointmentsProvider).isLoading) {
+      await ref
+          .read(clinicAppointmentsProvider.future)
+          .catchError((_) => <Appointment>[]);
+    }
+
+    if (!mounted) return;
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+
+    _tourStarted = true;
+    final keys = ref.read(clinicOnboardingKeysProvider);
+    startClinicOnboarding([keys.dashboard, keys.quickAccess, keys.bottomNav]);
   }
 
   @override
@@ -60,6 +120,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
       todayHeaderPattern(locale),
       locale,
     ).format(DateTime.now());
+    final onboardingKeys = ref.read(clinicOnboardingKeysProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -74,6 +135,7 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
           ]);
         },
         child: CustomScrollView(
+          controller: _scrollController,
           slivers: [
             // ── App bar con saludo ───────────────────────────────────
             SliverAppBar(
@@ -106,10 +168,19 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   // ── Citas del día ────────────────────────────────
                   _SectionLabel(label: l10n.today),
                   const SizedBox(height: 10),
-                  _TodayAppointmentsCard(
-                    isLoading: appointmentsLoading,
-                    appointments: todayAppointments,
-                    onTapAgenda: () => context.go('/clinic-agenda', extra: 1),
+                  buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.dashboard,
+                    title: l10n.onboardingClinicDashboardTitle,
+                    description: l10n.onboardingClinicDashboardDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: false,
+                    child: _TodayAppointmentsCard(
+                      isLoading: appointmentsLoading,
+                      appointments: todayAppointments,
+                      onTapAgenda: () =>
+                          context.go('/clinic-agenda', extra: 1),
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -149,7 +220,15 @@ class _ClinicHomeScreenState extends ConsumerState<ClinicHomeScreen> {
                   // ── Accesos rápidos ──────────────────────────────
                   _SectionLabel(label: l10n.quickAccess),
                   const SizedBox(height: 10),
-                  _QuickAccessGrid(),
+                  buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.quickAccess,
+                    title: l10n.onboardingClinicQuickAccessTitle,
+                    description: l10n.onboardingClinicQuickAccessDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: false,
+                    child: _QuickAccessGrid(),
+                  ),
                 ]),
               ),
             ),

@@ -2167,6 +2167,102 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Términos y condiciones'**
   String get termsOfServiceTitle;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In es, this message translates to:
+  /// **'Saltar'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingGotIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get onboardingGotIt;
+
+  /// No description provided for @onboardingOwnerSearchTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar clínicas'**
+  String get onboardingOwnerSearchTitle;
+
+  /// No description provided for @onboardingOwnerSearchDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca por nombre, ciudad o dirección para encontrar veterinarios cerca de ti.'**
+  String get onboardingOwnerSearchDesc;
+
+  /// No description provided for @onboardingOwnerNearbyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerca de mí'**
+  String get onboardingOwnerNearbyTitle;
+
+  /// No description provided for @onboardingOwnerNearbyDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa tu ubicación para ver clínicas en mapa y lista, ordenadas por distancia.'**
+  String get onboardingOwnerNearbyDesc;
+
+  /// No description provided for @onboardingOwnerNavTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Navegación'**
+  String get onboardingOwnerNavTitle;
+
+  /// No description provided for @onboardingOwnerNavDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde aquí accedes a tus citas, mascotas y perfil. Registra tus mascotas antes de reservar una cita.'**
+  String get onboardingOwnerNavDesc;
+
+  /// No description provided for @onboardingClinicDashboardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen del día'**
+  String get onboardingClinicDashboardTitle;
+
+  /// No description provided for @onboardingClinicDashboardDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta las citas de hoy y un resumen de la actividad de tu clínica.'**
+  String get onboardingClinicDashboardDesc;
+
+  /// No description provided for @onboardingClinicQuickAccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Accesos rápidos'**
+  String get onboardingClinicQuickAccessTitle;
+
+  /// No description provided for @onboardingClinicQuickAccessDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Entra a la agenda para confirmar citas o a pacientes para ver expedientes médicos.'**
+  String get onboardingClinicQuickAccessDesc;
+
+  /// No description provided for @onboardingClinicNavTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Navegación'**
+  String get onboardingClinicNavTitle;
+
+  /// No description provided for @onboardingClinicNavDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa la barra inferior para ir a la agenda, pacientes y completar el perfil público de tu clínica.'**
+  String get onboardingClinicNavDesc;
+
+  /// No description provided for @settingsShowAppGuide.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver guía de la app'**
+  String get settingsShowAppGuide;
 }
 
 class _AppLocalizationsDelegate

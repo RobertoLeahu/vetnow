@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/location/user_location_service.dart';
+import '../../../core/onboarding/onboarding_keys.dart';
+import '../../../core/onboarding/onboarding_provider.dart';
+import '../../../core/onboarding/onboarding_showcase.dart';
 import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
@@ -13,6 +16,7 @@ import '../../../features/auth/providers/auth_provider.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
 import '../../../shared/models/pet.dart';
+import '../../../shared/models/profile.dart';
 import 'clinic_list_card.dart';
 
 IconData _specialtyIcon(String name) {
@@ -45,6 +49,29 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   bool _locating = false;
+  bool _tourStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeStartTour());
+  }
+
+  Future<void> _maybeStartTour() async {
+    if (_tourStarted || !mounted) return;
+
+    if (GoRouterState.of(context).matchedLocation != '/search') return;
+
+    final role = ref.read(profileProvider).valueOrNull?.role;
+    if (role != UserRole.owner) return;
+
+    final show = await shouldShowOnboarding(ref, UserRole.owner);
+    if (!show || !mounted) return;
+
+    _tourStarted = true;
+    final keys = ref.read(ownerOnboardingKeysProvider);
+    startOwnerOnboarding([keys.searchBar, keys.nearby, keys.bottomNav]);
+  }
 
   Future<void> _onRefresh() async {
     ref.invalidate(favoriteClinicsProvider);
@@ -148,6 +175,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
     final filters = ref.watch(searchFiltersProvider);
     final specialties = specialtiesAsync.valueOrNull ?? [];
+    final onboardingKeys = ref.read(ownerOnboardingKeysProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -200,14 +228,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(height: 16),
 
                       // Abre pantalla de búsqueda en vivo
-                      GestureDetector(
-                        onTap: () => context.push('/search/query'),
-                        child: AbsorbPointer(
-                          child: TextField(
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              hintText: l10n.searchHintNameCityAddress,
-                              prefixIcon: const Icon(Icons.search_rounded),
+                      buildOnboardingShowcase(
+                        showcaseKey: onboardingKeys.searchBar,
+                        title: l10n.onboardingOwnerSearchTitle,
+                        description: l10n.onboardingOwnerSearchDesc,
+                        l10n: l10n,
+                        context: context,
+                        child: GestureDetector(
+                          onTap: () => context.push('/search/query'),
+                          child: AbsorbPointer(
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                hintText: l10n.searchHintNameCityAddress,
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
                             ),
                           ),
                         ),
@@ -215,9 +250,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(height: 12),
 
                       // "Cerca de mí" button
-                      _NearbyButton(
-                        loading: _locating,
-                        onTap: _locating ? null : _openNearby,
+                      buildOnboardingShowcase(
+                        showcaseKey: onboardingKeys.nearby,
+                        title: l10n.onboardingOwnerNearbyTitle,
+                        description: l10n.onboardingOwnerNearbyDesc,
+                        l10n: l10n,
+                        context: context,
+                        child: _NearbyButton(
+                          loading: _locating,
+                          onTap: _locating ? null : _openNearby,
+                        ),
                       ),
                       const SizedBox(height: 16),
                     ],

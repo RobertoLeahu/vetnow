@@ -1188,4 +1188,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get termsOfServiceTitle => 'Terms and conditions';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingGotIt => 'Got it';
+
+  @override
+  String get onboardingOwnerSearchTitle => 'Find clinics';
+
+  @override
+  String get onboardingOwnerSearchDesc =>
+      'Search by name, city, or address to find veterinarians near you.';
+
+  @override
+  String get onboardingOwnerNearbyTitle => 'Near me';
+
+  @override
+  String get onboardingOwnerNearbyDesc =>
+      'Use your location to see clinics on a map and list, sorted by distance.';
+
+  @override
+  String get onboardingOwnerNavTitle => 'Navigation';
+
+  @override
+  String get onboardingOwnerNavDesc =>
+      'From here you can open appointments, pets, and profile. Register your pets before booking.';
+
+  @override
+  String get onboardingClinicDashboardTitle => 'Today\'s overview';
+
+  @override
+  String get onboardingClinicDashboardDesc =>
+      'See today\'s appointments and a snapshot of your clinic activity.';
+
+  @override
+  String get onboardingClinicQuickAccessTitle => 'Quick access';
+
+  @override
+  String get onboardingClinicQuickAccessDesc =>
+      'Open the agenda to confirm appointments or patients to view medical records.';
+
+  @override
+  String get onboardingClinicNavTitle => 'Navigation';
+
+  @override
+  String get onboardingClinicNavDesc =>
+      'Use the bottom bar to open the agenda, patients, and complete your clinic\'s public profile.';
+
+  @override
+  String get settingsShowAppGuide => 'Show app guide';
 }

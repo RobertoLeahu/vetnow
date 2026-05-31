@@ -1193,4 +1193,58 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get termsOfServiceTitle => 'Términos y condiciones';
+
+  @override
+  String get onboardingSkip => 'Saltar';
+
+  @override
+  String get onboardingNext => 'Siguiente';
+
+  @override
+  String get onboardingGotIt => 'Entendido';
+
+  @override
+  String get onboardingOwnerSearchTitle => 'Buscar clínicas';
+
+  @override
+  String get onboardingOwnerSearchDesc =>
+      'Busca por nombre, ciudad o dirección para encontrar veterinarios cerca de ti.';
+
+  @override
+  String get onboardingOwnerNearbyTitle => 'Cerca de mí';
+
+  @override
+  String get onboardingOwnerNearbyDesc =>
+      'Usa tu ubicación para ver clínicas en mapa y lista, ordenadas por distancia.';
+
+  @override
+  String get onboardingOwnerNavTitle => 'Navegación';
+
+  @override
+  String get onboardingOwnerNavDesc =>
+      'Desde aquí accedes a tus citas, mascotas y perfil. Registra tus mascotas antes de reservar una cita.';
+
+  @override
+  String get onboardingClinicDashboardTitle => 'Resumen del día';
+
+  @override
+  String get onboardingClinicDashboardDesc =>
+      'Consulta las citas de hoy y un resumen de la actividad de tu clínica.';
+
+  @override
+  String get onboardingClinicQuickAccessTitle => 'Accesos rápidos';
+
+  @override
+  String get onboardingClinicQuickAccessDesc =>
+      'Entra a la agenda para confirmar citas o a pacientes para ver expedientes médicos.';
+
+  @override
+  String get onboardingClinicNavTitle => 'Navegación';
+
+  @override
+  String get onboardingClinicNavDesc =>
+      'Usa la barra inferior para ir a la agenda, pacientes y completar el perfil público de tu clínica.';
+
+  @override
+  String get settingsShowAppGuide => 'Ver guía de la app';
 }

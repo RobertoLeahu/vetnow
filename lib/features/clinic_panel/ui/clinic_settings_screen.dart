@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/onboarding/onboarding_provider.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../shared/models/profile.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class ClinicSettingsScreen extends ConsumerWidget {
@@ -105,6 +107,16 @@ class ClinicSettingsScreen extends ConsumerWidget {
                   label: l10n.personalization,
                   onTap: () =>
                       context.push('/clinic-profile/settings/personalization'),
+                ),
+                _SettingsMenuItem(
+                  icon: Icons.help_outline_rounded,
+                  label: l10n.settingsShowAppGuide,
+                  onTap: () async {
+                    await replayOnboarding(ref, UserRole.clinic);
+                    if (context.mounted) {
+                      context.go('/clinic-home');
+                    }
+                  },
                 ),
                 _SettingsMenuItem(
                   icon: Icons.logout_rounded,
