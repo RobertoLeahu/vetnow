@@ -1218,6 +1218,20 @@ class AppLocalizationsEs extends AppLocalizations {
       'Usa tu ubicación para ver clínicas en mapa y lista, ordenadas por distancia.';
 
   @override
+  String get onboardingOwnerFavoritesTitle => 'Clínicas favoritas';
+
+  @override
+  String get onboardingOwnerFavoritesDesc =>
+      'Guarda tus clínicas preferidas con el corazón en el detalle. Accede rápido desde aquí.';
+
+  @override
+  String get onboardingOwnerUpcomingTitle => 'Próximas citas';
+
+  @override
+  String get onboardingOwnerUpcomingDesc =>
+      'Consulta tus citas confirmadas y pendientes. Toca Ver más para ver el listado completo.';
+
+  @override
   String get onboardingOwnerNavTitle => 'Navegación';
 
   @override

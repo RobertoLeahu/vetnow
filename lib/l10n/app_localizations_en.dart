@@ -1213,6 +1213,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use your location to see clinics on a map and list, sorted by distance.';
 
   @override
+  String get onboardingOwnerFavoritesTitle => 'Favorite clinics';
+
+  @override
+  String get onboardingOwnerFavoritesDesc =>
+      'Save your preferred clinics with the heart on their profile. Access them quickly from here.';
+
+  @override
+  String get onboardingOwnerUpcomingTitle => 'Upcoming appointments';
+
+  @override
+  String get onboardingOwnerUpcomingDesc =>
+      'See your confirmed and pending appointments. Tap Show more for the full list.';
+
+  @override
   String get onboardingOwnerNavTitle => 'Navigation';
 
   @override

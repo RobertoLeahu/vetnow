@@ -2210,6 +2210,30 @@ abstract class AppLocalizations {
   /// **'Usa tu ubicación para ver clínicas en mapa y lista, ordenadas por distancia.'**
   String get onboardingOwnerNearbyDesc;
 
+  /// No description provided for @onboardingOwnerFavoritesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Clínicas favoritas'**
+  String get onboardingOwnerFavoritesTitle;
+
+  /// No description provided for @onboardingOwnerFavoritesDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda tus clínicas preferidas con el corazón en el detalle. Accede rápido desde aquí.'**
+  String get onboardingOwnerFavoritesDesc;
+
+  /// No description provided for @onboardingOwnerUpcomingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximas citas'**
+  String get onboardingOwnerUpcomingTitle;
+
+  /// No description provided for @onboardingOwnerUpcomingDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus citas confirmadas y pendientes. Toca Ver más para ver el listado completo.'**
+  String get onboardingOwnerUpcomingDesc;
+
   /// No description provided for @onboardingOwnerNavTitle.
   ///
   /// In es, this message translates to:

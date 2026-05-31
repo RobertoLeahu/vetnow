@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class OwnerOnboardingKeys {
   final searchBar = GlobalKey();
   final nearby = GlobalKey();
+  final favoriteClinics = GlobalKey();
+  final upcomingAppointments = GlobalKey();
   final bottomNav = GlobalKey();
 }
 
