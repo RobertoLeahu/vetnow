@@ -333,20 +333,7 @@ class _PetCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  pet.species.emoji,
-                  style: const TextStyle(fontSize: 22),
-                ),
-              ),
-            ),
+            _petAvatar(),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -377,6 +364,36 @@ class _PetCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _petAvatar() {
+    final photo = pet.photoUrl;
+    final hasPhoto = photo != null && photo.isNotEmpty;
+
+    return ClipOval(
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: hasPhoto
+            ? Image.network(
+                photo,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _speciesEmojiAvatar(),
+              )
+            : _speciesEmojiAvatar(),
+      ),
+    );
+  }
+
+  Widget _speciesEmojiAvatar() {
+    return Container(
+      color: AppTheme.surface,
+      alignment: Alignment.center,
+      child: Text(
+        pet.species.emoji,
+        style: const TextStyle(fontSize: 22),
       ),
     );
   }

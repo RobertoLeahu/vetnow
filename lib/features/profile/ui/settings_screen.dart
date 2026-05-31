@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/errors/app_error_presenter.dart';
+import '../../../core/onboarding/onboarding_provider.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../../shared/models/profile.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -138,6 +140,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       enabled: !_deletingAccount,
                       onTap: () =>
                           context.push('/profile/settings/personalization'),
+                    ),
+                    _SettingsMenuItem(
+                      icon: Icons.help_outline_rounded,
+                      label: l10n.settingsShowAppGuide,
+                      enabled: !_deletingAccount,
+                      onTap: () async {
+                        await replayOnboarding(ref, UserRole.owner);
+                        if (context.mounted) {
+                          context.go('/search');
+                        }
+                      },
                     ),
                     _SettingsMenuItem(
                       icon: Icons.logout_rounded,

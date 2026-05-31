@@ -1188,4 +1188,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get termsOfServiceTitle => 'Terms and conditions';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingGotIt => 'Got it';
+
+  @override
+  String get onboardingOwnerSearchTitle => 'Find clinics';
+
+  @override
+  String get onboardingOwnerSearchDesc =>
+      'Search by name, city, or address to find veterinarians near you.';
+
+  @override
+  String get onboardingOwnerNearbyTitle => 'Near me';
+
+  @override
+  String get onboardingOwnerNearbyDesc =>
+      'Use your location to see clinics on a map and list, sorted by distance.';
+
+  @override
+  String get onboardingOwnerFavoritesTitle => 'Favorite clinics';
+
+  @override
+  String get onboardingOwnerFavoritesDesc =>
+      'Save your preferred clinics with the heart on their profile. Access them quickly from here.';
+
+  @override
+  String get onboardingOwnerUpcomingTitle => 'Upcoming appointments';
+
+  @override
+  String get onboardingOwnerUpcomingDesc =>
+      'See your confirmed and pending appointments. Tap Show more for the full list.';
+
+  @override
+  String get onboardingOwnerNavTitle => 'Navigation';
+
+  @override
+  String get onboardingOwnerNavDesc =>
+      'From here you can open appointments, pets, and profile. Register your pets before booking.';
+
+  @override
+  String get onboardingClinicDashboardTitle => 'Today\'s overview';
+
+  @override
+  String get onboardingClinicDashboardDesc =>
+      'See today\'s confirmed and pending appointments at a glance.';
+
+  @override
+  String get onboardingClinicTodayPatientsTitle => 'Today\'s patients';
+
+  @override
+  String get onboardingClinicTodayPatientsDesc =>
+      'Pets with a confirmed appointment today. Swipe to see all visitors coming to your clinic.';
+
+  @override
+  String get onboardingClinicActivitySummaryTitle => 'Activity summary';
+
+  @override
+  String get onboardingClinicActivitySummaryDesc =>
+      'Today and weekly metrics: completed, confirmed appointments and patients seen.';
+
+  @override
+  String get onboardingClinicQuickAccessTitle => 'Quick access';
+
+  @override
+  String get onboardingClinicQuickAccessDesc =>
+      'Open the agenda to confirm appointments or patients to view medical records.';
+
+  @override
+  String get onboardingClinicNavTitle => 'Navigation';
+
+  @override
+  String get onboardingClinicNavDesc =>
+      'Use the bottom bar to open the agenda, patients, and complete your clinic\'s public profile.';
+
+  @override
+  String get settingsShowAppGuide => 'Show app guide';
 }

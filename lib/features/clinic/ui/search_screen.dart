@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/location/user_location_service.dart';
+import '../../../core/onboarding/onboarding_keys.dart';
+import '../../../core/onboarding/onboarding_provider.dart';
+import '../../../core/onboarding/onboarding_showcase.dart';
 import '../../appointment/providers/appointment_provider.dart';
 import '../providers/clinic_provider.dart';
 import '../../../app/theme.dart';
@@ -12,7 +18,9 @@ import '../../../core/providers/locale_provider.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/appointment.dart';
+import '../../../shared/models/clinic.dart';
 import '../../../shared/models/pet.dart';
+import '../../../shared/models/profile.dart';
 import 'clinic_list_card.dart';
 
 IconData _specialtyIcon(String name) {
@@ -45,6 +53,147 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   bool _locating = false;
+  bool _tourStarted = false;
+  final ScrollController _scrollController = ScrollController();
+  late final OnboardingShowcaseStart _onShowcaseStart;
+  late final OnboardingShowcaseComplete _onShowcaseComplete;
+
+  @override
+  void initState() {
+    super.initState();
+    _onShowcaseStart = _handleShowcaseStart;
+    _onShowcaseComplete = _handleShowcaseComplete;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      addOnboardingStartListener(_onShowcaseStart);
+      addOnboardingCompleteListener(_onShowcaseComplete);
+      _maybeStartTour();
+    });
+  }
+
+  @override
+  void dispose() {
+    removeOnboardingStartListener(_onShowcaseStart);
+    removeOnboardingCompleteListener(_onShowcaseComplete);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleShowcaseComplete(int? index, GlobalKey key) {
+    if (index == null) return;
+
+    final keys = ref.read(ownerOnboardingKeysProvider);
+    final GlobalKey? nextKey = switch (index) {
+      1 => keys.favoriteClinics,
+      2 => keys.upcomingAppointments,
+      3 => keys.bottomNav,
+      _ => null,
+    };
+    if (nextKey != null) {
+      unawaited(_animateToShowcaseTarget(nextKey));
+    }
+  }
+
+  void _handleShowcaseStart(int? index, GlobalKey key) {
+    if (index == null || index <= 1) return;
+    if (key == ref.read(ownerOnboardingKeysProvider).bottomNav) return;
+
+    _jumpToShowcaseTarget(key);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _jumpToShowcaseTarget(key);
+      setState(() {});
+    });
+  }
+
+  double _scrollAlignmentFor(GlobalKey key) {
+    final keys = ref.read(ownerOnboardingKeysProvider);
+    if (key == keys.upcomingAppointments) {
+      return 0.05;
+    }
+    if (key == keys.favoriteClinics) {
+      return 0.12;
+    }
+    return 0.25;
+  }
+
+  void _jumpToShowcaseTarget(GlobalKey key) {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final clamped = _targetScrollOffset(key);
+    if (clamped == null) return;
+
+    if ((_scrollController.offset - clamped).abs() > 1) {
+      _scrollController.jumpTo(clamped);
+    }
+  }
+
+  Future<void> _animateToShowcaseTarget(GlobalKey key) async {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final clamped = _targetScrollOffset(key);
+    if (clamped == null) return;
+
+    if ((_scrollController.offset - clamped).abs() <= 1) return;
+
+    await _scrollController.animateTo(
+      clamped,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  double? _targetScrollOffset(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null || !ctx.mounted) return null;
+
+    final renderObject = ctx.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) return null;
+
+    final viewport = RenderAbstractViewport.of(renderObject);
+    final alignment = _scrollAlignmentFor(key);
+    final targetOffset =
+        viewport.getOffsetToReveal(renderObject, alignment).offset;
+    return targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent);
+  }
+
+  Future<void> _maybeStartTour() async {
+    if (_tourStarted || !mounted) return;
+
+    if (GoRouterState.of(context).matchedLocation != '/search') return;
+
+    final role = ref.read(profileProvider).valueOrNull?.role;
+    if (role != UserRole.owner) return;
+
+    final show = await shouldShowOnboarding(ref, UserRole.owner);
+    if (!show || !mounted) return;
+
+    if (ref.read(favoriteClinicsProvider).isLoading) {
+      await ref
+          .read(favoriteClinicsProvider.future)
+          .catchError((_) => <Clinic>[]);
+    }
+    if (ref.read(myAppointmentsProvider).isLoading) {
+      await ref
+          .read(myAppointmentsProvider.future)
+          .catchError((_) => <Appointment>[]);
+    }
+
+    if (!mounted) return;
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+
+    _tourStarted = true;
+    final keys = ref.read(ownerOnboardingKeysProvider);
+    startOwnerOnboarding([
+      keys.searchBar,
+      keys.nearby,
+      keys.favoriteClinics,
+      keys.upcomingAppointments,
+      keys.bottomNav,
+    ]);
+  }
 
   Future<void> _onRefresh() async {
     ref.invalidate(favoriteClinicsProvider);
@@ -148,12 +297,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final appointmentsAsync = ref.watch(myAppointmentsProvider);
     final filters = ref.watch(searchFiltersProvider);
     final specialties = specialtiesAsync.valueOrNull ?? [];
+    final onboardingKeys = ref.read(ownerOnboardingKeysProvider);
 
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               // Header
@@ -200,14 +351,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(height: 16),
 
                       // Abre pantalla de búsqueda en vivo
-                      GestureDetector(
-                        onTap: () => context.push('/search/query'),
-                        child: AbsorbPointer(
-                          child: TextField(
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              hintText: l10n.searchHintNameCityAddress,
-                              prefixIcon: const Icon(Icons.search_rounded),
+                      buildOnboardingShowcase(
+                        showcaseKey: onboardingKeys.searchBar,
+                        title: l10n.onboardingOwnerSearchTitle,
+                        description: l10n.onboardingOwnerSearchDesc,
+                        l10n: l10n,
+                        context: context,
+                        enableAutoScroll: false,
+                        child: GestureDetector(
+                          onTap: () => context.push('/search/query'),
+                          child: AbsorbPointer(
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                hintText: l10n.searchHintNameCityAddress,
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
                             ),
                           ),
                         ),
@@ -215,9 +374,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(height: 12),
 
                       // "Cerca de mí" button
-                      _NearbyButton(
-                        loading: _locating,
-                        onTap: _locating ? null : _openNearby,
+                      buildOnboardingShowcase(
+                        showcaseKey: onboardingKeys.nearby,
+                        title: l10n.onboardingOwnerNearbyTitle,
+                        description: l10n.onboardingOwnerNearbyDesc,
+                        l10n: l10n,
+                        context: context,
+                        enableAutoScroll: false,
+                        child: _NearbyButton(
+                          loading: _locating,
+                          onTap: _locating ? null : _openNearby,
+                        ),
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -275,23 +442,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Section title
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    l10n.favoriteClinics,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              // Favorite clinics (lista fija; no depende de chips ni búsqueda)
+              // Clínicas favoritas
               favoritesAsync.when(
                 data: (allFavs) {
                   Widget content;
@@ -331,22 +482,101 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   }
 
                   return SliverToBoxAdapter(
-                    child: _FavoritesSectionBox(child: content),
+                    child: buildOnboardingShowcase(
+                      showcaseKey: onboardingKeys.favoriteClinics,
+                      title: l10n.onboardingOwnerFavoritesTitle,
+                      description: l10n.onboardingOwnerFavoritesDesc,
+                      l10n: l10n,
+                      context: context,
+                      enableAutoScroll: true,
+                      scrollAlignment: 0.12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              l10n.favoriteClinics,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _FavoritesSectionBox(child: content),
+                        ],
+                      ),
+                    ),
                   );
                 },
-                loading: () => const SliverToBoxAdapter(
-                  child: _FavoritesSectionBox(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
+                loading: () => SliverToBoxAdapter(
+                  child: buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.favoriteClinics,
+                    title: l10n.onboardingOwnerFavoritesTitle,
+                    description: l10n.onboardingOwnerFavoritesDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            l10n.favoriteClinics,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const _FavoritesSectionBox(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 error: (e, _) => SliverToBoxAdapter(
-                  child: _FavoritesSectionBox(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text(appErrorMessage(context, e))),
+                  child: buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.favoriteClinics,
+                    title: l10n.onboardingOwnerFavoritesTitle,
+                    description: l10n.onboardingOwnerFavoritesDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            l10n.favoriteClinics,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _FavoritesSectionBox(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: Text(appErrorMessage(context, e))),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -354,23 +584,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Section title — Próximas citas
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    l10n.upcomingAppointments,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              // Próximas citas (contenido dentro del recuadro)
+              // Próximas citas
               appointmentsAsync.when(
                 data: (all) {
                   final now = DateTime.now();
@@ -417,22 +631,101 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   }
 
                   return SliverToBoxAdapter(
-                    child: _FavoritesSectionBox(child: content),
+                    child: buildOnboardingShowcase(
+                      showcaseKey: onboardingKeys.upcomingAppointments,
+                      title: l10n.onboardingOwnerUpcomingTitle,
+                      description: l10n.onboardingOwnerUpcomingDesc,
+                      l10n: l10n,
+                      context: context,
+                      enableAutoScroll: true,
+                      scrollAlignment: 0.05,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              l10n.upcomingAppointments,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _FavoritesSectionBox(child: content),
+                        ],
+                      ),
+                    ),
                   );
                 },
-                loading: () => const SliverToBoxAdapter(
-                  child: _FavoritesSectionBox(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
+                loading: () => SliverToBoxAdapter(
+                  child: buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.upcomingAppointments,
+                    title: l10n.onboardingOwnerUpcomingTitle,
+                    description: l10n.onboardingOwnerUpcomingDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.05,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            l10n.upcomingAppointments,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const _FavoritesSectionBox(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 error: (e, _) => SliverToBoxAdapter(
-                  child: _FavoritesSectionBox(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text(appErrorMessage(context, e))),
+                  child: buildOnboardingShowcase(
+                    showcaseKey: onboardingKeys.upcomingAppointments,
+                    title: l10n.onboardingOwnerUpcomingTitle,
+                    description: l10n.onboardingOwnerUpcomingDesc,
+                    l10n: l10n,
+                    context: context,
+                    enableAutoScroll: true,
+                    scrollAlignment: 0.05,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            l10n.upcomingAppointments,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _FavoritesSectionBox(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: Text(appErrorMessage(context, e))),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

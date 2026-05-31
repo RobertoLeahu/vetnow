@@ -1193,4 +1193,86 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get termsOfServiceTitle => 'Términos y condiciones';
+
+  @override
+  String get onboardingSkip => 'Saltar';
+
+  @override
+  String get onboardingNext => 'Siguiente';
+
+  @override
+  String get onboardingGotIt => 'Entendido';
+
+  @override
+  String get onboardingOwnerSearchTitle => 'Buscar clínicas';
+
+  @override
+  String get onboardingOwnerSearchDesc =>
+      'Busca por nombre, ciudad o dirección para encontrar veterinarios cerca de ti.';
+
+  @override
+  String get onboardingOwnerNearbyTitle => 'Cerca de mí';
+
+  @override
+  String get onboardingOwnerNearbyDesc =>
+      'Usa tu ubicación para ver clínicas en mapa y lista, ordenadas por distancia.';
+
+  @override
+  String get onboardingOwnerFavoritesTitle => 'Clínicas favoritas';
+
+  @override
+  String get onboardingOwnerFavoritesDesc =>
+      'Guarda tus clínicas preferidas con el corazón en el detalle. Accede rápido desde aquí.';
+
+  @override
+  String get onboardingOwnerUpcomingTitle => 'Próximas citas';
+
+  @override
+  String get onboardingOwnerUpcomingDesc =>
+      'Consulta tus citas confirmadas y pendientes. Toca Ver más para ver el listado completo.';
+
+  @override
+  String get onboardingOwnerNavTitle => 'Navegación';
+
+  @override
+  String get onboardingOwnerNavDesc =>
+      'Desde aquí accedes a tus citas, mascotas y perfil. Registra tus mascotas antes de reservar una cita.';
+
+  @override
+  String get onboardingClinicDashboardTitle => 'Resumen del día';
+
+  @override
+  String get onboardingClinicDashboardDesc =>
+      'Consulta las citas confirmadas y pendientes de hoy de un vistazo.';
+
+  @override
+  String get onboardingClinicTodayPatientsTitle => 'Pacientes de hoy';
+
+  @override
+  String get onboardingClinicTodayPatientsDesc =>
+      'Mascotas con cita confirmada hoy. Desliza para ver todas las que visitarán tu clínica.';
+
+  @override
+  String get onboardingClinicActivitySummaryTitle => 'Resumen de actividad';
+
+  @override
+  String get onboardingClinicActivitySummaryDesc =>
+      'Métricas de hoy y de la semana: citas realizadas, confirmadas y pacientes atendidos.';
+
+  @override
+  String get onboardingClinicQuickAccessTitle => 'Accesos rápidos';
+
+  @override
+  String get onboardingClinicQuickAccessDesc =>
+      'Entra a la agenda para confirmar citas o a pacientes para ver expedientes médicos.';
+
+  @override
+  String get onboardingClinicNavTitle => 'Navegación';
+
+  @override
+  String get onboardingClinicNavDesc =>
+      'Usa la barra inferior para ir a la agenda, pacientes y completar el perfil público de tu clínica.';
+
+  @override
+  String get settingsShowAppGuide => 'Ver guía de la app';
 }
