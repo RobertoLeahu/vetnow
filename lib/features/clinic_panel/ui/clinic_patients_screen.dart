@@ -479,6 +479,7 @@ class PetVisitsScreen extends ConsumerWidget {
                   itemCount: visits.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _VisitCard(
+                    key: ValueKey(visits[i].appointmentId),
                     visit: visits[i],
                     clinicId: clinic.id,
                     petId: petId,
@@ -493,168 +494,230 @@ class PetVisitsScreen extends ConsumerWidget {
   }
 }
 
-class _VisitCard extends ConsumerWidget {
+class _VisitCard extends ConsumerStatefulWidget {
   final PetVisit visit;
   final String clinicId;
   final String petId;
 
   const _VisitCard({
+    super.key,
     required this.visit,
     required this.clinicId,
     required this.petId,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef widgetRef) {
+  ConsumerState<_VisitCard> createState() => _VisitCardState();
+}
+
+class _VisitCardState extends ConsumerState<_VisitCard> {
+  bool _expanded = false;
+
+  PetVisit get visit => widget.visit;
+  String get clinicId => widget.clinicId;
+  String get petId => widget.petId;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final locale = widgetRef.watch(localeProvider);
+    final locale = ref.watch(localeProvider);
     final dateFmt = dateFormat(visitDetailPattern(locale), locale);
     final hasNotes = visit.notes.isNotEmpty;
     final canNote = visit.canAddNotes;
     final dateShort = dateFormat(visitShortDatePattern(locale), locale);
+    final notesSummary = hasNotes
+        ? l10n.clinicalNotesCount(visit.notes.length)
+        : l10n.clinicalNotes;
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.divider),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header: fecha + especialidad
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.event_available_rounded,
-                  size: 18,
-                  color: AppTheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      dateFmt.format(visit.scheduledAt),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppTheme.textPrimary,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.event_available_rounded,
+                        size: 18,
+                        color: AppTheme.primary,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      visit.specialtyName,
-                      style: const TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateFmt.format(visit.scheduledAt),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            visit.specialtyName,
+                            style: const TextStyle(
+                              color: AppTheme.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (!_expanded) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              notesSummary,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary
+                                    .withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _VisitStatusBadge(status: visit.status),
+                        const SizedBox(height: 8),
+                        AnimatedRotation(
+                          turns: _expanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            Icons.expand_more_rounded,
+                            size: 22,
+                            color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              _VisitStatusBadge(status: visit.status),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: AppTheme.divider),
-          const SizedBox(height: 12),
-
-          Text(
-            hasNotes
-                ? l10n.clinicalNotesCount(visit.notes.length)
-                : l10n.clinicalNotes,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary,
-              letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 10),
-
-          if (hasNotes)
-            ...visit.notes.map(
-              (note) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _ClinicalNoteBlock(
-                  note: note,
-                  dateShort: dateShort,
-                  canModify: canNote,
-                  onEdit: () => _showNoteSheet(
-                    context,
-                    widgetRef,
-                    editingNote: note,
-                  ),
-                  onDelete: () =>
-                      _confirmDeleteNote(context, widgetRef, note),
-                ),
-              ),
-            ),
-
-          if (canNote)
-            TextButton.icon(
-              onPressed: () => _showNoteSheet(context, widgetRef),
-              icon: const Icon(Icons.add_rounded, size: 16),
-              label: Text(
-                  hasNotes ? l10n.addAnotherNote : l10n.addClinicalNote),
-              style: TextButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40),
-                foregroundColor: AppTheme.primary,
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
-              ),
-            )
-          else if (visit.isPending)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: AppTheme.textSecondary.withValues(alpha: 0.85),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      l10n.confirmAppointmentToAddNotes,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: AppTheme.textSecondary.withValues(alpha: 0.9),
-                      ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(height: 1, color: AppTheme.divider),
+                        const SizedBox(height: 12),
+                        Text(
+                          notesSummary,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        if (hasNotes)
+                          ...visit.notes.map(
+                            (note) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _ClinicalNoteBlock(
+                                note: note,
+                                dateShort: dateShort,
+                                canModify: canNote,
+                                onEdit: () => _showNoteSheet(
+                                  context,
+                                  editingNote: note,
+                                ),
+                                onDelete: () =>
+                                    _confirmDeleteNote(context, note),
+                              ),
+                            ),
+                          ),
+                        if (canNote)
+                          TextButton.icon(
+                            onPressed: () => _showNoteSheet(context),
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            label: Text(
+                              hasNotes
+                                  ? l10n.addAnotherNote
+                                  : l10n.addClinicalNote,
+                            ),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 40),
+                              foregroundColor: AppTheme.primary,
+                              textStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              backgroundColor:
+                                  AppTheme.primary.withValues(alpha: 0.06),
+                            ),
+                          )
+                        else if (visit.isPending)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 16,
+                                  color: AppTheme.textSecondary
+                                      .withValues(alpha: 0.85),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    l10n.confirmAppointmentToAddNotes,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      height: 1.35,
+                                      color: AppTheme.textSecondary
+                                          .withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
         ],
       ),
     );
   }
 
   void _showNoteSheet(
-    BuildContext context,
-    WidgetRef ref, {
+    BuildContext context, {
     MedicalNote? editingNote,
   }) {
     showModalBottomSheet<void>(
@@ -692,7 +755,6 @@ class _VisitCard extends ConsumerWidget {
 
   Future<void> _confirmDeleteNote(
     BuildContext context,
-    WidgetRef ref,
     MedicalNote note,
   ) async {
     final l10n = context.l10n;
