@@ -130,9 +130,15 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
       body: appointmentsAsync.when(
         data: (all) {
           final filteredAll = _filterByPet(all, selectedPetId);
-          final upcoming = filteredAll.where((a) => a.isUpcoming).toList();
-          final done = filteredAll.where((a) => a.isDone).toList();
-          final cancelled = filteredAll.where((a) => a.isCancelled).toList();
+          final upcoming = _sortByScheduledAt(
+            filteredAll.where((a) => a.isUpcoming),
+          );
+          final done = _sortByScheduledAt(
+            filteredAll.where((a) => a.isDone),
+          );
+          final cancelled = _sortByScheduledAt(
+            filteredAll.where((a) => a.isCancelled),
+          );
 
           return TabBarView(
             controller: _tabController,
@@ -168,6 +174,12 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen>
   List<Appointment> _filterByPet(List<Appointment> all, String? selectedPetId) {
     if (selectedPetId == null) return all;
     return all.where((a) => a.petId == selectedPetId).toList();
+  }
+
+  List<Appointment> _sortByScheduledAt(Iterable<Appointment> appointments) {
+    final sorted = appointments.toList()
+      ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return sorted;
   }
 
   Future<void> _refreshAppointments() async {
