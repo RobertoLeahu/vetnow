@@ -12,6 +12,7 @@
   "registerOwnerTitle": "Registro de propietario",
   "fullName": "Nombre completo",
   "fillAllFields": "Rellena todos los campos",
+  "invalidPhoneFormat": "El teléfono debe tener 9 dígitos.",
   "registerMustAcceptLegal": "Debes aceptar la política de privacidad y los términos",
   "registerError": "Error al registrarse: {error}",
   "@registerError": {
@@ -32,6 +33,31 @@
   "roleOwnerSubtitle": "Busco clínicas y reservo citas para mi mascota",
   "roleClinicTitle": "Soy clínica",
   "roleClinicSubtitle": "Gestiono mi agenda y recibo reservas",
+  "roleOwnerCardTitle": "Propietario",
+  "roleClinicCardTitle": "Clínica",
+  "welcomePrefix": "Bienvenido a ",
+  "appBrandName": "VetNow",
+  "appTitle": "VetNow",
+  "clinicMenuMyAgenda": "Mi agenda",
+  "clinicMenuMyPatients": "Mis pacientes",
+  "configureClinic": "Configurar clínica",
+  "notAvailable": "—",
+  "distanceMeters": "{meters} m",
+  "@distanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKilometers": "{kilometers} km",
+  "@distanceKilometers": {
+    "placeholders": {
+      "kilometers": {
+        "type": "String"
+      }
+    }
+  },
   "settingsTitle": "Ajustes",
   "account": "Cuenta",
   "termsAndConditions": "Términos y condiciones",
@@ -349,7 +375,7 @@
   "speciesHamster": "Hámster",
   "speciesBird": "Ave",
   "speciesReptile": "Reptil",
-  "speciesFerret": "Hurón",
+  "speciesFish": "Pez",
   "speciesOther": "Otro",
   "specialtyGeneralMedicine": "Medicina general",
   "specialtyDermatology": "Dermatología",

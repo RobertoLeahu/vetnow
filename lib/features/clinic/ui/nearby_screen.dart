@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error_presenter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 import '../providers/clinic_provider.dart';
@@ -592,13 +593,12 @@ class _NearbyClinicCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String _formatDistance(double km) {
-    if (km < 1) return '${(km * 1000).toStringAsFixed(0)} m';
-    return '${km.toStringAsFixed(1)} km';
-  }
+  String _formatDistance(double km, AppLocalizations l10n) =>
+      formatDistanceKm(km, l10n);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -665,7 +665,7 @@ class _NearbyClinicCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                _formatDistance(clinic.distanceKm!),
+                                _formatDistance(clinic.distanceKm!, l10n),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -716,7 +716,7 @@ class _NearbyClinicCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(50),
                               ),
                               child: Text(
-                                s.name,
+                                s.localizedLabel(l10n),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppTheme.textSecondary,

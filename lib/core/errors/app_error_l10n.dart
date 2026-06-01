@@ -17,6 +17,8 @@ extension AppErrorL10n on AppError {
         AppErrorCode.server => l10n.errorServer,
         AppErrorCode.notFound => l10n.errorNotFound,
         AppErrorCode.validation => l10n.errorValidation,
+        AppErrorCode.appointmentNotConfirmedForNotes =>
+          l10n.confirmAppointmentToAddNotes,
         AppErrorCode.unknown => l10n.errorGeneric,
       };
 }

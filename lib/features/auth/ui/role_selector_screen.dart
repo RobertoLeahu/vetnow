@@ -34,14 +34,14 @@ class RoleSelectorScreen extends StatelessWidget {
             const SizedBox(height: 32),
             _RoleCard(
               icon: Icons.pets,
-              title: 'Propietario',
+              title: l10n.roleOwnerCardTitle,
               subtitle: l10n.roleOwnerSubtitle,
               role: UserRole.owner,
             ),
             const SizedBox(height: 16),
             _RoleCard(
               icon: Icons.local_hospital,
-              title: 'Clinica',
+              title: l10n.roleClinicCardTitle,
               subtitle: l10n.roleClinicSubtitle,
               role: UserRole.clinic,
             ),

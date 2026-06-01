@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/location/user_location_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 
@@ -131,10 +132,8 @@ class _ClinicMapScreenState extends State<ClinicMapScreen> {
     );
   }
 
-  String _formatDistance(double km) {
-    if (km < 1) return '${(km * 1000).toStringAsFixed(0)} m';
-    return '${km.toStringAsFixed(1)} km';
-  }
+  String _formatDistance(double km, AppLocalizations l10n) =>
+      formatDistanceKm(km, l10n);
 
   void _fitMapCamera() {
     final clinicPoint = LatLng(widget.clinicLat, widget.clinicLng);
@@ -416,7 +415,7 @@ class _ClinicMapScreenState extends State<ClinicMapScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _formatDistance(_distanceKm!),
+                          _formatDistance(_distanceKm!, l10n),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/app_error_code.dart';
 import '../../../core/datetime/timestamptz.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/medical_note.dart';
@@ -178,9 +180,7 @@ class MedicalNotesRepository {
         .single();
     final status = row['status'] as String;
     if (status == 'pending') {
-      throw StateError(
-        'Confirma la cita en la agenda para poder gestionar notas.',
-      );
+      throw const AppError(AppErrorCode.appointmentNotConfirmedForNotes);
     }
   }
 

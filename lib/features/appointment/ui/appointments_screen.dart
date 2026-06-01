@@ -312,7 +312,7 @@ class _AppointmentCard extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            appointment.specialtyName,
+            specialtyLocalizedLabel(l10n, appointment.specialtyName),
             style: const TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.w500,

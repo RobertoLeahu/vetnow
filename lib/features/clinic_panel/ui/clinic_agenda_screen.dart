@@ -350,7 +350,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
     final dateFmt = dateFormat(appointmentCardPattern(locale), locale);
     final ownerName = appointment.ownerFullName?.trim().isNotEmpty == true
         ? appointment.ownerFullName!
-        : '—';
+        : l10n.notAvailable;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -378,7 +378,7 @@ class _ClinicAgendaCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            appointment.specialtyName,
+            specialtyLocalizedLabel(l10n, appointment.specialtyName),
             style: const TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.w500,

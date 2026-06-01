@@ -15,7 +15,7 @@ extension PetSpeciesL10n on PetSpecies {
         PetSpecies.hamster => l10n.speciesHamster,
         PetSpecies.bird => l10n.speciesBird,
         PetSpecies.reptile => l10n.speciesReptile,
-        PetSpecies.ferret => l10n.speciesFerret,
+        PetSpecies.fish => l10n.speciesFish,
         PetSpecies.other => l10n.speciesOther,
       };
 }
@@ -44,6 +44,13 @@ String specialtyLocalizedLabel(AppLocalizations l10n, String name) {
 extension SpecialtyL10n on Specialty {
   String localizedLabel(AppLocalizations l10n) =>
       specialtyLocalizedLabel(l10n, name);
+}
+
+String formatDistanceKm(double km, AppLocalizations l10n) {
+  if (km < 1) {
+    return l10n.distanceMeters((km * 1000).round());
+  }
+  return l10n.distanceKilometers(km.toStringAsFixed(1));
 }
 
 String formatAppointmentDurationLabel(int minutes, AppLocalizations l10n) {

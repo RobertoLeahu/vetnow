@@ -54,17 +54,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 12),
               RichText(
-                text: const TextSpan(
-                  style: TextStyle(
+                text: TextSpan(
+                  style: const TextStyle(
                     fontSize: 24,
                     color: AppTheme.textPrimary,
                     fontWeight: FontWeight.w400,
                   ),
                   children: [
-                    TextSpan(text: 'Bienvenido a '),
+                    TextSpan(text: l10n.welcomePrefix),
                     TextSpan(
-                      text: 'VetNow',
-                      style: TextStyle(
+                      text: l10n.appBrandName,
+                      style: const TextStyle(
                         color: AppTheme.primary,
                         fontWeight: FontWeight.bold,
                       ),

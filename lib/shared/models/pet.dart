@@ -7,7 +7,7 @@ enum PetSpecies {
   hamster,
   bird,
   reptile,
-  ferret,
+  fish,
   other,
 }
 
@@ -19,7 +19,7 @@ extension PetSpeciesX on PetSpecies {
     PetSpecies.hamster => '🐹',
     PetSpecies.bird => '🦜',
     PetSpecies.reptile => '🦎',
-    PetSpecies.ferret => '🦦',
+    PetSpecies.fish => '🐟',
     PetSpecies.other => '🐾',
   };
 
@@ -48,10 +48,7 @@ class Pet extends Equatable {
     id: map['id'] as String,
     ownerId: map['owner_id'] as String,
     name: map['name'] as String,
-    species: PetSpecies.values.firstWhere(
-      (e) => e.name == map['species'],
-      orElse: () => PetSpecies.other,
-    ),
+    species: parsePetSpecies(map['species']),
     breed: map['breed'] as String?,
     birthDate: map['birth_date'] != null
         ? DateTime.parse(map['birth_date'] as String)
@@ -74,4 +71,12 @@ class Pet extends Equatable {
 
   @override
   List<Object?> get props => [id, ownerId, name, species];
+}
+
+PetSpecies parsePetSpecies(dynamic raw) {
+  final name = raw == 'ferret' ? 'fish' : raw as String?;
+  return PetSpecies.values.firstWhere(
+    (e) => e.name == name,
+    orElse: () => PetSpecies.other,
+  );
 }

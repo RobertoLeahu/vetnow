@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/errors/app_error_presenter.dart';
+import '../../../core/strings/phone_validation.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/widgets/app_error_banner.dart';
 import '../data/auth_repository.dart';
@@ -58,6 +60,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() => _error = l10n.registerMustAcceptLegal);
       return;
     }
+    if (_isClinic && !isValidSpanishLocalPhone(_phoneCtrl.text)) {
+      setState(() => _error = l10n.invalidPhoneFormat);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -73,7 +79,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             fullName: _nameCtrl.text.trim(),
             role: widget.role,
             clinicName: _isClinic ? _clinicNameCtrl.text.trim() : null,
-            clinicPhone: _isClinic ? _phoneCtrl.text.trim() : null,
+            clinicPhone: _isClinic ? extractPhoneDigits(_phoneCtrl.text) : null,
             privacyAcceptedAt: now,
             termsAcceptedAt: now,
           );
@@ -164,7 +170,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _phoneCtrl,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(9),
+                  ],
                   decoration: InputDecoration(labelText: l10n.phone),
                 ),
               ],

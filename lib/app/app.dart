@@ -16,9 +16,10 @@ class App extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final l10n = lookupAppLocalizations(locale);
 
     return MaterialApp.router(
-      title: 'VetNow',
+      title: l10n.appTitle,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

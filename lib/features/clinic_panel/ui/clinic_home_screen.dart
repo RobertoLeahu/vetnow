@@ -1203,6 +1203,7 @@ class _TodayPatientChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final time = DateFormat('HH:mm').format(appointment.scheduledAt.toLocal());
     final ownerId = appointment.ownerId;
     final petId = appointment.petId;
@@ -1277,7 +1278,7 @@ class _TodayPatientChip extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        appointment.ownerFullName ?? '—',
+                        appointment.ownerFullName ?? l10n.notAvailable,
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppTheme.textSecondary,
@@ -1303,7 +1304,7 @@ class _TodayPatientChip extends StatelessWidget {
     PetSpecies.hamster => '🐹',
     PetSpecies.bird => '🦜',
     PetSpecies.reptile => '🦎',
-    PetSpecies.ferret => '🦦',
+    PetSpecies.fish => '🐟',
     PetSpecies.other => '🐾',
   };
 }

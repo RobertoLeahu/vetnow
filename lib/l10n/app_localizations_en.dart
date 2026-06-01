@@ -45,6 +45,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fillAllFields => 'Fill in all fields';
 
   @override
+  String get invalidPhoneFormat => 'Phone number must be 9 digits.';
+
+  @override
   String get registerMustAcceptLegal =>
       'You must accept the privacy policy and terms';
 
@@ -88,6 +91,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roleClinicSubtitle => 'I manage my schedule and receive bookings';
+
+  @override
+  String get roleOwnerCardTitle => 'Pet owner';
+
+  @override
+  String get roleClinicCardTitle => 'Clinic';
+
+  @override
+  String get welcomePrefix => 'Welcome to ';
+
+  @override
+  String get appBrandName => 'VetNow';
+
+  @override
+  String get appTitle => 'VetNow';
+
+  @override
+  String get clinicMenuMyAgenda => 'My schedule';
+
+  @override
+  String get clinicMenuMyPatients => 'My patients';
+
+  @override
+  String get configureClinic => 'Configure clinic';
+
+  @override
+  String get notAvailable => '—';
+
+  @override
+  String distanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String distanceKilometers(String kilometers) {
+    return '$kilometers km';
+  }
 
   @override
   String get settingsTitle => 'Settings';
@@ -703,7 +743,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speciesReptile => 'Reptile';
 
   @override
-  String get speciesFerret => 'Ferret';
+  String get speciesFish => 'Fish';
 
   @override
   String get speciesOther => 'Other';

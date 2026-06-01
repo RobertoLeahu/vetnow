@@ -364,7 +364,7 @@ strings = {
     "speciesHamster": ("Hámster", "Hamster"),
     "speciesBird": ("Ave", "Bird"),
     "speciesReptile": ("Reptil", "Reptile"),
-    "speciesFerret": ("Hurón", "Ferret"),
+    "speciesFish": ("Pez", "Fish"),
     "speciesOther": ("Otro", "Other"),
     "myClinicFallback": ("Mi clínica", "My clinic"),
     "today": ("Hoy", "Today"),

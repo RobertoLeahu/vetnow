@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -6,6 +7,7 @@ import '../../clinic/providers/clinic_provider.dart';
 import '../../clinic_panel/providers/clinic_panel_provider.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error_presenter.dart';
+import '../../../core/strings/phone_validation.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/profile.dart';
 import '../../../shared/widgets/app_error_banner.dart';
@@ -31,10 +33,10 @@ import '../../../shared/widgets/app_error_banner.dart';
 
 String? _composePhone(String prefix, String number) {
   final pre = prefix.trim();
-  final num = number.trim();
-  if (pre.isEmpty && num.isEmpty) return null;
-  if (num.isEmpty) return pre.isEmpty ? null : pre;
-  return '$pre $num';
+  final digits = extractPhoneDigits(number);
+  if (pre.isEmpty && digits.isEmpty) return null;
+  if (digits.isEmpty) return pre.isEmpty ? null : pre;
+  return '$pre $digits';
 }
 
 class AccountScreen extends ConsumerStatefulWidget {
@@ -51,6 +53,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   bool _seeded = false;
   String? _initialPhoneSerialized;
   bool _saving = false;
+  String? _phoneError;
 
   @override
   void initState() {
@@ -76,21 +79,31 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   Future<void> _savePhone() async {
+    final l10n = context.l10n;
     final user = ref.read(authRepositoryProvider).currentUser;
     if (user == null) return;
     final role = ref.read(profileProvider).valueOrNull?.role;
+
+    final numberText = _numberCtrl.text.trim();
+    if (numberText.isNotEmpty && !isValidSpanishLocalPhone(numberText)) {
+      setState(() => _phoneError = l10n.invalidPhoneFormat);
+      return;
+    }
 
     final newSerialized = _composePhone(_prefixCtrl.text, _numberCtrl.text);
     if (newSerialized == _initialPhoneSerialized) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(context.l10n.noChangesToSave)));
+        ).showSnackBar(SnackBar(content: Text(l10n.noChangesToSave)));
       }
       return;
     }
 
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _phoneError = null;
+    });
     try {
       if (role == UserRole.clinic) {
         await ref.read(clinicRepositoryProvider).updateClinicPhoneByProfile(
@@ -108,7 +121,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(context.l10n.dataSaved)));
+        ).showSnackBar(SnackBar(content: Text(l10n.dataSaved)));
       }
     } catch (e) {
       if (mounted) {
@@ -187,7 +200,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               InputDecorator(
                 decoration: InputDecoration(labelText: l10n.emailAddress),
                 child: Text(
-                  email.isEmpty ? '—' : email,
+                  email.isEmpty ? l10n.notAvailable : email,
                   style: const TextStyle(
                     fontSize: 15,
                     color: AppTheme.textPrimary,
@@ -210,7 +223,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   Expanded(
                     child: TextField(
                       controller: _numberCtrl,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(9),
+                      ],
+                      onChanged: (_) {
+                        if (_phoneError != null) {
+                          setState(() => _phoneError = null);
+                        }
+                      },
                       decoration: InputDecoration(labelText: l10n.phoneNumber),
                     ),
                   ),
@@ -226,6 +248,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ),
               const Divider(color: AppTheme.divider),
               const SizedBox(height: 24),
+              if (_phoneError != null) ...[
+                AppErrorBanner(message: _phoneError!),
+                const SizedBox(height: 12),
+              ],
               ElevatedButton(
                 onPressed: _saving ? null : _savePhone,
                 child: _saving

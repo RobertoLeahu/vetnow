@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../../shared/models/clinic.dart';
 
 /// Tarjeta de clínica para listados de búsqueda y favoritos.
@@ -12,6 +13,7 @@ class ClinicListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: () => context.push('/search/clinic/${clinic.id}'),
       child: Container(
@@ -88,7 +90,7 @@ class ClinicListCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(50),
                               ),
                               child: Text(
-                                s.name,
+                                s.localizedLabel(l10n),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppTheme.textSecondary,

@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "We need camera access to take a profile photo of your pet.";
+"NSPhotoLibraryUsageDescription" = "We need access to your photos to choose a profile picture for your pet.";
+"NSLocationWhenInUseUsageDescription" = "We need your location to show nearby veterinary clinics.";
+"CFBundleDisplayName" = "VetNow";

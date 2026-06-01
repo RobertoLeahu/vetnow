@@ -57,17 +57,17 @@ class ClinicProfileMenuScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _ClinicMenuItem(
             icon: Icons.calendar_month_rounded,
-            label: 'Mi Agenda',
+            label: l10n.clinicMenuMyAgenda,
             onTap: () => context.go('/clinic-agenda'),
           ),
           _ClinicMenuItem(
             icon: Icons.people_rounded,
-            label: 'Mis Pacientes',
+            label: l10n.clinicMenuMyPatients,
             onTap: () => context.go('/clinic-patients'),
           ),
           _ClinicMenuItem(
             icon: Icons.store_rounded,
-            label: 'Configurar clínica',
+            label: l10n.configureClinic,
             onTap: () => context.push('/clinic-profile/edit'),
           ),
           const SizedBox(height: 32),

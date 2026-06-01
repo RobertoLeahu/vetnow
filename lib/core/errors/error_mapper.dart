@@ -11,6 +11,11 @@ import 'app_error_code.dart';
 AppError mapError(Object error) {
   if (error is AppError) return error;
 
+  if (error is StateError &&
+      error.message.contains('Confirma la cita en la agenda')) {
+    return const AppError(AppErrorCode.appointmentNotConfirmedForNotes);
+  }
+
   if (error is RegisterException) {
     return switch (error.failure) {
       RegisterFailure.emailAlreadyExists => const AppError(

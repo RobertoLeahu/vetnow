@@ -575,7 +575,7 @@ class _VisitCardState extends ConsumerState<_VisitCard> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            visit.specialtyName,
+                            specialtyLocalizedLabel(l10n, visit.specialtyName),
                             style: const TextStyle(
                               color: AppTheme.primary,
                               fontSize: 12,

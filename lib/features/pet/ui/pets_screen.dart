@@ -8,6 +8,8 @@ import '../providers/pet_provider.dart';
 import '../../../shared/models/pet.dart';
 import '../../../app/theme.dart';
 import '../../../core/errors/app_error_presenter.dart';
+import '../../../core/datetime/app_date_format.dart';
+import '../../../core/providers/locale_provider.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -650,6 +652,8 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final birthDateFmt = dateFormat(petBirthDatePattern(locale), locale);
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -740,7 +744,7 @@ class _AddPetSheetState extends ConsumerState<_AddPetSheet> {
                     Text(
                       _birthDate == null
                           ? l10n.birthDateOptional
-                          : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          : birthDateFmt.format(_birthDate!),
                       style: TextStyle(
                         color: _birthDate == null
                             ? AppTheme.textSecondary
@@ -876,6 +880,8 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final birthDateFmt = dateFormat(petBirthDatePattern(locale), locale);
     final displayUrl = (_pickedPhoto == null && !_removePhoto)
         ? widget.pet.photoUrl
         : null;
@@ -978,7 +984,7 @@ class _EditPetSheetState extends ConsumerState<_EditPetSheet> {
                     Text(
                       _birthDate == null
                           ? l10n.birthDateOptional
-                          : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          : birthDateFmt.format(_birthDate!),
                       style: TextStyle(
                         color: _birthDate == null
                             ? AppTheme.textSecondary

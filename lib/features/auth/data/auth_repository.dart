@@ -1,4 +1,6 @@
 //Auth Repository
+import '../../../core/errors/app_error.dart';
+import '../../../core/errors/app_error_code.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../shared/models/profile.dart';
@@ -72,7 +74,7 @@ class AuthRepository {
       }
     }
 
-    if (user == null) throw Exception('Error al crear el usuario');
+    if (user == null) throw const AppError(AppErrorCode.server);
 
     final existingProfile = await supabase
         .from('profiles')
@@ -185,7 +187,9 @@ class AuthRepository {
 
   /// Elimina todos los datos del usuario (RGPD), el usuario en Auth y cierra sesión.
   Future<void> deleteCurrentAccount() async {
-    if (currentUser == null) throw Exception('No hay usuario autenticado');
+    if (currentUser == null) {
+      throw const AppError(AppErrorCode.authSessionExpired);
+    }
 
     final response = await supabase.functions.invoke(
       'delete-account',
@@ -195,9 +199,9 @@ class AuthRepository {
     if (response.status != 200) {
       final data = response.data;
       if (data is Map && data['error'] != null) {
-        throw Exception(data['error']);
+        throw AppError(AppErrorCode.server, debugMessage: '${data['error']}');
       }
-      throw Exception('Error al eliminar la cuenta (${response.status})');
+      throw const AppError(AppErrorCode.server);
     }
 
     await signOut();

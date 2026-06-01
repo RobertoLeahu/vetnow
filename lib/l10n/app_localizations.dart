@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Rellena todos los campos'**
   String get fillAllFields;
 
+  /// No description provided for @invalidPhoneFormat.
+  ///
+  /// In es, this message translates to:
+  /// **'El teléfono debe tener 9 dígitos.'**
+  String get invalidPhoneFormat;
+
   /// No description provided for @registerMustAcceptLegal.
   ///
   /// In es, this message translates to:
@@ -247,6 +253,72 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Gestiono mi agenda y recibo reservas'**
   String get roleClinicSubtitle;
+
+  /// No description provided for @roleOwnerCardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Propietario'**
+  String get roleOwnerCardTitle;
+
+  /// No description provided for @roleClinicCardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Clínica'**
+  String get roleClinicCardTitle;
+
+  /// No description provided for @welcomePrefix.
+  ///
+  /// In es, this message translates to:
+  /// **'Bienvenido a '**
+  String get welcomePrefix;
+
+  /// No description provided for @appBrandName.
+  ///
+  /// In es, this message translates to:
+  /// **'VetNow'**
+  String get appBrandName;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'VetNow'**
+  String get appTitle;
+
+  /// No description provided for @clinicMenuMyAgenda.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi agenda'**
+  String get clinicMenuMyAgenda;
+
+  /// No description provided for @clinicMenuMyPatients.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis pacientes'**
+  String get clinicMenuMyPatients;
+
+  /// No description provided for @configureClinic.
+  ///
+  /// In es, this message translates to:
+  /// **'Configurar clínica'**
+  String get configureClinic;
+
+  /// No description provided for @notAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'—'**
+  String get notAvailable;
+
+  /// No description provided for @distanceMeters.
+  ///
+  /// In es, this message translates to:
+  /// **'{meters} m'**
+  String distanceMeters(int meters);
+
+  /// No description provided for @distanceKilometers.
+  ///
+  /// In es, this message translates to:
+  /// **'{kilometers} km'**
+  String distanceKilometers(String kilometers);
 
   /// No description provided for @settingsTitle.
   ///
@@ -1310,11 +1382,11 @@ abstract class AppLocalizations {
   /// **'Reptil'**
   String get speciesReptile;
 
-  /// No description provided for @speciesFerret.
+  /// No description provided for @speciesFish.
   ///
   /// In es, this message translates to:
-  /// **'Hurón'**
-  String get speciesFerret;
+  /// **'Pez'**
+  String get speciesFish;
 
   /// No description provided for @speciesOther.
   ///

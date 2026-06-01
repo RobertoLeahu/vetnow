@@ -754,7 +754,7 @@ class _StepConfirm extends ConsumerWidget {
             _SummaryRow(
               icon: Icons.medical_services_rounded,
               label: l10n.specialtyLabel,
-              value: specialty.name,
+              value: specialty.localizedLabel(l10n),
             ),
             _SummaryRow(
               icon: Icons.calendar_today_rounded,

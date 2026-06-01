@@ -53,10 +53,7 @@ class Appointment extends Equatable {
 
     final speciesRaw = readNestedString('pets', 'species');
     final petSpecies = speciesRaw != null
-        ? PetSpecies.values.firstWhere(
-            (e) => e.name == speciesRaw,
-            orElse: () => PetSpecies.other,
-          )
+        ? parsePetSpecies(speciesRaw)
         : PetSpecies.other;
 
     final street = readNestedString('clinics', 'address') ?? '';

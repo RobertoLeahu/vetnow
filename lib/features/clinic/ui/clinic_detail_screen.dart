@@ -113,7 +113,7 @@ class ClinicDetailScreen extends ConsumerWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: clinic.specialties
-                              .map((s) => Chip(label: Text(s.name)))
+                              .map((s) => Chip(label: Text(s.localizedLabel(l10n))))
                               .toList(),
                         ),
                       ],
@@ -315,7 +315,7 @@ class _SpecialtySheet extends StatelessWidget {
                   ),
                 ),
                 title: Text(
-                  s.name,
+                  s.localizedLabel(l10n),
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textPrimary,

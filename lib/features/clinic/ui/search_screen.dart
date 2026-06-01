@@ -765,7 +765,7 @@ class _UpcomingAppointmentCard extends ConsumerWidget {
       PetSpecies.hamster => '🐹',
       PetSpecies.bird => '🦜',
       PetSpecies.reptile => '🦎',
-      PetSpecies.ferret => '🦦',
+      PetSpecies.fish => '🐟',
       PetSpecies.other => '🐾',
     };
 

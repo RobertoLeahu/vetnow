@@ -12,6 +12,7 @@
   "registerOwnerTitle": "Owner registration",
   "fullName": "Full name",
   "fillAllFields": "Fill in all fields",
+  "invalidPhoneFormat": "Phone number must be 9 digits.",
   "registerMustAcceptLegal": "You must accept the privacy policy and terms",
   "registerError": "Registration error: {error}",
   "@registerError": {
@@ -32,6 +33,31 @@
   "roleOwnerSubtitle": "I look for clinics and book appointments for my pet",
   "roleClinicTitle": "I'm a clinic",
   "roleClinicSubtitle": "I manage my schedule and receive bookings",
+  "roleOwnerCardTitle": "Pet owner",
+  "roleClinicCardTitle": "Clinic",
+  "welcomePrefix": "Welcome to ",
+  "appBrandName": "VetNow",
+  "appTitle": "VetNow",
+  "clinicMenuMyAgenda": "My schedule",
+  "clinicMenuMyPatients": "My patients",
+  "configureClinic": "Configure clinic",
+  "notAvailable": "—",
+  "distanceMeters": "{meters} m",
+  "@distanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKilometers": "{kilometers} km",
+  "@distanceKilometers": {
+    "placeholders": {
+      "kilometers": {
+        "type": "String"
+      }
+    }
+  },
   "settingsTitle": "Settings",
   "account": "Account",
   "termsAndConditions": "Terms and conditions",
@@ -349,7 +375,7 @@
   "speciesHamster": "Hamster",
   "speciesBird": "Bird",
   "speciesReptile": "Reptile",
-  "speciesFerret": "Ferret",
+  "speciesFish": "Fish",
   "speciesOther": "Other",
   "specialtyGeneralMedicine": "General medicine",
   "specialtyDermatology": "Dermatology",

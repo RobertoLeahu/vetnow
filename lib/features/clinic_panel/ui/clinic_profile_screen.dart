@@ -764,7 +764,7 @@ class _ClinicProfileScreenState extends ConsumerState<ClinicProfileEditScreen> {
             children: catalog.map((s) {
               final selected = _selectedSpecialtyIds.contains(s.id);
               return FilterChip(
-                label: Text(s.name),
+                label: Text(s.localizedLabel(l10n)),
                 selected: selected,
                 selectedColor: AppTheme.primary.withValues(alpha: 0.15),
                 checkmarkColor: AppTheme.primary,

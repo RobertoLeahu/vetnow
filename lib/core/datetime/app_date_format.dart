@@ -48,3 +48,6 @@ String visitShortDatePattern(Locale locale) =>
 
 String lastAppointmentPattern(Locale locale) =>
     locale.languageCode == 'en' ? 'MMM d, yyyy' : 'd MMM yyyy';
+
+String petBirthDatePattern(Locale locale) =>
+    locale.languageCode == 'en' ? 'M/d/yyyy' : 'd/M/yyyy';
