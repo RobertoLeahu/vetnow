@@ -99,10 +99,7 @@ class ProfileScreen extends ConsumerWidget {
 
           // Logout
           OutlinedButton.icon(
-            onPressed: () async {
-              await ref.read(authRepositoryProvider).signOut();
-              if (context.mounted) context.go('/login');
-            },
+            onPressed: () => _confirmAndSignOut(context, ref),
             icon: const Icon(Icons.logout_rounded, size: 16),
             label: Text(l10n.signOut),
             style: OutlinedButton.styleFrom(
@@ -117,6 +114,35 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmAndSignOut(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.signOut),
+        content: Text(l10n.signOutConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.signOut),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+      if (context.mounted) context.go('/login');
+    } catch (e) {
+      if (context.mounted) showAppError(context, e);
+    }
   }
 }
 
