@@ -12,8 +12,8 @@ class AppointmentRepository {
 
   final SupabaseClient _client;
 
-  /// Marca como realizadas las citas confirmadas cuyo slot ya terminó (RPC).
-  Future<void> _autoCompletePastAppointments() async {
+  /// Sincroniza citas vencidas vía RPC: confirmed → done, pending → cancelled.
+  Future<void> syncPastAppointments() async {
     try {
       await _client.rpc('complete_past_appointments');
     } catch (e, st) {
@@ -89,7 +89,7 @@ class AppointmentRepository {
 
   /// Obtener citas del propietario
   Future<List<Map<String, dynamic>>> fetchMyAppointments(String ownerId) async {
-    await _autoCompletePastAppointments();
+    await syncPastAppointments();
     final data = await _client
         .from('appointments')
         .select('''
@@ -107,7 +107,7 @@ class AppointmentRepository {
   Future<List<Map<String, dynamic>>> fetchClinicAppointments(
     String clinicId,
   ) async {
-    await _autoCompletePastAppointments();
+    await syncPastAppointments();
     final data = await _client
         .from('appointments')
         .select('''

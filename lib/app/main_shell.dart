@@ -5,11 +5,13 @@ import 'package:showcaseview/showcaseview.dart';
 import '../l10n/l10n_ext.dart';
 import '../app/theme.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/appointment/providers/appointment_provider.dart';
 import '../features/clinic_panel/providers/clinic_panel_provider.dart';
 import '../shared/models/profile.dart';
 import '../core/onboarding/onboarding_keys.dart';
 import '../core/onboarding/onboarding_provider.dart';
 import '../core/onboarding/onboarding_showcase.dart';
+import '../core/appointments/appointment_sync_scheduler.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -21,9 +23,22 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   bool _showcaseRegistered = false;
+  AppointmentSyncScheduler? _appointmentSync;
+
+  @override
+  void initState() {
+    super.initState();
+    _appointmentSync = AppointmentSyncScheduler(
+      onSync: () {
+        ref.invalidate(clinicAppointmentsProvider);
+        ref.invalidate(myAppointmentsProvider);
+      },
+    )..start();
+  }
 
   @override
   void dispose() {
+    _appointmentSync?.stop();
     unregisterOnboardingShowcaseView();
     super.dispose();
   }

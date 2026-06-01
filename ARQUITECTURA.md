@@ -60,6 +60,8 @@ lib/
 │   ├── datetime/
 │   │   ├── timestamptz.dart
 │   │   └── app_date_format.dart   # Patrones DateFormat según locale
+│   ├── appointments/
+│   │   └── appointment_sync_scheduler.dart  # Timer 1 min + resume → invalidar citas
 │   ├── errors/                    # Errores amigables (mapError, AppErrorCode, l10n)
 │   ├── location/
 │   │   └── user_location_service.dart  # GPS con caché lastKnown (15 min)
@@ -152,9 +154,10 @@ medical_notes     -- appointment_id FK, clinic_id FK, content, created_at, updat
 - `get_booked_slots(p_clinic_id, p_from, p_to)` — SECURITY DEFINER. Devuelve
   `(scheduled_at, duration_minutes)` de citas con status `pending` o `confirmed`.
   Permite detectar solapamientos cuando la duración de la cita es > 30 min.
-- `complete_past_appointments()` — SECURITY DEFINER. Marca como `done` las citas
-  `confirmed` cuyo fin (`scheduled_at` + duración) ya pasó y rellena `completed_at = now()`.
-  Se invoca desde Flutter al cargar citas del propietario.
+- `complete_past_appointments()` — SECURITY DEFINER. Sincroniza citas vencidas según
+  `scheduled_at` + duración: `confirmed` → `done` + `completed_at = now()`;
+  `pending` → `cancelled` (sin email). Job `pg_cron` cada 5 min (`sync-past-appointments`).
+  También se invoca desde Flutter al cargar citas (propietario y clínica).
 - Trigger `on_auth_user_created` → `handle_new_user()`: crea fila en `profiles` desde
   `raw_user_meta_data` (`role`, `full_name`) al registrarse en Auth.
 
@@ -269,7 +272,8 @@ navegación tras signUp, evita races con signIn en email duplicado).
 - Dialog de éxito con fecha formateada según locale (`app_date_format.dart`).
 - Cancelación de cita con dialog de confirmación.
 - AppointmentsScreen con 3 tabs y contadores reales.
-- Al cargar citas del propietario se llama a `complete_past_appointments` (RPC).
+- Al cargar citas (propietario o clínica) se llama a `complete_past_appointments` (RPC).
+- `MainShell` refresca citas cada 1 min y al volver de background (`AppointmentSyncScheduler`).
 
 ### ✅ Gestión de mascotas — propietario (Fase 3 — completa)
 - PetsScreen con lista, estado vacío y FAB.
@@ -284,6 +288,7 @@ navegación tras signUp, evita races con signIn en email duplicado).
 
 ### ✅ NavBar dinámico por rol y panel clínica (Fase 5 — completa)
 - MainShell con NavBar por rol; spinner mientras carga perfil.
+- `AppointmentSyncScheduler` en MainShell: invalida citas cada 1 min y al resume.
 - Al salir de **Mi clínica** con cambios sin guardar, `clinicProfileExitHandlerProvider`
   intercepta el tap en otras tabs del NavBar.
 - ClinicHomeScreen, ClinicAgendaScreen, ClinicPatientsScreen + expedientes médicos
@@ -382,7 +387,9 @@ navegación tras signUp, evita races con signIn en email duplicado).
 
 ### Citas realizadas (`completed_at`)
 - Al marcar manualmente desde agenda clínica: `status = done` + `completed_at = now()`.
-- Auto-completado RPC: solo citas `confirmed` cuyo slot ya terminó; también setea `completed_at`.
+- Auto-completado RPC: citas `confirmed` cuyo slot ya terminó → `done` + `completed_at`.
+- Citas `pending` vencidas → `cancelled` automáticamente (sin email al propietario).
+- Ejecución: `pg_cron` cada 5 min + refetch en Flutter (carga de citas, timer 1 min, resume).
 - Estadísticas del dashboard usan `completed_at` para contar realizadas del día.
 
 ### Joins y RLS — punto crítico
@@ -445,6 +452,7 @@ navegación tras signUp, evita races con signIn en email duplicado).
 
 ### Edge Functions — recordatorios y notificaciones
 - `send-appointment-reminders`: cron horario, `reminder_sent`.
+- `complete_past_appointments`: cron cada 5 min (`sync-past-appointments`), además de Flutter.
 - `send-appointment-notification`: confirmación/denegación desde Flutter.
 - SERVICE_ROLE_KEY para leer emails en `auth.users`.
 - Destinatario hardcodeado en desarrollo (Resend modo pruebas).
