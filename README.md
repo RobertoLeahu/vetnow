@@ -22,6 +22,32 @@ El rol se elige en el registro y es **inmutable**: una sola app atiende a ambos 
 
 ---
 
+## Capturas de pantalla
+
+Vista general de la aplicación por rol. Las imágenes se almacenan en `docs/screenshots/` (añade ahí tus capturas con los nombres indicados).
+
+### Propietario
+
+| Búsqueda de clínicas | Detalle y mapa | Reserva de cita |
+|:---:|:---:|:---:|
+| ![Búsqueda de clínicas](docs/screenshots/owner-search.png) | ![Detalle de clínica](docs/screenshots/owner-clinic-detail.png) | ![Reserva de cita](docs/screenshots/owner-booking.png) |
+
+| Mis mascotas | Mis citas | Perfil |
+|:---:|:---:|:---:|
+| ![Mis mascotas](docs/screenshots/owner-pets.png) | ![Mis citas](docs/screenshots/owner-appointments.png) | ![Perfil](docs/screenshots/owner-profile.png) |
+
+### Clínica
+
+| Dashboard | Agenda | Pacientes |
+|:---:|:---:|:---:|
+| ![Dashboard](docs/screenshots/clinic-dashboard.png) | ![Agenda](docs/screenshots/clinic-agenda.png) | ![Pacientes](docs/screenshots/clinic-patients.png) |
+
+| Perfil de clínica | Notas médicas |
+|:---:|:---:|
+| ![Perfil de clínica](docs/screenshots/clinic-profile.png) | ![Notas médicas](docs/screenshots/clinic-medical-notes.png) |
+
+---
+
 ## Funcionalidades
 
 ### Propietario
