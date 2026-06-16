@@ -28,7 +28,7 @@ Vista general de la aplicación por rol. Las imágenes se almacenan en `docs/scr
 
 ### Propietario
 
-| Búsqueda de clínicas | Detalle y mapa | Reserva de cita |
+| Búsqueda de clínicas | Detalle | Reserva de cita |
 |:---:|:---:|:---:|
 | ![Búsqueda de clínicas](docs/screenshots/owner-search.png) | ![Detalle de clínica](docs/screenshots/owner-clinic-detail.png) | ![Reserva de cita](docs/screenshots/owner-booking.png) |
 
