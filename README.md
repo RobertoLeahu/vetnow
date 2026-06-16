@@ -334,13 +334,6 @@ dart run build_runner build --delete-conflicting-outputs
 
 ---
 
-## Licencia
-
-Este proyecto es de uso privado (`publish_to: 'none'` en `pubspec.yaml`).  
-Si deseas publicarlo o distribuirlo, define aquí la licencia aplicable (por ejemplo MIT) y actualiza este apartado.
-
----
-
 ## Enlaces útiles
 
 - [Documentación Flutter](https://docs.flutter.dev/)
