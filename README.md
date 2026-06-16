@@ -24,27 +24,27 @@ El rol se elige en el registro y es **inmutable**: una sola app atiende a ambos 
 
 ## Capturas de pantalla
 
-Vista general de la aplicación por rol. Las imágenes se almacenan en `docs/screenshots/` (añade ahí tus capturas con los nombres indicados).
+Vista general de la aplicación por rol.
 
 ### Propietario
 
 | Búsqueda de clínicas | Detalle | Reserva de cita |
 |:---:|:---:|:---:|
-| ![Búsqueda de clínicas](docs/screenshots/owner-search.png) | ![Detalle de clínica](docs/screenshots/owner-clinic-detail.png) | ![Reserva de cita](docs/screenshots/owner-booking.png) |
+| <img src="docs/screenshots/owner-search.png" width="200" alt="Búsqueda de clínicas"> | <img src="docs/screenshots/owner-clinic-detail.png" width="200" alt="Detalle de clínica"> | <img src="docs/screenshots/owner-booking.png" width="200" alt="Reserva de cita"> |
 
 | Mis mascotas | Mis citas | Perfil |
 |:---:|:---:|:---:|
-| ![Mis mascotas](docs/screenshots/owner-pets.png) | ![Mis citas](docs/screenshots/owner-appointments.png) | ![Perfil](docs/screenshots/owner-profile.png) |
+| <img src="docs/screenshots/owner-pets.png" width="200" alt="Mis mascotas"> | <img src="docs/screenshots/owner-appointments.png" width="200" alt="Mis citas"> | <img src="docs/screenshots/owner-profile.png" width="200" alt="Perfil"> |
 
 ### Clínica
 
 | Dashboard | Agenda | Pacientes |
 |:---:|:---:|:---:|
-| ![Dashboard](docs/screenshots/clinic-dashboard.png) | ![Agenda](docs/screenshots/clinic-agenda.png) | ![Pacientes](docs/screenshots/clinic-patients.png) |
+| <img src="docs/screenshots/clinic-dashboard.png" width="200" alt="Dashboard"> | <img src="docs/screenshots/clinic-agenda.png" width="200" alt="Agenda"> | <img src="docs/screenshots/clinic-patients.png" width="200" alt="Pacientes"> |
 
 | Perfil de clínica | Notas médicas |
 |:---:|:---:|
-| ![Perfil de clínica](docs/screenshots/clinic-profile.png) | ![Notas médicas](docs/screenshots/clinic-medical-notes.png) |
+| <img src="docs/screenshots/clinic-profile.png" width="260" alt="Perfil de clínica"> | <img src="docs/screenshots/clinic-medical-notes.png" width="260" alt="Notas médicas"> |
 
 ---
 
